@@ -11,7 +11,17 @@ async function bootstrap() {
   app.useWebSocketAdapter(redisIoAdapter);
 
   // cors
-  app.enableCors();
+  const allowlist = ['http://google.com']; // 나중에 프론트엔드 웹 주소로 변경할 것
+  const corsOptionsDelegate = function (req, callback) {
+    let corsOptions;
+    if (allowlist.indexOf(req.header('Origin')) !== -1) {
+      corsOptions = { origin: true }; // reflect (enable) the requested origin in the CORS response
+    } else {
+      corsOptions = { origin: false }; // disable CORS for this request
+    }
+    callback(null, corsOptions); // callback expects two parameters: error and options
+  };
+  app.enableCors(corsOptionsDelegate);
 
   await app.listen(process.env.PORT || 3000);
 }
