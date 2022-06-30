@@ -10,7 +10,10 @@ import { Logger } from '@nestjs/common';
 import { Server } from 'ws';
 import { Socket } from 'socket.io';
 
-@WebSocketGateway({ namespace: 'screen-share' })
+@WebSocketGateway({
+  cors: { origin: '*' },
+  namespace: 'screen-share',
+})
 export class ScreenShareGateway implements OnGatewayInit, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
