@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { RoomsController } from './rooms/rooms.controller';
 import { RoomsService } from './rooms/rooms.service';
 import { ScreenShareGateway } from './gateways/screenshare.gateway';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { ScreenShareGateway } from './gateways/screenshare.gateway';
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
     }),
+    UsersModule,
   ],
   controllers: [AppController, RoomsController],
   providers: [AppService, RoomsService, ScreenShareGateway],
