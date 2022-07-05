@@ -36,3 +36,7 @@ lerna-debug.log*
 
 # Local .env
 .env.local
+
+# ignore mongodb database files
+/dockers/mongodb/mongodb
+/dockers/mongodb/mongodb/**
