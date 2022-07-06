@@ -37,6 +37,9 @@ lerna-debug.log*
 # Local .env
 .env.local
 
+# Local cert files
+/secrets/**
+
 # ignore mongodb database files
 /dockers/mongodb/mongodb
 /dockers/mongodb/mongodb/**
