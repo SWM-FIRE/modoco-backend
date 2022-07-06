@@ -1,9 +1,18 @@
 import { NestFactory } from '@nestjs/core';
 import { RedisIoAdapter } from './adapters/redis.adapter';
 import { AppModule } from './app.module';
+import * as fs from 'fs';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // ssl certificate
+  const httpsOptions = {
+    key: fs.readFileSync('./secrets/server.key'),
+    cert: fs.readFileSync('./secrets/server.crt'),
+  };
+
+  const app = await NestFactory.create(AppModule, {
+    httpsOptions,
+  });
 
   // redis
   const redisIoAdapter = new RedisIoAdapter(app);
