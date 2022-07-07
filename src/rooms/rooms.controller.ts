@@ -8,7 +8,7 @@ export class RoomsController {
 
   @Post()
   async create(@Body() dto: RoomDto) {
-    this.roomsService.create(dto);
+    return this.roomsService.create(dto);
   }
 
   @Get()
@@ -17,12 +17,13 @@ export class RoomsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string) {
     return this.roomsService.getOne(id);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
+    console.log(id);
     return this.roomsService.deleteOne(id);
   }
 }
