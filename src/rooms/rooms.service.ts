@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { Room } from './interfaces/room.interface';
 
 @Injectable()
 export class RoomsService {
+  constructor(private readonly prisma: PrismaService) {}
+
   private readonly rooms: Room[] = [];
 
   create(room: Room) {
