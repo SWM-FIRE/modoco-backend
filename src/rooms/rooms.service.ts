@@ -1,27 +1,48 @@
 import { Injectable } from '@nestjs/common';
-import { Room } from './interfaces/room.interface';
+import { RoomDto } from './dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class RoomsService {
-  private readonly rooms: Room[] = [];
+  constructor(private readonly prisma: PrismaService) {}
 
-  create(room: Room) {
-    this.rooms.push(room);
+  private readonly rooms: RoomDto[] = [];
+
+  async create(dto: RoomDto) {
+    const room = await this.prisma.room.create({
+      data: {
+        ...dto,
+      },
+    });
+
+    delete room.createdAt;
+    return room;
   }
 
-  findAll(): Room[] {
-    return this.rooms;
+  async findAll(): Promise<RoomDto[]> {
+    const rooms = await this.prisma.room.findMany({
+      select: {
+        id: true,
+        name: true,
+        current: true,
+        total: true,
+        image: true,
+        tags: true,
+      },
+    });
+    return rooms;
   }
 
-  getOne(id: string): Room {
-    return this.rooms.find((room) => room.id === id);
+  async getOne(id: string): Promise<RoomDto> {
+    const room = await this.prisma.room.findFirst({
+      where: { id },
+    });
+    return room;
   }
 
-  deleteOne(id: string): boolean {
-    const index = this.rooms.map((room) => room.id).indexOf(id);
-    if (index === -1) return false;
-
-    this.rooms.splice(index, 1);
-    return true;
+  async deleteOne(id: string) {
+    await this.prisma.room.delete({
+      where: { id },
+    });
   }
 }

@@ -10,8 +10,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
+model Room {
+  id          String    @id
+  image       String
+  name        String 
+  current     Int
+  total       Int
+  tags        String[]
+  createdAt   DateTime  @default(now())
+}
+
 model User {
-  uid          String @id
+  uid          String   @id
   nickname     String
   createdAt    DateTime @default(now())
 }
