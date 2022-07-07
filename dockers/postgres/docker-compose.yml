@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    restart: always
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: 'soma13'
+      POSTGRES_PASSWORD: 'myPasswd'
+    labels:
+      - 'name=postgres'
+      - 'mode=standalone'
