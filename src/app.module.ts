@@ -6,6 +6,7 @@ import { RoomsController } from './rooms/rooms.controller';
 import { RoomsService } from './rooms/rooms.service';
 import { ScreenShareGateway } from './gateways/screenshare.gateway';
 import { UsersModule } from './users/users.module';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { UsersModule } from './users/users.module';
       envFilePath: ['.env.local', '.env'],
     }),
     UsersModule,
+    PrismaModule,
   ],
   controllers: [AppController, RoomsController],
   providers: [AppService, RoomsService, ScreenShareGateway],

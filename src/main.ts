@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { RedisIoAdapter } from './adapters/redis.adapter';
 import { AppModule } from './app.module';
 import * as fs from 'fs';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   // ssl certificate
@@ -31,6 +32,12 @@ async function bootstrap() {
     callback(null, corsOptions); // callback expects two parameters: error and options
   };
   app.enableCors(corsOptionsDelegate);
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+    }),
+  );
 
   await app.listen(process.env.PORT || 3000);
 }

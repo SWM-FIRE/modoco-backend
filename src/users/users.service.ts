@@ -1,32 +1,56 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from './dto';
 
 @Injectable()
 export class UsersService {
+  constructor(private readonly prisma: PrismaService) {}
   private readonly users: User[] = [];
 
-  create(user: User): User {
-    this.users.push(user);
+  async create(dto: User): Promise<User> {
+    const user = await this.prisma.user.create({
+      data: {
+        ...dto,
+      },
+    });
+
+    delete user.createdAt;
+
     return user;
   }
 
-  findAll(): User[] {
-    return this.users;
+  async findAll(): Promise<User[]> {
+    const users = await this.prisma.user.findMany();
+    return users;
   }
 
-  update(user: User) {
-    const index = this.users.findIndex((u) => u.uid === user.uid);
-    this.users[index] = user;
+  async update(dto: User) {
+    try {
+      const user = await this.prisma.user.update({
+        where: {
+          uid: dto.uid,
+        },
+        data: {
+          ...dto,
+        },
+      });
+      delete user.createdAt;
+
+      return user;
+    } catch (error) {
+      throw new ForbiddenException('User not found');
+    }
   }
 
   delete(uid: string) {
-    console.log(`Deleting user with uid: ${uid}`);
-    const index = this.users.findIndex((u) => u.uid === uid);
-    if (index !== -1) {
-      this.users.splice(index, 1);
-    } else {
-      //throw new Error('User not found');
-      console.log('User not found');
+    try {
+      this.prisma.user.delete({
+        where: {
+          uid,
+        },
+      });
+    } catch (error) {
+      throw new ForbiddenException('User not found');
     }
   }
 }
