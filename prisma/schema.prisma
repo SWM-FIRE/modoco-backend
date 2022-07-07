@@ -18,14 +18,11 @@ model Room {
   current     Int
   total       Int
   tags        String[]
-  user        User      @relation(fields: [userId], references: [uid])
-  userId      String    @unique
   createdAt   DateTime  @default(now())
 }
 
 model User {
   uid          String   @id
   nickname     String
-  room         Room? 
   createdAt    DateTime @default(now())
 }

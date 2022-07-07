@@ -1,22 +1,32 @@
 import { Injectable } from '@nestjs/common';
+import { RoomDto } from './dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Room } from './interfaces/room.interface';
 
 @Injectable()
 export class RoomsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private readonly rooms: Room[] = [];
+  private readonly rooms: RoomDto[] = [];
 
-  create(room: Room) {
-    this.rooms.push(room);
+  async create(dto: RoomDto) {
+    const room = await this.prisma.room.create({
+      data: {
+        id: dto.id,
+        name: dto.name,
+        current: dto.current,
+        total: dto.total,
+        image: dto.image,
+      },
+    });
+
+    return room;
   }
 
-  findAll(): Room[] {
+  findAll(): RoomDto[] {
     return this.rooms;
   }
 
-  getOne(id: string): Room {
+  getOne(id: string): RoomDto {
     return this.rooms.find((room) => room.id === id);
   }
 

@@ -1,19 +1,18 @@
 import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { RoomDto } from './dto';
 import { RoomsService } from './rooms.service';
-import { Room } from './interfaces/room.interface';
-import { CreateRoomDto } from './dto/RoomDto';
 
 @Controller('rooms')
 export class RoomsController {
   constructor(private roomsService: RoomsService) {}
 
   @Post()
-  async create(@Body() createRoomDto: CreateRoomDto) {
-    this.roomsService.create(createRoomDto);
+  async create(@Body() dto: RoomDto) {
+    this.roomsService.create(dto);
   }
 
   @Get()
-  async findAll(): Promise<Room[]> {
+  async findAll(): Promise<RoomDto[]> {
     return this.roomsService.findAll();
   }
 

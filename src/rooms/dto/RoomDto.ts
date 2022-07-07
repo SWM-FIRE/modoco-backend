@@ -1,6 +1,6 @@
 import { IsArray, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
-export class CreateRoomDto {
+export class RoomDto {
   @IsString()
   @IsNotEmpty()
   id: string;
