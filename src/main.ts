@@ -12,7 +12,7 @@ async function bootstrap() {
   app.useWebSocketAdapter(redisIoAdapter);
 
   // cors
-  const allowlist = ['*']; // 나중에 프론트엔드 웹 주소로 변경할 것
+  const allowlist = ['https://modocode.com']; 
   const corsOptionsDelegate = function (req, callback) {
     let corsOptions;
     if (allowlist.indexOf(req.header('Origin')) !== -1) {
