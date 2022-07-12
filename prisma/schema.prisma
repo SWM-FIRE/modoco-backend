@@ -10,20 +10,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-model Room {
-  id          String    @id
-  image       String
-  name        String 
-  current     Int
-  total       Int
-  tags        String[]
-  createdAt   DateTime  @default(now())
+model User {
+  uid       String   @id
+  nickname  String
+  avatar    String
+  createdAt DateTime @default(now())
+  Room      Room[]
 }
 
-model User {
-  uid          String   @id
-  nickname     String
-  avatar       String
-  createdAt    DateTime @default(now())
+model Room {
+  itemId      Int      @id @default(autoincrement())
+  moderator   User     @relation(fields: [moderatorId], references: [uid])
+  moderatorId String
+  title       String
+  details     String?
+  tags        String[]
+  current     Int
+  total       Int
+  createdAt   DateTime @default(now())
 }
