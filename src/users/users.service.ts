@@ -1,4 +1,5 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDTO } from './dto';
 
@@ -42,20 +43,32 @@ export class UsersService {
       delete user.createdAt;
 
       return user;
-    } catch (error) {
-      throw new ForbiddenException('User not found');
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        if (e.code === 'P2025') {
+          console.warn('User not found');
+          console.warn(e.message);
+        }
+      }
+      //throw e;
     }
   }
 
-  delete(uid: string) {
+  async delete(uid: string) {
     try {
-      this.prisma.user.delete({
+      await this.prisma.user.delete({
         where: {
           uid,
         },
       });
-    } catch (error) {
-      throw new ForbiddenException('User not found');
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        if (e.code === 'P2025') {
+          console.warn('User not found');
+          console.warn(e.message);
+        }
+      }
+      //throw e;
     }
   }
 }
