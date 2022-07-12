@@ -1,48 +1,66 @@
 import { Injectable } from '@nestjs/common';
-import { RoomDto } from './dto';
+import { CreateRoomDTO } from './dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class RoomsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private readonly rooms: RoomDto[] = [];
+  private readonly rooms: CreateRoomDTO[] = [];
 
-  async create(dto: RoomDto) {
+  async create(dto: CreateRoomDTO) {
     const room = await this.prisma.room.create({
       data: {
-        ...dto,
+        moderator: {
+          connect: { uid: dto.moderator.uid },
+        },
+        title: dto.title,
+        details: dto.details,
+        tags: dto.tags,
+        current: dto.current,
+        total: dto.total,
       },
+      include: { moderator: true },
     });
 
     delete room.createdAt;
+    delete room.moderatorId;
+    delete room.moderator.createdAt;
+
     return room;
   }
 
-  async findAll(): Promise<RoomDto[]> {
+  async findAll() {
     const rooms = await this.prisma.room.findMany({
       select: {
-        id: true,
-        name: true,
+        itemId: true,
+        moderator: {
+          select: {
+            nickname: true,
+            avatar: true,
+          },
+        },
+        title: true,
+        details: true,
+        tags: true,
         current: true,
         total: true,
-        image: true,
-        tags: true,
       },
     });
+
     return rooms;
   }
 
-  async getOne(id: string): Promise<RoomDto> {
+  async getOne(id: number) {
     const room = await this.prisma.room.findFirst({
-      where: { id },
+      where: { itemId: id },
     });
     return room;
   }
 
-  async deleteOne(id: string) {
+  async deleteOne(id: number) {
     await this.prisma.room.delete({
-      where: { id },
+      where: { itemId: id },
     });
   }
 }
