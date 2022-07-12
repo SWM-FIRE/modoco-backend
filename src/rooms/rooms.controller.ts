@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { RoomDto } from './dto';
 import { RoomsService } from './rooms.service';
 
-@Controller('rooms')
+@Controller('api/v1/rooms')
 export class RoomsController {
   constructor(private roomsService: RoomsService) {}
 
