@@ -24,5 +24,6 @@ model Room {
 model User {
   uid          String   @id
   nickname     String
+  avatar       String
   createdAt    DateTime @default(now())
 }

@@ -1,12 +1,12 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { User } from './dto';
+import { CreateUserDTO } from './dto';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: User): Promise<User> {
+  async create(dto: CreateUserDTO): Promise<CreateUserDTO> {
     const user = await this.prisma.user.create({
       data: {
         ...dto,
@@ -18,12 +18,18 @@ export class UsersService {
     return user;
   }
 
-  async findAll(): Promise<User[]> {
-    const users = await this.prisma.user.findMany();
+  async findAll(): Promise<CreateUserDTO[]> {
+    const users = await this.prisma.user.findMany({
+      select: {
+        uid: true,
+        nickname: true,
+        avatar: true,
+      },
+    });
     return users;
   }
 
-  async update(dto: User) {
+  async update(dto: CreateUserDTO) {
     try {
       const user = await this.prisma.user.update({
         where: {
