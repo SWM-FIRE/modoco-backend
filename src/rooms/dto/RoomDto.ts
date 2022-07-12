@@ -1,13 +1,29 @@
-import { IsArray, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsNumber,
+  IsObject,
+  IsString,
+} from 'class-validator';
 
-export class RoomDto {
+class Moderator {
+  uid: string;
+}
+
+export class CreateRoomDTO {
+  @IsNotEmpty()
+  @IsObject()
+  moderator: Moderator;
+
   @IsString()
   @IsNotEmpty()
-  id: string;
+  title: string;
 
   @IsString()
-  @IsNotEmpty()
-  name: string;
+  details?: string;
+
+  @IsArray()
+  tags: string[];
 
   @IsNotEmpty()
   @IsNumber()
@@ -16,11 +32,4 @@ export class RoomDto {
   @IsNotEmpty()
   @IsNumber()
   total: number;
-
-  @IsNotEmpty()
-  @IsString()
-  image: string;
-
-  @IsArray()
-  tags: string[];
 }
