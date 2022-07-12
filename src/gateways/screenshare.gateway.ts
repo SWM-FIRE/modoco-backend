@@ -11,7 +11,7 @@ import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: { origin: '*' },
-  namespace: 'room',
+  namespace: 'socket/room',
 })
 export class ScreenShareGateway implements OnGatewayInit, OnGatewayDisconnect {
   @WebSocketServer()
