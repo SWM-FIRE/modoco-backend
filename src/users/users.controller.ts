@@ -6,14 +6,14 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Get()
-  async findAll(): Promise<CreateUserDTO[]> {
-    return this.usersService.findAll();
-  }
-
   @Post()
   async create(@Body() user: CreateUserDTO): Promise<CreateUserDTO> {
     return this.usersService.create(user);
+  }
+
+  @Get()
+  async findAll(): Promise<CreateUserDTO[]> {
+    return this.usersService.findAll();
   }
 
   @Put()

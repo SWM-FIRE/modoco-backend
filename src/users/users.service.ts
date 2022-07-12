@@ -12,7 +12,6 @@ export class UsersService {
         ...dto,
       },
     });
-
     delete user.createdAt;
 
     return user;
@@ -26,6 +25,7 @@ export class UsersService {
         avatar: true,
       },
     });
+
     return users;
   }
 
