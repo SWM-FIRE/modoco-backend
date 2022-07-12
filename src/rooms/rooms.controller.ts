@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+} from '@nestjs/common';
 import { CreateRoomDTO } from './dto';
 import { RoomsService } from './rooms.service';
 
@@ -17,13 +25,12 @@ export class RoomsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: number) {
+  async findOne(@Param('id', new ParseIntPipe()) id: number) {
     return this.roomsService.getOne(id);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: number) {
-    console.log(id);
+  remove(@Param('id', new ParseIntPipe()) id: number) {
     return this.roomsService.deleteOne(id);
   }
 }
