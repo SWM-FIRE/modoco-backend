@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
-import { RoomDto } from './dto';
+import { CreateRoomDTO } from './dto';
 import { RoomsService } from './rooms.service';
 
 @Controller('api/v1/rooms')
@@ -7,22 +7,22 @@ export class RoomsController {
   constructor(private roomsService: RoomsService) {}
 
   @Post()
-  async create(@Body() dto: RoomDto) {
+  async create(@Body() dto: CreateRoomDTO) {
     return this.roomsService.create(dto);
   }
 
   @Get()
-  async findAll(): Promise<RoomDto[]> {
+  async findAll() {
     return this.roomsService.findAll();
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: number) {
     return this.roomsService.getOne(id);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: number) {
     console.log(id);
     return this.roomsService.deleteOne(id);
   }
