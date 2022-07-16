@@ -12,7 +12,7 @@ async function bootstrap() {
   app.useWebSocketAdapter(redisIoAdapter);
 
   // cors
-  const allowlist = ['https://modocode.com', 'https://modoco-frontend.vercel.app/', 'http://localhost:3000', 'https://localhost:3000']; 
+  const allowlist = ['https://modocode.com', 'https://modoco-frontend.vercel.app', 'http://localhost:3000', 'https://localhost:3000']; 
   const corsOptionsDelegate = function (req, callback) {
     let corsOptions;
     if (allowlist.indexOf(req.header('Origin')) !== -1) {
