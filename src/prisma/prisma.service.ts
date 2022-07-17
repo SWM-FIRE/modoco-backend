@@ -11,5 +11,6 @@ export class PrismaService extends PrismaClient {
         },
       },
     });
+    console.log('Connected to ', process.env.DATABASE_URL);
   }
 }
