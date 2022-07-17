@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { RedisIoAdapter } from './adapters/redis.adapter';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { NewrelicInterceptor } from './interceptors/newrelic.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,7 +13,12 @@ async function bootstrap() {
   app.useWebSocketAdapter(redisIoAdapter);
 
   // cors
-  const allowlist = ['https://modocode.com', 'https://modoco-frontend.vercel.app', 'http://localhost:3000', 'https://localhost:3000']; 
+  const allowlist = [
+    'https://modocode.com',
+    'https://modoco-frontend.vercel.app',
+    'http://localhost:3000',
+    'https://localhost:3000',
+  ];
   const corsOptionsDelegate = function (req, callback) {
     let corsOptions;
     if (allowlist.indexOf(req.header('Origin')) !== -1) {
@@ -23,6 +29,9 @@ async function bootstrap() {
     callback(null, corsOptions); // callback expects two parameters: error and options
   };
   app.enableCors(corsOptionsDelegate);
+
+  // newrelic interceptor
+  app.useGlobalInterceptors(new NewrelicInterceptor());
 
   app.useGlobalPipes(
     new ValidationPipe({
