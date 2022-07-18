@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { RoomsController } from './rooms/rooms.controller';
 import { RoomsService } from './rooms/rooms.service';
 import { ScreenShareGateway } from './gateways/screenshare.gateway';
+import { ChatGateway } from './gateways/chat.gateway';
 import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -18,6 +19,6 @@ import { PrismaModule } from './prisma/prisma.module';
     PrismaModule,
   ],
   controllers: [AppController, RoomsController],
-  providers: [AppService, RoomsService, ScreenShareGateway],
+  providers: [AppService, RoomsService, ScreenShareGateway, ChatGateway],
 })
 export class AppModule {}
