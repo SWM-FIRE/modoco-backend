@@ -1,12 +1,18 @@
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { NestFactory } from '@nestjs/core';
 import { RedisIoAdapter } from './adapters/redis.adapter';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { NewrelicInterceptor } from './interceptors/newrelic.interceptor';
 import helmet from 'helmet';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // static assets for socket.io client]
+  // to disable contentSecurityPolicy because it breaks the client it is placed above helmet
+  app.useStaticAssets(join(__dirname, '..', 'static'));
 
   // helmet middleware should be placed before any other middleware
   app.use(helmet());
@@ -37,6 +43,7 @@ async function bootstrap() {
   // newrelic interceptor
   app.useGlobalInterceptors(new NewrelicInterceptor());
 
+  // validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Socket.io Client</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+    <div id="v-app">
+      <h1>{{ title }}</h1>
+      <form>
+        <input v-model="text" type="text" name="message" id="message" />
+        <input type="submit" value="Send" @click.prevent="sendMessage"/>
+      </form>
+      <p id="messages">
+        <ul>
+          <li v-for="message in messages">{{ message }}</li>
+        </ul>
+      </p>
+    </div>
+    <script>
+      var app = new Vue({
+        el: '#v-app',
+        data: {
+          title: 'Socket.io Client',
+          text: '',
+          messages: ['Message 1', 'Message 2', 'Message 3'],
+          socket: null
+        },
+        methods: {
+          sendMessage() {
+            console.log(`send message: ${this.text}`);
+            this.socket.emit('message', this.text);
+            this.text = '';
+          },
+          receiveMessage(message) {
+            console.log(`received message: ${message}`);
+            this.messages.push(message);
+          }
+        },
+        created() {
+          console.log('created vue app.');
+          console.log('connecting to socket...');
+          this.socket = io('http://localhost:3333/socket/chat');
+          this.socket.on('message', (message) => {
+            this.receiveMessage(message);
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
