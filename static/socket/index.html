@@ -5,49 +5,103 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Socket.io Client</title>
+    <style>
+      main {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas: 'chat alerts';
+      }
+
+      section.chat {
+        grid-area: chat;
+      }
+
+      section.alerts {
+        grid-area: alerts;
+      }
+    </style>
+    <link href="https://unpkg.com/vue-simple-notify/dist/vue-simple-notify.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/vue-simple-notify/dist/vue-simple-notify.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
   </head>
   <body>
     <div id="v-app">
+      <section class="alerts">
+        <alerts-component :items="alerts"></alerts-component>
+      </section>
+      <section class="chat">
+        <h2>Chat</h2>
+        <form>
+          <input v-model="text" type="text" name="message" id="message" />
+          <input type="submit" value="Send" @click.prevent="sendChatMessage"/>
+        </form>
+        <p id="messages">
+          <ul>
+            <li v-for="message in messages">
+              <strong>{{ message.sender }}</strong>: {{ message.message }} 
+              <small style="font-size: 1px;"><i>at {{ message.createdAt }}</i></small>
+            </li>
+          </ul>
+        </p>
+      </section>
       <h1>{{ title }}</h1>
-      <form>
-        <input v-model="text" type="text" name="message" id="message" />
-        <input type="submit" value="Send" @click.prevent="sendMessage"/>
-      </form>
-      <p id="messages">
-        <ul>
-          <li v-for="message in messages">{{ message }}</li>
-        </ul>
-      </p>
+      <div>
+        <h2>Room</h1>
+        <form>
+          <input v-model="roomName" type="text" name="roomName"/>
+          <input type="submit" value="Join Room" @click.prevent="joinRoom"/>
+        </form>
+      </div>
     </div>
     <script>
+      Vue.component('alerts-component', VueSimpleNotify.VueSimpleNotify);
       var app = new Vue({
         el: '#v-app',
         data: {
           title: 'Socket.io Client',
+          nickname: '',
           text: '',
-          messages: ['Message 1', 'Message 2', 'Message 3'],
-          socket: null
+          roomName: 'ts공부방',
+          socket: {room: null, chat: null},
+          messages: [],
+          alerts: []
         },
         methods: {
-          sendMessage() {
-            console.log(`send message: ${this.text}`);
-            this.socket.emit('message', this.text);
+          sendChatMessage() {
+            this.socket.chat.emit('chatMessage', { sender: this.nickname, message: this.text, createdAt: new Date().toDateString() });
             this.text = '';
           },
-          receiveMessage(message) {
-            console.log(`received message: ${message}`);
+          receiveChatMessage(message) {
             this.messages.push(message);
-          }
+          },
+          joinRoom() {
+            this.socket.room.emit('joinRoom', this.roomName);
+            // 이 방의 새로운 유저 참가를 기다린다
+            this.socket.room.on(`${this.roomName}-add-user`, (message) => {
+              app.receiveJoinRoomMessage(message.user + 'has joined the room');
+            });
+            this.roomName = this.roomName + '에 입장했습니다.';
+          },
+          receiveJoinRoomMessage(message) {
+            this.alerts.push({
+              type: 'Alert',
+              message
+            });
+          },
         },
         created() {
           console.log('created vue app.');
           console.log('connecting to socket...');
-          this.socket = io('http://localhost:3333/socket/chat');
-          this.socket.on('message', (message) => {
-            this.receiveMessage(message);
+          
+          this.nickname = prompt('What is your nickname?');
+          
+          this.socket.chat = io('http://localhost:3333/socket/chat');
+          this.socket.chat.on('chatMessage', (message) => {
+            this.receiveChatMessage(message);
           });
+          
+          this.socket.room = io('http://localhost:3333/socket/room');
         }
       });
     </script>
