@@ -3,14 +3,13 @@ import { RedisIoAdapter } from './adapters/redis.adapter';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { NewrelicInterceptor } from './interceptors/newrelic.interceptor';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // redis
-  const redisIoAdapter = new RedisIoAdapter(app);
-  await redisIoAdapter.connectToRedis();
-  app.useWebSocketAdapter(redisIoAdapter);
+  // helmet middleware should be placed before any other middleware
+  app.use(helmet());
 
   // cors
   const allowlist = [
@@ -29,6 +28,11 @@ async function bootstrap() {
     callback(null, corsOptions); // callback expects two parameters: error and options
   };
   app.enableCors(corsOptionsDelegate);
+
+  // redis
+  const redisIoAdapter = new RedisIoAdapter(app);
+  await redisIoAdapter.connectToRedis();
+  app.useWebSocketAdapter(redisIoAdapter);
 
   // newrelic interceptor
   app.useGlobalInterceptors(new NewrelicInterceptor());
