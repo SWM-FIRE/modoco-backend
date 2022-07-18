@@ -13,13 +13,13 @@ import { Server, Socket } from 'socket.io';
   cors: { origin: '*' },
   namespace: 'socket/room',
 })
-export class ScreenShareGateway implements OnGatewayInit, OnGatewayDisconnect {
+export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
   private activeSockets: { room: string; id: string }[] = [];
 
-  private logger: Logger = new Logger('ScreenShareGateway');
+  private logger: Logger = new Logger('RoomGateway');
 
   @SubscribeMessage('joinRoom')
   public joinRoom(client: Socket, room: string): void {
