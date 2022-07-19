@@ -129,7 +129,7 @@
           
           this.nickname = prompt('What is your nickname?');
           
-          this.socket.chat = io('https://localhost:3333/socket/chat');
+          this.socket.chat = io('https://모도코.com/socket/chat');
           this.socket.chat.on('chatMessage', (message) => {
             this.receiveChatMessage(message);
           });
@@ -150,7 +150,7 @@
           // Room Socket <- 채팅의 룸과 별개
           // 아래 소켓은 화면 공유용도로 사용되는 소켓입니다.
           // ------------
-          this.socket.room = io('https://localhost:3333/socket/room');
+          this.socket.room = io('https://모도코.com/socket/room');
         }
       });
     </script>
