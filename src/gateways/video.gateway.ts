@@ -11,9 +11,9 @@ import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: { origin: '*' },
-  namespace: 'socket/room',
+  namespace: 'socket/video',
 })
-export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect {
+export class VideoGateway implements OnGatewayInit, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
