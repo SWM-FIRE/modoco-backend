@@ -24,9 +24,28 @@ export class ChatGateway
   @SubscribeMessage('chatMessage')
   handleMessage(
     client: Socket,
-    message: { sender: string; message: string; createdAt: string },
+    message: {
+      room: string;
+      sender: string;
+      message: string;
+      createdAt: string;
+    },
   ): void {
-    this.server.emit('chatMessage', message);
+    this.server.to(message.room).emit('chatMessage', message);
+  }
+
+  @SubscribeMessage('joinChatRoom')
+  handleJoinChatRoom(client: Socket, room: string): void {
+    this.logger.log(`Client ${client.id} joined ${room}`);
+    client.join(room);
+    client.emit('joinedRoom', room);
+  }
+
+  @SubscribeMessage('leaveChatRoom')
+  handleLeaveChatRoom(client: Socket, room: string): void {
+    this.logger.log(`Client ${client.id} leaved ${room}`);
+    client.leave(room);
+    client.emit('leftRoom', room);
   }
 
   afterInit(server: Server): void {
