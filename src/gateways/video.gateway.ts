@@ -11,15 +11,15 @@ import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: { origin: '*' },
-  namespace: 'socket/room',
+  namespace: 'socket/video',
 })
-export class ScreenShareGateway implements OnGatewayInit, OnGatewayDisconnect {
+export class VideoGateway implements OnGatewayInit, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
   private activeSockets: { room: string; id: string }[] = [];
 
-  private logger: Logger = new Logger('ScreenShareGateway');
+  private logger: Logger = new Logger('RoomGateway');
 
   @SubscribeMessage('joinRoom')
   public joinRoom(client: Socket, room: string): void {

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Socket.io Client</title>
+    <style>
+      main {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas: 'chat alerts';
+      }
+
+      section.chat {
+        grid-area: chat;
+      }
+
+      section.alerts {
+        grid-area: alerts;
+      }
+
+      .tab-row {
+        padding-top: 20px;
+      }
+
+      .tab-btn.active {
+        background-color: cornflowerblue;
+        color: antiquewhite;
+      }
+    </style>
+    <link href="https://unpkg.com/vue-simple-notify/dist/vue-simple-notify.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/vue-simple-notify/dist/vue-simple-notify.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+    <div id="v-app">
+      <h1>{{ title }}</h1>
+      <section class="alerts">
+        <alerts-component :items="alerts"></alerts-component>
+      </section>
+      <section class="chat">
+        <h2>Chat</h2>
+        <form>
+          <input v-model="text" type="text" name="message" id="message" />
+          <input type="submit" value="Send" @click.prevent="sendChatMessage"/>
+        </form>
+        <p id="messages">
+          <ul>
+            <li v-for="message in messages[activeRoom]">
+              <strong>{{ message.sender }}</strong>: {{ message.message }} 
+              <small style="font-size: 1px;"><i>at {{ message.createdAt }}</i></small>
+            </li>
+          </ul>
+        </p>
+      </section>
+      <div>
+        <h2>Room</h1>
+          <div class="tab-row">
+            <button class="tab-btn" :class="{ active: activeRoom === 'JavaScript Room' }" @click="activeRoom = 'JavaScript Room'">JavaScript Room</button>
+            <button class="tab-btn" :class="{ active: activeRoom === 'React Room' }" @click="activeRoom = 'React Room'">React Room</button>
+            <button class="tab-btn" :class="{ active: activeRoom === 'NestJS Study' }" @click="activeRoom = 'NestJS Study'">NestJS Study</button>
+          </div>
+          <div class="tab-row">
+            접속 상태: {{ hasJoinedRoom ? '방 접속 중': '접속한 방 없음' }}
+            <button @click="toggleRoomJoin">{{ hasJoinedRoom ? '나가기' : '참가하기' }}</button>
+          </div>
+      </div>
+    </div>
+    <script>
+      Vue.component('alerts-component', VueSimpleNotify.VueSimpleNotify);
+      var app = new Vue({
+        el: '#v-app',
+        data: {
+          title: 'Socket.io Client',
+          nickname: '',
+          text: '',
+          socket: {room: null, chat: null},
+          activeRoom: 'JavaScript Room',
+          messages: {
+            'JavaScript Room': [],
+            'React Room': [],
+            'NestJS Study': []
+          },
+          roomsStatus: {
+            'JavaScript Room': false,
+            'React Room': false,
+            'NestJS Study': false
+          },
+          alerts: []
+        },
+        methods: {
+          sendChatMessage() {
+            // check if user is member of active room
+            if (this.hasJoinedRoom) {
+              this.socket.chat.emit('chatMessage', { 
+                room: this.activeRoom, 
+                sender: this.nickname, 
+                message: this.text, 
+                createdAt: new Date().toDateString() 
+              });
+              // clear input field
+              this.text = '';
+            } else {
+              alert('방에 참여해야 합니다.');
+            }
+          },
+          receiveChatMessage(message) {
+            this.messages[message.room].push(message);
+          },
+          toggleRoomJoin() {
+            if (this.hasJoinedRoom) {
+              this.socket.chat.emit('leaveChatRoom', this.activeRoom);
+            } else {
+              this.socket.chat.emit('joinChatRoom', this.activeRoom);
+            }
+          },
+        },
+        computed: {
+          // 현재 접속한 방이 있는지 여부를 확인하는 함수(프로퍼티처럼 접근 가능)
+          hasJoinedRoom() {
+            return this.roomsStatus[this.activeRoom];
+          }
+        },
+        created() {
+          console.log('created vue app.');
+          console.log('connecting to socket...');
+          
+          this.nickname = prompt('What is your nickname?');
+          
+          this.socket.chat = io('http://localhost:3333/socket/chat');
+          this.socket.chat.on('chatMessage', (message) => {
+            this.receiveChatMessage(message);
+          });
+          
+          this.socket.chat.on('connect', ()=> {
+            this.toggleRoomJoin();
+          })
+          
+          this.socket.chat.on('joinedRoom', (room) => {
+            this.roomsStatus[room] = true;
+          });
+
+          this.socket.chat.on('leftRoom', (room) => {
+            this.roomsStatus[room] = false;
+          });
+
+          // ------------
+          // Room Socket <- 채팅의 룸과 별개
+          // 아래 소켓은 화면 공유용도로 사용되는 소켓입니다.
+          // ------------
+          this.socket.room = io('http://localhost:3333/socket/room');
+        }
+      });
+    </script>
+  </body>
+</html>
