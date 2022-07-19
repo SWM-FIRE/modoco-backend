@@ -84,8 +84,11 @@
             this.roomName = this.roomName + '에 입장했습니다.';
           },
           receiveJoinRoomMessage(message) {
+            if (this.alerts.length > 0) {
+              this.alerts.pop();
+            } 
             this.alerts.push({
-              type: 'Alert',
+              type: 'New User',
               message
             });
           },
