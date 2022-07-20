@@ -30,6 +30,25 @@ export class UsersService {
     return users;
   }
 
+  /**
+   *
+   * @param uid user id
+   * @returns user object
+   */
+  async findOne(uid: string): Promise<CreateUserDTO> {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        uid,
+      },
+      select: {
+        uid: true,
+        nickname: true,
+        avatar: true,
+      },
+    });
+    return user;
+  }
+
   async update(dto: CreateUserDTO) {
     try {
       const user = await this.prisma.user.update({
