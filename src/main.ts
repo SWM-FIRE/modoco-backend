@@ -56,6 +56,7 @@ function preInitServer(app: NestExpressApplication): void {
     'https://modoco-frontend.vercel.app',
     'http://localhost:3000',
     'https://localhost:3000',
+    /\.xn--hq1br4kwqt\.com/,
   ];
 
   const corsOptionsDelegate = function (req, callback) {
