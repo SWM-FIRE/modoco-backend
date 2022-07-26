@@ -75,4 +75,50 @@ export class RoomsService {
       //throw e;
     }
   }
+
+  async joinRoom(id: string) {
+    try {
+      const room = await this.prisma.room.update({
+        where: { itemId: parseInt(id, 10) },
+        data: { current: { increment: 1 } },
+      });
+
+      if (!room) {
+        throw new Error('Room not found');
+      }
+
+      return room;
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        if (e.code === 'P2025') {
+          console.warn('Room not found');
+          console.warn(e.message);
+        }
+      }
+      //throw e;
+    }
+  }
+
+  async leaveRoom(id: string) {
+    try {
+      const room = await this.prisma.room.update({
+        where: { itemId: parseInt(id, 10) },
+        data: { current: { decrement: 1 } },
+      });
+
+      if (!room) {
+        throw new Error('Room not found');
+      }
+
+      return room;
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        if (e.code === 'P2025') {
+          console.warn('Room not found');
+          console.warn(e.message);
+        }
+      }
+      //throw e;
+    }
+  }
 }

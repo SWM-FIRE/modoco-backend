@@ -8,12 +8,15 @@ import {
 
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
+import { RoomsService } from 'src/rooms/rooms.service';
 
 @WebSocketGateway({
   cors: { origin: '*' },
   namespace: 'socket/video',
 })
 export class VideoGateway implements OnGatewayInit, OnGatewayDisconnect {
+  constructor(private roomsService: RoomsService) {}
+
   @WebSocketServer()
   server: Server;
 
@@ -28,6 +31,9 @@ export class VideoGateway implements OnGatewayInit, OnGatewayDisconnect {
     );
 
     if (!existingSocket) {
+      // increment room current count
+      this.roomsService.joinRoom(room);
+
       this.activeSockets = [
         ...this.activeSockets,
         { id: client.id, room, uid },
@@ -92,6 +98,9 @@ export class VideoGateway implements OnGatewayInit, OnGatewayDisconnect {
     this.activeSockets = this.activeSockets.filter(
       (socket) => socket.id !== client.id,
     );
+
+    // decrement room current count
+    this.roomsService.leaveRoom(existingSocket.room);
 
     client.broadcast.emit(`${existingSocket.room}-remove-user`, {
       socketId: client.id,
