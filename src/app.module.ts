@@ -8,12 +8,14 @@ import { VideoGateway } from './gateways/video.gateway';
 import { ChatGateway } from './gateways/chat.gateway';
 import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
+import environmentConfig from './config/environmentConfig';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
+      load: [environmentConfig],
+      cache: true,
     }),
     UsersModule,
     PrismaModule,

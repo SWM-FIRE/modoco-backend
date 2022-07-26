@@ -10,7 +10,7 @@ import {
 import { CreateRoomDTO } from './dto';
 import { RoomsService } from './rooms.service';
 
-@Controller('api/v1/rooms')
+@Controller('rooms')
 export class RoomsController {
   constructor(private roomsService: RoomsService) {}
 

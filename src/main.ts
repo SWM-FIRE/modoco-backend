@@ -4,30 +4,32 @@ import { RedisIoAdapter } from './adapters/redis.adapter';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NewrelicInterceptor } from './interceptors/newrelic.interceptor';
-import { join } from 'path';
+import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 
+/**
+ * logging server start message
+ */
 const logger = new Logger('Modoco Bootstrap');
 
 /**
  * bootstrap server
  */
 async function bootstrap() {
-  try {
-    // create express application
-    const app = await createServer();
+  // create express application
+  const app = await createServer();
 
-    // pre init server
-    preInitServer(app);
+  // get config service
+  const configService = app.get(ConfigService);
 
-    // connect to redis
-    const redisIoAdapter = await connectRedis(app);
+  // pre init server
+  preInitServer(app, configService);
 
-    // init server
-    await initServer(app, redisIoAdapter);
-  } catch (error) {
-    logger.error(error.message);
-  }
+  // connect to redis
+  const redisIoAdapter = await connectRedis(app);
+
+  // init server
+  return await initServer(app, redisIoAdapter, configService);
 }
 
 /**
@@ -43,33 +45,31 @@ async function createServer(): Promise<NestExpressApplication> {
  * use middleware that should be executed before server init
  * @param {NestExpressApplication} app NestExpressApplication app
  */
-function preInitServer(app: NestExpressApplication): void {
-  // should be executed before helmet to bypass helmet
-  hostStaticAssets(app);
+function preInitServer(
+  app: NestExpressApplication,
+  configService: ConfigService,
+): void {
+  const ALLOWLIST = configService.get('CORS_ALLOWLIST');
+  const STATIC_ASSETS_PATH = configService.get<string>('STATIC_ASSETS_PATH');
 
-  // helmet middleware for security enhancement
-  app.use(helmet());
-
-  // cors
-  const allowlist = [
-    'https://modocode.com',
-    'https://modoco-frontend.vercel.app',
-    'http://localhost:3000',
-    'https://localhost:3000',
-    'https://www.xn--hq1br4kwqt.com',
-  ];
-
+  /**
+   * construct cors options delegate
+   * @param {any} req request
+   * @param {Function} callback callback expects two parameters: error and options
+   */
   const corsOptionsDelegate = function (req, callback) {
-    let corsOptions;
-    if (allowlist.indexOf(req.header('Origin')) !== -1) {
-      corsOptions = { origin: true }; // reflect (enable) the requested origin in the CORS response
-    } else {
-      corsOptions = { origin: false }; // disable CORS for this request
-    }
-    callback(null, corsOptions); // callback expects two parameters: error and options
+    const origin = ALLOWLIST.includes(req.header('Origin'));
+    const corsOptions = {
+      origin,
+    };
+
+    callback(null, corsOptions);
   };
 
-  app.enableCors(corsOptionsDelegate);
+  app
+    .useStaticAssets(STATIC_ASSETS_PATH) // should be executed before helmet to bypass helmet
+    .use(helmet()) // helmet middleware for security enhancement
+    .enableCors(corsOptionsDelegate); // enable cors
 }
 
 /**
@@ -87,15 +87,6 @@ async function connectRedis(
 }
 
 /**
- * host static asset using express static middleware
- * this should be executed before helmet to bypass helmet
- * @param {NestExpressApplication} app NestExpressApplication app
- */
-function hostStaticAssets(app: NestExpressApplication): void {
-  app.useStaticAssets(join(__dirname, '..', 'static'));
-}
-
-/**
  * initialize server
  * @param {NestExpressApplication} app NestExpressApplication app
  * @param {RedisIoAdapter} redisIoAdapter redis adapter
@@ -103,12 +94,21 @@ function hostStaticAssets(app: NestExpressApplication): void {
 async function initServer(
   app: NestExpressApplication,
   redisIoAdapter: RedisIoAdapter,
+  configService: ConfigService,
 ) {
-  app.useWebSocketAdapter(redisIoAdapter);
-  app.useGlobalInterceptors(new NewrelicInterceptor());
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  const PORT = configService.get<number>('PORT');
+  const API_VERSION = configService.get<string>('API_VERSION');
 
-  await app.listen(process.env.PORT || 3000);
+  await app
+    .useWebSocketAdapter(redisIoAdapter)
+    .useGlobalPipes(new ValidationPipe({ whitelist: true }))
+    .useGlobalInterceptors(new NewrelicInterceptor())
+    .setGlobalPrefix(`/api/${API_VERSION}`)
+    .listen(PORT);
+
+  return PORT;
 }
 
-bootstrap();
+bootstrap()
+  .then((port) => logger.log(`Server listening on port ${port}`))
+  .catch((error) => logger.error(error.message, error));
