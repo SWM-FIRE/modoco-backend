@@ -9,7 +9,9 @@ export default () => ({
     'https://modocode.com',
     'https://modoco-frontend.vercel.app',
     'http://localhost:3000',
+    'http://localhost:3333',
     'https://localhost:3000',
+    'https://xn--hq1br4kwqt.com',
     'https://www.xn--hq1br4kwqt.com',
   ],
   DATABASE: {
