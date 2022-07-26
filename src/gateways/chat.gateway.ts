@@ -48,10 +48,12 @@ export class ChatGateway
     client.emit('leftRoom', room);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   afterInit(server: Server): void {
     this.logger.log('Init');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleConnection(client: Socket, ...args: any[]) {
     this.logger.log(`Client connected: ${client.id}`);
   }

@@ -2,11 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { RoomsController } from './rooms/rooms.controller';
-import { RoomsService } from './rooms/rooms.service';
-import { VideoGateway } from './gateways/video.gateway';
-import { ChatGateway } from './gateways/chat.gateway';
 import { UsersModule } from './users/users.module';
+import { RoomsModule } from './rooms/rooms.module';
+import { GatewayModule } from './gateways/gateways.module';
 import { PrismaModule } from './prisma/prisma.module';
 import environmentConfig from './config/environmentConfig';
 
@@ -18,9 +16,11 @@ import environmentConfig from './config/environmentConfig';
       cache: true,
     }),
     UsersModule,
+    RoomsModule,
+    GatewayModule,
     PrismaModule,
   ],
-  controllers: [AppController, RoomsController],
-  providers: [AppService, RoomsService, VideoGateway, ChatGateway],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
