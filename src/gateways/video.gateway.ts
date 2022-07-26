@@ -12,6 +12,7 @@ import { RoomsService } from 'src/rooms/rooms.service';
 
 @WebSocketGateway({
   cors: { origin: '*' },
+  transports: ['websocket', 'polling'],
   namespace: 'socket/video',
 })
 export class VideoGateway implements OnGatewayInit, OnGatewayDisconnect {
