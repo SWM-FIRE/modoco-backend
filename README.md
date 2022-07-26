@@ -1,6 +1,10 @@
 # Modoco Backend
 
+## API Documentation
+
 ## Installation
+
+[모도코 API 문서](https://xn--hq1br4kwqt.com/docs)
 
 ### NPM packages
 
@@ -36,6 +40,14 @@ $ yarn start:dev
 
 # production mode
 $ yarn start:prod
+```
+
+## Database (ORM)
+
+### Prisam
+
+```bash
+yarn prisma studio
 ```
 
 ## Deploy
