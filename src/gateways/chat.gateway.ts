@@ -36,9 +36,9 @@ export class ChatGateway
 
   @SubscribeMessage('joinChatRoom')
   handleJoinChatRoom(client: Socket, { room, uid }): void {
-    this.logger.log(`Client ${client.id} joined ${room}`);
+    this.logger.log(`Client ::room(${client.id})/uid(${uid}) joined ${room}`);
     client.join(room);
-    client.emit('joinedRoom', uid);
+    client.to(room).emit('joinedRoom', uid);
   }
 
   @SubscribeMessage('leaveChatRoom')
