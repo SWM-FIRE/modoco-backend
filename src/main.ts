@@ -50,7 +50,6 @@ function preInitServer(
   configService: ConfigService,
 ): void {
   const ALLOWLIST = configService.get('CORS_ALLOWLIST');
-  const STATIC_ASSETS_PATH = configService.get<string>('STATIC_ASSETS_PATH');
 
   /**
    * construct cors options delegate
@@ -67,7 +66,6 @@ function preInitServer(
   };
 
   app
-    .useStaticAssets(STATIC_ASSETS_PATH) // should be executed before helmet to bypass helmet
     .use(helmet()) // helmet middleware for security enhancement
     .enableCors(corsOptionsDelegate); // enable cors
 }
