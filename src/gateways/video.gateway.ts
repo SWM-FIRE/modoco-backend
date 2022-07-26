@@ -17,30 +17,42 @@ export class VideoGateway implements OnGatewayInit, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  private activeSockets: { room: string; id: string }[] = [];
+  private activeSockets: { room: string; id: string; uid: string }[] = [];
 
   private logger: Logger = new Logger('RoomGateway');
 
   @SubscribeMessage('joinRoom')
-  public joinRoom(client: Socket, room: string): void {
+  public joinRoom(client: Socket, { room, uid }): void {
     const existingSocket = this.activeSockets?.find(
       (socket) => socket.room === room && socket.id === client.id,
     );
 
     if (!existingSocket) {
-      this.activeSockets = [...this.activeSockets, { id: client.id, room }];
+      this.activeSockets = [
+        ...this.activeSockets,
+        { id: client.id, room, uid },
+      ];
+
       client.emit(`${room}-update-user-list`, {
         users: this.activeSockets
           .filter((socket) => socket.room === room && socket.id !== client.id)
-          .map((existingSocket) => existingSocket.id),
-        current: client.id,
+          .map((existingSocket) => {
+            return {
+              id: existingSocket.id,
+              uid: existingSocket.uid,
+            };
+          }),
+        current: { id: client.id, uid: uid },
       });
 
       client.broadcast.emit(`${room}-add-user`, {
         user: client.id,
+        uid: uid,
       });
     }
-    return this.logger.log(`Client ${client.id} joined ${room}`);
+    return this.logger.log(
+      `Client::socket(${client.id})/uid(${uid}):: joined ${room}`,
+    );
   }
 
   @SubscribeMessage('call-user')
