@@ -7,9 +7,11 @@ import {
   ParseIntPipe,
   Post,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { CreateRoomDTO } from './dto';
 import { RoomsService } from './rooms.service';
 
+@ApiTags('rooms')
 @Controller('rooms')
 export class RoomsController {
   constructor(private roomsService: RoomsService) {}

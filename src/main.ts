@@ -6,6 +6,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { NewrelicInterceptor } from './interceptors/newrelic.interceptor';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
+import { SwaggerModule } from '@nestjs/swagger';
 
 /**
  * logging server start message
@@ -50,6 +51,7 @@ function preInitServer(
   configService: ConfigService,
 ): void {
   const ALLOWLIST = configService.get('CORS_ALLOWLIST');
+  const CSP_POLICY = configService.get('CSP_POLICY');
 
   /**
    * construct cors options delegate
@@ -66,8 +68,15 @@ function preInitServer(
   };
 
   app
-    .use(helmet()) // helmet middleware for security enhancement
+    .use(
+      helmet.contentSecurityPolicy({
+        directives: CSP_POLICY,
+      }),
+    ) // helmet middleware for security enhancement
     .enableCors(corsOptionsDelegate); // enable cors
+
+  // swagger document builder
+  createDocument(app, configService);
 }
 
 /**
@@ -82,6 +91,20 @@ async function connectRedis(
   await redisIoAdapter.connectToRedis();
 
   return redisIoAdapter;
+}
+
+/**
+ *
+ * @param {NestExpressApplication} app
+ * @param {ConfigService} configService
+ */
+function createDocument(
+  app: NestExpressApplication,
+  configService: ConfigService,
+) {
+  const SWAGGER_OPTIONS = configService.get('SWAGGER_OPTIONS');
+  const document = SwaggerModule.createDocument(app, SWAGGER_OPTIONS);
+  SwaggerModule.setup('docs', app, document);
 }
 
 /**

@@ -7,12 +7,13 @@ import { RoomsModule } from './rooms/rooms.module';
 import { GatewayModule } from './gateways/gateways.module';
 import { PrismaModule } from './prisma/prisma.module';
 import environmentConfig from './config/environmentConfig';
+import swaggerConfig from './config/swaggerConfig';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [environmentConfig],
+      load: [environmentConfig, swaggerConfig],
       cache: true,
     }),
     UsersModule,

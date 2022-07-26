@@ -5,6 +5,12 @@ export default () => ({
   API_VERSION: 'v1',
   PORT: parseInt(process.env.PORT, 10) || 3000,
   STATIC_ASSETS_PATH: join(__dirname, '..', 'static'),
+  CSP_POLICY: {
+    defaultSrc: [`'self'`],
+    styleSrc: [`'self'`, `'unsafe-inline'`],
+    imgSrc: [`'self'`, 'data:', 'validator.swagger.io'], // validator.swagger.io is used for swagger-ui
+    scriptSrc: [`'self'`, `https: 'unsafe-inline'`],
+  },
   CORS_ALLOWLIST: [
     'https://modocode.com',
     'https://modoco-frontend.vercel.app',
