@@ -9,11 +9,6 @@ import helmet from 'helmet';
 import { SwaggerModule } from '@nestjs/swagger';
 
 /**
- * logging server start message
- */
-const logger = new Logger('Modoco Bootstrap');
-
-/**
  * bootstrap server
  */
 async function bootstrap() {
@@ -130,6 +125,10 @@ async function initServer(
   return PORT;
 }
 
+// logger for server
+const logger = new Logger('ModocoBootstrap');
+
+// call bootstrap
 bootstrap()
   .then((port) => logger.log(`Server listening on port ${port}`))
   .catch((error) => logger.error(error.message, error));
