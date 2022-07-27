@@ -25,7 +25,8 @@ export class RoomGateway
   server: Server;
 
   // active sockets used to track users in a room
-  private activeSockets: { room: string; id: string; uid: string }[] = [];
+  //private activeSockets: { room: string; id: string; uid: string }[] = [];
+
   // logger for this class
   private logger: Logger = new Logger('RoomGateway');
 
@@ -38,39 +39,32 @@ export class RoomGateway
    */
   @SubscribeMessage('joinRoom')
   public joinRoom(client: Socket, { room, uid }): void {
-    const existingSocket = this.activeSockets?.find(
-      (socket) => socket.room === room && socket.id === client.id,
-    );
+    const hasJoined = client.rooms.has(room);
 
-    if (!existingSocket) {
-      // increment room current count
-      this.roomsService.joinRoom(room);
-
-      this.activeSockets = [
-        ...this.activeSockets,
-        { id: client.id, room, uid },
-      ];
-
-      client.emit(`${room}-update-user-list`, {
-        users: this.activeSockets
-          .filter((socket) => socket.room === room && socket.id !== client.id)
-          .map((existingSocket) => {
-            return {
-              id: existingSocket.id,
-              uid: existingSocket.uid,
-            };
-          }),
-        current: { id: client.id, uid: uid },
-      });
-
-      client.broadcast.emit(`${room}-add-user`, {
-        user: client.id,
-        uid: uid,
-      });
+    // if already in room, do nothing
+    if (hasJoined) {
+      client.emit('alreadyJoined', room);
+      return;
     }
 
-    //client.join(room);
-    //client.to(room).emit('joinedRoom', uid);
+    // if room does not exist, join it
+    client.join(room);
+    client.emit('joinedRoom', room);
+
+    // increment room current count
+    this.roomsService.joinRoom(room);
+
+    // emit a user joined event to all users in the room except the sender
+    client.to(room).emit('newUser', {
+      sid: client.id,
+      uid,
+    });
+
+    // existing users in the room
+    client.emit('existingRoomUsers', {
+      users: {},
+      current: { sid: client.id, uid },
+    });
 
     this.logger.log(
       `Client::socket(${client.id})/uid(${uid}):: joined ${room}`,
@@ -121,14 +115,10 @@ export class RoomGateway
     });
   }
 
-  // ***************************************************************
-  // ***************************[CHAT]******************************
-  // ***************************************************************
-
   /**
    *
    * @param {Socket} client client socket
-   * @param message chat message
+   * @param {any} message chat message
    * @emit a `chatMessage` event to all users in the room
    */
   @SubscribeMessage('chatMessage')
@@ -144,25 +134,47 @@ export class RoomGateway
     this.server.to(message.room).emit('chatMessage', message);
   }
 
-  // ***************************************************************
-  // **************************[COMMON]*****************************
-  // ***************************************************************
-
   /**
    * [COMMON]
    * onInit - on init
    */
   public afterInit(): void {
-    this.logger.log('Init');
+    this.logger.log('Initialized RoomGateway');
   }
 
   /**
    * [COMMON]
    * onConnection - on connection
    * @param {Socket} client client socket
+   * @note in here we overide onClose handler in order to notify users in the room that the user has left.
+   * this could be done in the handleDisconnect(which is invoked after socket is emptied) method
+   * but we want to notify users in the room
+   *
    */
   handleConnection(client: Socket): void {
     this.logger.log(`Client connected: ${client.id}`);
+
+    client._onclose = function (reason) {
+      //this.logger.log(`OnClose Client(${client.id})`);
+      const roomsToLeave = this.server.adapter['sids'].get(client.id);
+
+      if (!roomsToLeave) {
+        return Object.getPrototypeOf(client)._onclose.call(client, reason);
+      }
+
+      const rooms = [...roomsToLeave];
+      rooms.forEach((room) => {
+        // decrement room current count
+        this.roomsService.leaveRoom(room);
+
+        // emit a `leftRoom` event to all users in the room except the sender
+        client.to(room).emit('leftRoom', {
+          sid: client.id,
+        });
+      });
+
+      return Object.getPrototypeOf(client)._onclose.call(client, reason);
+    }.bind(this);
   }
 
   /**
@@ -173,23 +185,6 @@ export class RoomGateway
    * @returns {void}
    */
   public handleDisconnect(client: Socket): void {
-    const existingSocket = this.activeSockets.find(
-      (socket) => socket.id === client.id,
-    );
-
-    if (!existingSocket) return;
-
-    this.activeSockets = this.activeSockets.filter(
-      (socket) => socket.id !== client.id,
-    );
-
-    // decrement room current count
-    this.roomsService.leaveRoom(existingSocket.room);
-
-    client.broadcast.emit(`${existingSocket.room}-remove-user`, {
-      socketId: client.id,
-    });
-
     this.logger.log(`Client disconnected: ${client.id}`);
   }
 
@@ -203,8 +198,9 @@ export class RoomGateway
    */
   @SubscribeMessage('leaveRoom')
   handleLeaveRoom(client: Socket, room: string): void {
-    this.logger.log(`Client ${client.id} leaved ${room}`);
     client.leave(room);
     client.emit('leftRoom', room);
+
+    this.logger.log(`Client ${client.id} leaved ${room}`);
   }
 }
