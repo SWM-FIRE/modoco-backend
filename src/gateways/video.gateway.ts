@@ -23,7 +23,7 @@ export class VideoGateway implements OnGatewayInit, OnGatewayDisconnect {
 
   private activeSockets: { room: string; id: string; uid: string }[] = [];
 
-  private logger: Logger = new Logger('RoomGateway');
+  private logger: Logger = new Logger('VideoGateway');
 
   @SubscribeMessage('joinRoom')
   public joinRoom(client: Socket, { room, uid }): void {
