@@ -135,6 +135,19 @@ export class RoomGateway
   }
 
   /**
+   * send ice-candidate to all users in the room except the sender
+   * @param {Socket} client client socket
+   * @param {any} data ice-candidate data
+   */
+  @SubscribeMessage('ice-candidate')
+  public handleIceCandidate(client: Socket, data: any): void {
+    client.to(data.to).emit('ice-candidate', {
+      sid: client.id,
+      candidate: data.candidate,
+    });
+  }
+
+  /**
    * [COMMON]
    * onInit - on init
    */
