@@ -82,8 +82,6 @@ export class RoomGateway
     // [temporary] store the user in the room
     this.userList.set(client.id, uid);
 
-    console.log('conn', this.userList);
-
     this.logger.log(
       `Client::socket(${client.id})/uid(${uid}):: joined ${room}`,
     );
@@ -221,8 +219,6 @@ export class RoomGateway
 
     // [temporary] delete the user from the room
     this.userList.delete(client.id);
-
-    console.log('disconn', this.userList);
   }
 
   /**
