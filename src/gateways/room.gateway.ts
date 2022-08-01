@@ -62,7 +62,7 @@ export class RoomGateway
 
     // existing users in the room
     client.emit('existingRoomUsers', {
-      users: {},
+      users: [],
       current: { sid: client.id, uid },
     });
 
@@ -81,8 +81,8 @@ export class RoomGateway
   @SubscribeMessage('call-user')
   public callUser(client: Socket, data: any): void {
     client.to(data.to).emit('call-made', {
+      sid: client.id,
       offer: data.offer,
-      socket: client.id,
     });
   }
 
@@ -96,7 +96,7 @@ export class RoomGateway
   @SubscribeMessage('make-answer')
   public makeAnswer(client: Socket, data: any): void {
     client.to(data.to).emit('answer-made', {
-      socket: client.id,
+      sid: client.id,
       answer: data.answer,
     });
   }
@@ -111,7 +111,7 @@ export class RoomGateway
   @SubscribeMessage('reject-call')
   public rejectCall(client: Socket, data: any): void {
     client.to(data.from).emit('call-rejected', {
-      socket: client.id,
+      sid: client.id,
     });
   }
 
