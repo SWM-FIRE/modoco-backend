@@ -24,6 +24,8 @@ export class RoomGateway
   @WebSocketServer()
   server: Server;
 
+  private userList = new Map<string, string>();
+
   // active sockets used to track users in a room
   //private activeSockets: { room: string; id: string; uid: string }[] = [];
 
@@ -51,20 +53,36 @@ export class RoomGateway
     client.join(room);
     client.emit('joinedRoom', room);
 
-    // increment room current count
-    this.roomsService.joinRoom(room);
-
     // emit a user joined event to all users in the room except the sender
     client.to(room).emit('newUser', {
       sid: client.id,
       uid,
     });
 
+    // [temporary] get existing users in the room
+    const existingRoomUsers = [...this.server.adapter['rooms'].get(room)];
+    const users = existingRoomUsers
+      .filter((sid) => sid !== client.id)
+      .map((sid) => {
+        return {
+          sid,
+          uid: this.userList.get(sid),
+        };
+      });
+
     // existing users in the room
     client.emit('existingRoomUsers', {
-      users: [],
+      users: users,
       current: { sid: client.id, uid },
     });
+
+    // increment room current count
+    this.roomsService.joinRoom(room);
+
+    // [temporary] store the user in the room
+    this.userList.set(client.id, uid);
+
+    console.log('conn', this.userList);
 
     this.logger.log(
       `Client::socket(${client.id})/uid(${uid}):: joined ${room}`,
@@ -116,7 +134,8 @@ export class RoomGateway
   }
 
   /**
-   *
+   * [CHAT]
+   * chatMessage - send chat message to all users in the room
    * @param {Socket} client client socket
    * @param {any} message chat message
    * @emit a `chatMessage` event to all users in the room
@@ -199,6 +218,11 @@ export class RoomGateway
    */
   public handleDisconnect(client: Socket): void {
     this.logger.log(`Client disconnected: ${client.id}`);
+
+    // [temporary] delete the user from the room
+    this.userList.delete(client.id);
+
+    console.log('disconn', this.userList);
   }
 
   /**
