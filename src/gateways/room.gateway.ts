@@ -232,7 +232,14 @@ export class RoomGateway
   @SubscribeMessage('leaveRoom')
   handleLeaveRoom(client: Socket, room: string): void {
     client.leave(room);
-    client.emit('leftRoom', room);
+
+    client.emit('leftRoom', {
+      sid: client.id,
+    });
+
+    client.to(room).emit('leftRoom', {
+      sid: client.id,
+    });
 
     this.logger.log(`Client ${client.id} leaved ${room}`);
   }
