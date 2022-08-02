@@ -40,7 +40,7 @@ export class RoomGateway
    * @returns {void}
    */
   @SubscribeMessage('joinRoom')
-  public joinRoom(client: Socket, { room, uid }): void {
+  joinRoom(client: Socket, { room, uid }): void {
     const hasJoined = client.rooms.has(room);
 
     // if already in room, do nothing
@@ -83,7 +83,7 @@ export class RoomGateway
     this.userList.set(client.id, uid);
 
     this.logger.log(
-      `Client::socket(${client.id})/uid(${uid}):: joined ${room}`,
+      `Client joined room(${room}), sid: ${client.id}), uid: ${uid}`,
     );
   }
 
@@ -182,7 +182,7 @@ export class RoomGateway
    *
    */
   handleConnection(client: Socket): void {
-    this.logger.log(`Client connected: ${client.id}`);
+    this.logger.log(`Client connected, sid: ${client.id}`);
 
     client._onclose = function (reason) {
       //this.logger.log(`OnClose Client(${client.id})`);
@@ -215,7 +215,7 @@ export class RoomGateway
    * @returns {void}
    */
   public handleDisconnect(client: Socket): void {
-    this.logger.log(`Client disconnected: ${client.id}`);
+    this.logger.log(`Client disconnected, sid: ${client.id}`);
 
     // [temporary] delete the user from the room
     this.userList.delete(client.id);
@@ -241,6 +241,6 @@ export class RoomGateway
       sid: client.id,
     });
 
-    this.logger.log(`Client ${client.id} leaved ${room}`);
+    this.logger.log(`Client leaved ${room}, sid: ${client.id})`);
   }
 }
