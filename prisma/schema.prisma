@@ -26,7 +26,8 @@ model Room {
   title       String
   details     String?
   tags        String[]
-  current     Int
   total       Int
+  current     Int      @default(0)
+  theme       String
   createdAt   DateTime @default(now())
 }
