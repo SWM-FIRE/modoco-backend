@@ -8,7 +8,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateRoomDTO } from './dto';
+import { CreateRoomDTO, GetRoomDTO } from './dto';
 import { RoomsService } from './rooms.service';
 
 @ApiTags('rooms')
@@ -22,17 +22,19 @@ export class RoomsController {
   }
 
   @Get()
-  async findAll() {
+  async findAll(): Promise<GetRoomDTO[]> {
     return this.roomsService.findAll();
   }
 
   @Get(':id')
-  async findOne(@Param('id', new ParseIntPipe()) id: number) {
+  async findOne(
+    @Param('id', new ParseIntPipe()) id: number,
+  ): Promise<GetRoomDTO> {
     return this.roomsService.getOne(id);
   }
 
   @Delete(':id')
-  remove(@Param('id', new ParseIntPipe()) id: number) {
+  async remove(@Param('id', new ParseIntPipe()) id: number): Promise<void> {
     return this.roomsService.deleteOne(id);
   }
 }

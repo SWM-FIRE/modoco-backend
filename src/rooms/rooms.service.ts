@@ -7,8 +7,6 @@ import { Prisma } from '@prisma/client';
 export class RoomsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private readonly rooms: CreateRoomDTO[] = [];
-
   /**
    * Create a room and return the room object
    * @param {CreateRoomDTO} dto create room dto
