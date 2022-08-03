@@ -233,6 +233,9 @@ export class RoomGateway
   handleLeaveRoom(client: Socket, room: string): void {
     client.leave(room);
 
+    // decrement room current count
+    this.roomsService.leaveRoom(room);
+    
     client.emit('leftRoom', {
       sid: client.id,
     });
