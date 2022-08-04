@@ -1,7 +1,7 @@
 import { join } from 'path';
 
 export default () => ({
-  ENV: 'development',
+  ENV: parseInt(process.env.PORT, 10) || 'development',
   API_VERSION: 'v1',
   PORT: parseInt(process.env.PORT, 10) || 3000,
   STATIC_ASSETS_PATH: join(__dirname, '..', 'static'),
@@ -13,12 +13,11 @@ export default () => ({
   },
   CORS_ALLOWLIST: [
     'https://modocode.com',
-    'https://modoco-frontend.vercel.app',
-    'http://localhost:3000',
-    'http://localhost:3333',
-    'https://localhost:3000',
+    'https://www.modocode.com',
     'https://xn--hq1br4kwqt.com',
     'https://www.xn--hq1br4kwqt.com',
+    'http://localhost:3000',
+    'https://localhost:3000',
   ],
   DATABASE: {
     HOST:

@@ -22,7 +22,7 @@ async function bootstrap() {
   preInitServer(app, configService);
 
   // connect to redis
-  const redisIoAdapter = await connectRedis(app);
+  const redisIoAdapter = await connectRedis(app, configService);
 
   // init server
   return await initServer(app, redisIoAdapter, configService);
@@ -81,8 +81,9 @@ function preInitServer(
  */
 async function connectRedis(
   app: NestExpressApplication,
+  configService: ConfigService,
 ): Promise<RedisIoAdapter> {
-  const redisIoAdapter = new RedisIoAdapter(app);
+  const redisIoAdapter = new RedisIoAdapter(app, configService);
   await redisIoAdapter.connectToRedis();
 
   return redisIoAdapter;

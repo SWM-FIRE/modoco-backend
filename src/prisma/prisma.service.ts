@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService extends PrismaClient {
   constructor(private configService: ConfigService) {
+    const logger = new Logger('PrismaService');
+
     const DATABASE_URL = configService.get('DATABASE_URL');
 
     super({
@@ -14,7 +16,7 @@ export class PrismaService extends PrismaClient {
         },
       },
     });
-    // console.log database url
-    console.log(`Connect to Database : ${DATABASE_URL.split('@')[1]}`);
+
+    logger.debug(`Connect to Database : ${DATABASE_URL.split('@')[1]}`);
   }
 }

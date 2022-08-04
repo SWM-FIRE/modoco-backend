@@ -235,7 +235,7 @@ export class RoomGateway
 
     // decrement room current count
     this.roomsService.leaveRoom(room);
-    
+
     client.emit('leftRoom', {
       sid: client.id,
     });
