@@ -4,7 +4,7 @@
 
 ## Installation
 
-[모도코 API 문서](https://xn--hq1br4kwqt.com/docs)
+[모도코 API 문서](https://api.modocode.com/docs)
 
 ### NPM packages
 
