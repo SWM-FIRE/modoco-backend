@@ -117,7 +117,7 @@ export class RoomsService {
    */
   async leaveRoom(id: string): Promise<GetRoomDTO> {
     try {
-      const room = await this.prisma.room.update({
+      let room = await this.prisma.room.update({
         where: { itemId: parseInt(id, 10) },
         data: { current: { decrement: 1 } },
         select: getRoomSelector,
@@ -125,6 +125,14 @@ export class RoomsService {
 
       if (!room) {
         throw new Error('Room not found');
+      }
+
+      if (room.current < 0) {
+        room = await this.prisma.room.update({
+          where: { itemId: parseInt(id, 10) },
+          data: { current: 0 },
+          select: getRoomSelector,
+        });
       }
 
       return room;
