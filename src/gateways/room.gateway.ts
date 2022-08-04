@@ -40,7 +40,7 @@ export class RoomGateway
    * @returns {void}
    */
   @SubscribeMessage('joinRoom')
-  joinRoom(client: Socket, { room, uid }): void {
+  async joinRoom(client: Socket, { room, uid }): Promise<void> {
     const hasJoined = client.rooms.has(room);
 
     // if already in room, do nothing
@@ -49,9 +49,22 @@ export class RoomGateway
       return;
     }
 
+    // check if room exceeds max capacity
+    const roomCapacity = await this.roomsService.getRoomCapacity(
+      parseInt(room),
+    );
+    let roomCurrentCount = 0;
+    if (this.server.adapter['rooms'].get(room) !== undefined) {
+      roomCurrentCount = this.server.adapter['rooms'].get(room).size;
+    }
+    if (roomCurrentCount >= roomCapacity) {
+      client.emit('roomFull', { room });
+      return;
+    }
+
     // if room does not exist, join it
     client.join(room);
-    client.emit('joinedRoom', room);
+    client.emit('joinedRoom', { room });
 
     // emit a user joined event to all users in the room except the sender
     client.to(room).emit('newUser', {
