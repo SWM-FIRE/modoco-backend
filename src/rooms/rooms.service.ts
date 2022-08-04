@@ -138,4 +138,33 @@ export class RoomsService {
       //throw e;
     }
   }
+
+  /**
+   * get room capacity(total)
+   * @param {number} id roomId(=itemId in DB)
+   * @returns {Promise<number>}
+   */
+  async getRoomCapacity(id: number): Promise<number> {
+    try {
+      if (isNaN(id)) {
+        return 0;
+      }
+
+      const room = await this.prisma.room.findFirst({
+        where: { itemId: id },
+        select: {
+          total: true,
+        },
+      });
+      return room.total;
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        if (e.code === 'P2025') {
+          console.warn('Room not found');
+          console.warn(e.message);
+        }
+      }
+      //throw e;
+    }
+  }
 }
