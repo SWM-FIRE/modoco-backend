@@ -53,13 +53,8 @@ function preInitServer(
    * @param {any} req request
    * @param {Function} callback callback expects two parameters: error and options
    */
-  const corsOptionsDelegate = function (req, callback) {
-    const origin = ALLOWLIST.includes(req.header('Origin'));
-    const corsOptions = {
-      origin,
-    };
-
-    callback(null, corsOptions);
+  const corsOptions = {
+    origin: ALLOWLIST,
   };
 
   app
@@ -68,7 +63,7 @@ function preInitServer(
         directives: CSP_POLICY,
       }),
     ) // helmet middleware for security enhancement
-    .enableCors(corsOptionsDelegate); // enable cors
+    .enableCors(corsOptions); // enable cors
 
   // swagger document builder
   createDocument(app, configService);
