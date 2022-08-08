@@ -14,6 +14,7 @@ export default () => ({
   CORS_ALLOWLIST: [
     'https://modocode.com',
     'https://www.modocode.com',
+    'https://*.do65qrifiozf1.amplifyapp.com',
     'https://xn--hq1br4kwqt.com',
     'https://www.xn--hq1br4kwqt.com',
     'http://localhost:3000',
