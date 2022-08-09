@@ -20,14 +20,23 @@ export class AuthService {
     return argon.hash(password);
   }
 
-  async signToken(userId: any, email: string): Promise<string> {
+  async signToken(
+    userId: number,
+    email: string,
+  ): Promise<{ access_token: string }> {
     const JWT_SECRET = this.configService.get('JWT_SECRET');
-
     const payload = {
       sub: userId,
       email,
     };
 
-    return this.jwt.signAsync(payload, { expiresIn: '5m', secret: JWT_SECRET });
+    const jwtToken = await this.jwt.signAsync(payload, {
+      expiresIn: '5m',
+      secret: JWT_SECRET,
+    });
+
+    return {
+      access_token: jwtToken,
+    };
   }
 }

@@ -10,12 +10,13 @@ import { AuthModule } from './auth/auth.module';
 import { SessionModule } from './session/session.module';
 import environmentConfig from './config/environmentConfig';
 import swaggerConfig from './config/swaggerConfig';
+import jwtConfig from './config/jwtConfig';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [environmentConfig, swaggerConfig],
+      load: [environmentConfig, swaggerConfig, jwtConfig],
       cache: true,
     }),
     UsersModule,

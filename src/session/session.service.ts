@@ -29,8 +29,6 @@ export class SessionService {
       throw new ForbiddenException('Credential incorrect');
     }
 
-    delete user.hash;
-
-    return user;
+    return this.authService.signToken(user.uid, user.email);
   }
 }

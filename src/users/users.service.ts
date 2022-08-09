@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -10,6 +10,8 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly authService: AuthService,
   ) {}
+
+  private readonly logger = new Logger('UsersService');
 
   async create(dto: CreateUserDTO) {
     const hash = await this.authService.generateHash(dto.password);
@@ -23,11 +25,11 @@ export class UsersService {
         },
       });
 
-      return user.nickname;
+      return this.authService.signToken(user.uid, user.email);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
-          console.warn('User already exists');
+          this.logger.warn('User already exists');
           throw new ForbiddenException('User already exists');
         }
       }
@@ -36,15 +38,22 @@ export class UsersService {
   }
 
   async findAll() {
-    const users = await this.prisma.user.findMany({
-      select: {
-        uid: true,
-        nickname: true,
-        avatar: true,
-      },
-    });
+    try {
+      const users = await this.prisma.user.findMany({
+        select: {
+          uid: true,
+          nickname: true,
+          avatar: true,
+        },
+      });
 
-    return users;
+      return users;
+    } catch (error) {
+      this.logger.error({
+        code: error.code,
+        message: error.message,
+      });
+    }
   }
 
   /**
@@ -53,17 +62,29 @@ export class UsersService {
    * @returns user object
    */
   async findOne(uid: number) {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        uid,
-      },
-      select: {
-        uid: true,
-        nickname: true,
-        avatar: true,
-      },
-    });
-    return user;
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          uid,
+        },
+        select: {
+          uid: true,
+          nickname: true,
+          avatar: true,
+        },
+      });
+
+      if (!user) {
+        throw new ForbiddenException('Invalid Credentials');
+      }
+
+      return user;
+    } catch (error) {
+      this.logger.error({
+        code: error.code,
+        message: error.message,
+      });
+    }
   }
 
   async update(dto: CreateUserDTO) {
@@ -76,17 +97,22 @@ export class UsersService {
           ...dto,
         },
       });
-      delete user.createdAt;
+
+      if (!user) {
+        throw new ForbiddenException('Invalid Credentials');
+      }
+
+      delete user.hash;
 
       return user;
-    } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        if (e.code === 'P2025') {
-          console.warn('User not found');
-          console.warn(e.message);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          this.logger.warn('User not found');
         }
+      } else {
+        throw error;
       }
-      //throw e;
     }
   }
 
@@ -97,14 +123,14 @@ export class UsersService {
           uid,
         },
       });
-    } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        if (e.code === 'P2025') {
-          console.warn('User not found');
-          console.warn(e.message);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          this.logger.warn('User not found');
         }
+      } else {
+        throw error;
       }
-      //throw e;
     }
   }
 }
