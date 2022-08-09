@@ -10,6 +10,7 @@ import {
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { RoomsService } from 'src/rooms/rooms.service';
+import { EVENT } from './constants/event.enum';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -39,13 +40,13 @@ export class RoomGateway
    * @param {{string, string}} param1 data
    * @returns {void}
    */
-  @SubscribeMessage('joinRoom')
+  @SubscribeMessage(EVENT.JOIN_ROOM)
   async joinRoom(client: Socket, { room, uid }): Promise<void> {
     const hasJoined = client.rooms.has(room);
 
     // if already in room, do nothing
     if (hasJoined) {
-      client.emit('alreadyJoined', room);
+      client.emit(EVENT.ALREADY_JOINED, room);
       return;
     }
 
@@ -58,16 +59,16 @@ export class RoomGateway
       roomCurrentCount = this.server.adapter['rooms'].get(room).size;
     }
     if (roomCurrentCount >= roomCapacity) {
-      client.emit('roomFull', { room });
+      client.emit(EVENT.ROOM_FULL, { room });
       return;
     }
 
     // if room does not exist, join it
     client.join(room);
-    client.emit('joinedRoom', { room });
+    client.emit(EVENT.JOINED_ROOM, { room });
 
     // emit a user joined event to all users in the room except the sender
-    client.to(room).emit('newUser', {
+    client.to(room).emit(EVENT.NEW_USER, {
       sid: client.id,
       uid,
     });
@@ -84,7 +85,7 @@ export class RoomGateway
       });
 
     // existing users in the room
-    client.emit('existingRoomUsers', {
+    client.emit(EVENT.EXISTING_ROOM_USERS, {
       users: users,
       current: { sid: client.id, uid },
     });
@@ -107,9 +108,9 @@ export class RoomGateway
    * @param {Socket} client client socket
    * @param {any} data data
    */
-  @SubscribeMessage('call-user')
+  @SubscribeMessage(EVENT.CALL_USER)
   public callUser(client: Socket, data: any): void {
-    client.to(data.to).emit('call-made', {
+    client.to(data.to).emit(EVENT.CALL_MADE, {
       sid: client.id,
       offer: data.offer,
     });
@@ -122,25 +123,11 @@ export class RoomGateway
    * @param {Socket} client client socket
    * @param {any} data data
    */
-  @SubscribeMessage('make-answer')
+  @SubscribeMessage(EVENT.MAKE_ANSWER)
   public makeAnswer(client: Socket, data: any): void {
-    client.to(data.to).emit('answer-made', {
+    client.to(data.to).emit(EVENT.ANSWER_MADE, {
       sid: client.id,
       answer: data.answer,
-    });
-  }
-
-  /**
-   * [WEBRTC]
-   * reject-call - reject a call
-   * called by a user when he rejects a call
-   * @param {Socket} client client socket
-   * @param {any} data data
-   */
-  @SubscribeMessage('reject-call')
-  public rejectCall(client: Socket, data: any): void {
-    client.to(data.from).emit('call-rejected', {
-      sid: client.id,
     });
   }
 
@@ -151,7 +138,7 @@ export class RoomGateway
    * @param {any} message chat message
    * @emit a `chatMessage` event to all users in the room
    */
-  @SubscribeMessage('chatMessage')
+  @SubscribeMessage(EVENT.CHAT_MESSAGE)
   handleMessage(
     client: Socket,
     message: {
@@ -161,7 +148,7 @@ export class RoomGateway
       createdAt: string;
     },
   ): void {
-    this.server.to(message.room).emit('chatMessage', message);
+    this.server.to(message.room).emit(EVENT.CHAT_MESSAGE, message);
   }
 
   /**
@@ -169,9 +156,9 @@ export class RoomGateway
    * @param {Socket} client client socket
    * @param {any} data ice-candidate data
    */
-  @SubscribeMessage('ice-candidate')
+  @SubscribeMessage(EVENT.ICE_CANDIDATE)
   public handleIceCandidate(client: Socket, data: any): void {
-    client.to(data.to).emit('ice-candidate', {
+    client.to(data.to).emit(EVENT.ICE_CANDIDATE, {
       sid: client.id,
       candidate: data.candidate,
     });
@@ -211,7 +198,7 @@ export class RoomGateway
         this.roomsService.leaveRoom(room);
 
         // emit a `leftRoom` event to all users in the room except the sender
-        client.to(room).emit('leftRoom', {
+        client.to(room).emit(EVENT.LEFT_ROOM, {
           sid: client.id,
         });
       });
@@ -242,18 +229,18 @@ export class RoomGateway
    * @param {string} room room id
    * @emit a `leftRoom` event to all users in the room
    */
-  @SubscribeMessage('leaveRoom')
+  @SubscribeMessage(EVENT.LEAVE_ROOM)
   handleLeaveRoom(client: Socket, room: string): void {
     client.leave(room);
 
     // decrement room current count
     this.roomsService.leaveRoom(room);
 
-    client.emit('leftRoom', {
+    client.emit(EVENT.LEFT_ROOM, {
       sid: client.id,
     });
 
-    client.to(room).emit('leftRoom', {
+    client.to(room).emit(EVENT.LEFT_ROOM, {
       sid: client.id,
     });
 
