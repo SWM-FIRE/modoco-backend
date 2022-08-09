@@ -1,15 +1,25 @@
-version: '3.7'
+version: '3.8'
 
 services:
-  postgres:
-    image: postgres:latest
-    container_name: postgres
+  dev-db:
+    image: postgres:14
+    container_name: dev-db-container
     restart: always
     ports:
       - '5432:5432'
     environment:
       POSTGRES_USER: 'soma13'
       POSTGRES_PASSWORD: 'myPasswd'
+      POSTGRES_DB: nest
     labels:
       - 'name=postgres'
       - 'mode=standalone'
+  test-db:
+    image: postgres:14
+    container_name: test-db-container
+    ports:
+      - '5435:5432'
+    environment:
+      POSTGRES_USER: 'soma13'
+      POSTGRES_PASSWORD: 'myPasswd'
+      POSTGRES_DB: nest
