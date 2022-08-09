@@ -6,10 +6,14 @@ import {
   Param,
   Post,
   Put,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
 import { CreateUserDTO } from './dto';
 import { UsersService } from './users.service';
+import { JwtGuard } from '../auth/guard';
 
 @ApiTags('users')
 @Controller('users')
@@ -24,6 +28,14 @@ export class UsersController {
   @Get()
   async findAll() {
     return this.usersService.findAll();
+  }
+
+  @UseGuards(JwtGuard)
+  @Get('me')
+  async getMe(@Req() req: Request) {
+    console.log(req);
+    return req.user;
+    //return this.usersService.findOne();
   }
 
   @Get(':uid')
