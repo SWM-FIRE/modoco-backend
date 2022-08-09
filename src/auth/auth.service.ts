@@ -25,13 +25,15 @@ export class AuthService {
     email: string,
   ): Promise<{ access_token: string }> {
     const JWT_SECRET = this.configService.get('JWT_SECRET');
+    const EXPIRES_IN = this.configService.get('JWT_EXPIRES_IN');
+
     const payload = {
       sub: userId,
       email,
     };
 
     const jwtToken = await this.jwt.signAsync(payload, {
-      expiresIn: '5m',
+      expiresIn: EXPIRES_IN,
       secret: JWT_SECRET,
     });
 

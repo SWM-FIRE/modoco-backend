@@ -6,8 +6,10 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { JwtGuard } from 'src/auth/guard';
 import { CreateRoomDTO, GetRoomDTO } from './dto';
 import { RoomsService } from './rooms.service';
 
@@ -16,6 +18,7 @@ import { RoomsService } from './rooms.service';
 export class RoomsController {
   constructor(private roomsService: RoomsService) {}
 
+  @UseGuards(JwtGuard)
   @Post()
   async create(@Body() dto: CreateRoomDTO) {
     return this.roomsService.create(dto);
@@ -26,6 +29,7 @@ export class RoomsController {
     return this.roomsService.findAll();
   }
 
+  @UseGuards(JwtGuard)
   @Get(':id')
   async findOne(
     @Param('id', new ParseIntPipe()) id: number,
@@ -33,6 +37,7 @@ export class RoomsController {
     return this.roomsService.getOne(id);
   }
 
+  @UseGuards(JwtGuard)
   @Delete(':id')
   async remove(@Param('id', new ParseIntPipe()) id: number): Promise<void> {
     return this.roomsService.deleteOne(id);

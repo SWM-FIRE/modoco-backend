@@ -3,28 +3,33 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
+  ParseIntPipe,
   Post,
   Put,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { Request } from 'express';
-import { CreateUserDTO } from './dto';
+import { CreateUserDTO, UpdateUserDTO } from './dto';
 import { UsersService } from './users.service';
 import { JwtGuard } from '../auth/guard';
+import { GetUserDecorator } from 'src/auth/decorator';
+import { User } from '@prisma/client';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @HttpCode(HttpStatus.CREATED)
   @Post()
   async create(@Body() user: CreateUserDTO) {
     return this.usersService.create(user);
   }
 
+  @UseGuards(JwtGuard)
   @Get()
   async findAll() {
     return this.usersService.findAll();
@@ -32,24 +37,25 @@ export class UsersController {
 
   @UseGuards(JwtGuard)
   @Get('me')
-  async getMe(@Req() req: Request) {
-    console.log(req);
-    return req.user;
-    //return this.usersService.findOne();
+  async getMe(@GetUserDecorator() user: User) {
+    return user;
   }
 
+  @UseGuards(JwtGuard)
   @Get(':uid')
-  async findOne(@Param('uid') uid: number) {
+  async findOne(@Param('uid', ParseIntPipe) uid: number) {
     return this.usersService.findOne(uid);
   }
 
+  @UseGuards(JwtGuard)
   @Put()
-  update(@Body() user: CreateUserDTO) {
-    this.usersService.update(user);
+  update(@GetUserDecorator() user: User, @Body() dto: UpdateUserDTO) {
+    this.usersService.update(user, dto);
   }
 
+  @UseGuards(JwtGuard)
   @Delete()
-  remove(@Body('uid') uid: number) {
+  remove(@Body('uid', ParseIntPipe) uid: number) {
     this.usersService.delete(uid);
   }
 }

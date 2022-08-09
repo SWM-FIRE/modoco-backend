@@ -1,8 +1,8 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateUserDTO } from './dto';
+import { CreateUserDTO, UpdateUserDTO } from './dto';
 
 @Injectable()
 export class UsersService {
@@ -87,24 +87,40 @@ export class UsersService {
     }
   }
 
-  async update(dto: CreateUserDTO) {
+  async update(user: User, dto: UpdateUserDTO) {
     try {
-      const user = await this.prisma.user.update({
+      let updatedUser = await this.prisma.user.update({
         where: {
-          email: dto.email,
+          uid: user.uid,
         },
         data: {
-          ...dto,
+          email: dto.email ? dto.email : user.email,
+          nickname: dto.nickname ? dto.nickname : user.nickname,
+          avatar: dto.avatar ? dto.avatar : user.avatar,
         },
       });
 
-      if (!user) {
+      // if password is provided update hash
+      if (dto.password) {
+        const hash = await this.authService.generateHash(dto.password);
+
+        updatedUser = await this.prisma.user.update({
+          where: {
+            uid: user.uid,
+          },
+          data: {
+            hash,
+          },
+        });
+      }
+
+      if (!updatedUser) {
         throw new ForbiddenException('Invalid Credentials');
       }
 
-      delete user.hash;
+      delete updatedUser.hash;
 
-      return user;
+      return updatedUser;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {

@@ -1,5 +1,11 @@
 import { ApiProperty, ApiTags } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 @ApiTags('users')
 export class CreateUserDTO {
@@ -69,4 +75,39 @@ export class GetUserDTO {
   @IsString()
   @IsNotEmpty()
   avatar: string;
+}
+
+@ApiTags('users')
+export class UpdateUserDTO {
+  @ApiProperty({
+    description: 'The nickname of the user',
+    type: String,
+  })
+  @IsString()
+  @IsOptional()
+  nickname?: string;
+
+  @ApiProperty({
+    description: 'The avatar type of the user',
+    type: Number,
+  })
+  @IsNumber()
+  @IsOptional()
+  avatar?: number;
+
+  @ApiProperty({
+    description: 'The email of the user',
+    type: String,
+  })
+  @IsEmail()
+  @IsOptional()
+  email?: string;
+
+  @ApiProperty({
+    description: 'The password of the user',
+    type: String,
+  })
+  @IsString()
+  @IsOptional()
+  password?: string;
 }
