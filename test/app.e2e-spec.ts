@@ -36,20 +36,49 @@ describe('Application e2e test', () => {
     app.close();
   });
 
-  describe('Auth', () => {
-    // 회원가입
-    describe('/auth/register', () => {
-      it.todo('should register(signup) a user');
+  describe('Users', () => {
+    describe('/users', () => {
+      describe('GET /users', () => {
+        it.todo('should return all users');
+      });
 
-      it.todo('should throw if email empty');
-      it.todo('should throw if email is not valid');
+      // register
+      describe('POST /users', () => {
+        it.todo(
+          'should register(signup) a user and record information into database as new /user/:uid',
+        );
 
-      it.todo('should throw if password empty');
-      it.todo('should throw if password is not valid');
+        it.todo('should throw if email empty');
+        it.todo('should throw if email is not valid');
+
+        it.todo('should throw if password empty');
+        it.todo('should throw if password is not valid');
+      });
+
+      // /user/:uid
+      describe('/users/:uid', () => {
+        describe('GET /users/:uid', () => {
+          it.todo('should return a user');
+        }),
+          it.todo('should throw if user not found');
+
+        describe('POST /users/:uid', () => {
+          it.todo('should update new information about a user');
+        });
+
+        describe('DELETE /users/:uid', () => {
+          it.todo('should delete a user');
+        });
+
+        // [고민] 비밀 번호 잊었을 때 어떻게 할까?
+      });
     });
-    // 로그인
-    describe('/auth/login', () => {
-      it.todo('should login(signin) a user');
+  });
+
+  describe('Session', () => {
+    // 세션 생성 (실제 DB에 반영)
+    describe('POST /session', () => {
+      it.todo('should create a session to be logged in');
 
       it.todo('should throw if email empty');
       it.todo('should throw if email not found');
@@ -60,51 +89,36 @@ describe('Application e2e test', () => {
       it.todo('should throw if body is empty');
     });
 
-    // 로그아웃
-    describe('/auth/logout', () => {
-      it.todo('should logout a user');
+    // 세션 삭제
+    describe('Delete /session', () => {
+      it.todo('should delete a session');
     });
   });
 
   describe('Rooms', () => {
     describe('/rooms', () => {
       // 방 생성
-      describe('POST + /rooms', () => {
+      describe('POST /rooms', () => {
         it.todo('should create a room');
       });
 
       // 모든 방 조회
-      describe('GET + /rooms', () => {
+      describe('GET /rooms', () => {
         it.todo('should find all rooms');
       });
-    }),
+
+      // /rooms/:roomId
       describe('/rooms/:roomId', () => {
         // 특정 방 조회
-        describe('GET + /rooms/:roomId', () => {
+        describe('GET /rooms/:roomId', () => {
           it.todo('should find a room');
         });
 
         // 방 삭제
-        describe('DELETE + /rooms/:roomId', () => {
+        describe('DELETE /rooms/:roomId', () => {
           it.todo('should delete a room');
         });
       });
+    });
   });
-
-  // describe('User', () => {
-  //   // 모든 사용자 조회
-  //   describe('GET all /users', () => {
-  //     it.todo('should get users list');
-  //   });
-  //   // 사용자 정보 수정
-  //   describe('PUT + /users', () => {
-  //     it.todo('should update user');
-  //   });
-  //   // 사용자 정보 삭제
-  //   describe('DELETE + /users', () => {
-  //     it.todo('should delete user');
-  //   });
-  //   // 사용자 정보 조회
-  //   describe('GET /users/:uid', () => {
-  //     it.todo('should get user info');
 });
