@@ -1,24 +1,41 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDTO } from './dto';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly authService: AuthService,
+  ) {}
 
-  async create(dto: CreateUserDTO): Promise<CreateUserDTO> {
-    const user = await this.prisma.user.create({
-      data: {
-        ...dto,
-      },
-    });
-    delete user.createdAt;
+  async create(dto: CreateUserDTO) {
+    const hash = await this.authService.generateHash(dto.password);
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          nickname: dto.nickname,
+          email: dto.email,
+          hash,
+          avatar: dto.avatar,
+        },
+      });
 
-    return user;
+      return user.nickname;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          console.warn('User already exists');
+          throw new ForbiddenException('User already exists');
+        }
+      }
+      //throw error;
+    }
   }
 
-  async findAll(): Promise<CreateUserDTO[]> {
+  async findAll() {
     const users = await this.prisma.user.findMany({
       select: {
         uid: true,
@@ -35,7 +52,7 @@ export class UsersService {
    * @param uid user id
    * @returns user object
    */
-  async findOne(uid: string): Promise<CreateUserDTO> {
+  async findOne(uid: number) {
     const user = await this.prisma.user.findUnique({
       where: {
         uid,
@@ -53,7 +70,7 @@ export class UsersService {
     try {
       const user = await this.prisma.user.update({
         where: {
-          uid: dto.uid,
+          email: dto.email,
         },
         data: {
           ...dto,
@@ -73,7 +90,7 @@ export class UsersService {
     }
   }
 
-  async delete(uid: string) {
+  async delete(uid: number) {
     try {
       await this.prisma.user.delete({
         where: {

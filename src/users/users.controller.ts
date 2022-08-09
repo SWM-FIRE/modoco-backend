@@ -17,17 +17,17 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  async create(@Body() user: CreateUserDTO): Promise<CreateUserDTO> {
+  async create(@Body() user: CreateUserDTO) {
     return this.usersService.create(user);
   }
 
   @Get()
-  async findAll(): Promise<CreateUserDTO[]> {
+  async findAll() {
     return this.usersService.findAll();
   }
 
   @Get(':uid')
-  async findOne(@Param('uid') uid: string): Promise<CreateUserDTO> {
+  async findOne(@Param('uid') uid: number) {
     return this.usersService.findOne(uid);
   }
 
@@ -37,7 +37,7 @@ export class UsersController {
   }
 
   @Delete()
-  remove(@Body('uid') uid: string) {
+  remove(@Body('uid') uid: number) {
     this.usersService.delete(uid);
   }
 }
