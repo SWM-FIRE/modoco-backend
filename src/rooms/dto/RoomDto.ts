@@ -10,9 +10,9 @@ import {
 class Moderator {
   @ApiProperty({
     description: 'The user id',
-    type: String,
+    type: Number,
   })
-  uid: string;
+  uid: number;
 }
 
 export class CreateRoomDTO {
@@ -76,7 +76,7 @@ export class GetRoomDTO {
   @IsObject()
   moderator: {
     nickname: string;
-    avatar: string;
+    avatar: number;
   };
 
   @ApiProperty({

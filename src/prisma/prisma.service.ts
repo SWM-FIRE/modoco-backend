@@ -19,4 +19,18 @@ export class PrismaService extends PrismaClient {
 
     logger.debug(`Connect to Database : ${DATABASE_URL.split('@')[1]}`);
   }
+
+  /**
+   * @description Clean up all the data in the database
+   * @purpose To clean up the database before test begins
+   */
+  cleanDatabase() {
+    const ENV = this.configService.get('ENV');
+    if (ENV === 'test') {
+      return this.$transaction([
+        this.room.deleteMany(),
+        this.user.deleteMany(),
+      ]);
+    }
+  }
 }

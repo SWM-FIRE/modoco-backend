@@ -12,17 +12,25 @@ datasource db {
 }
 
 model User {
-  uid       String   @id
-  nickname  String
-  avatar    String
+  uid       Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
-  Room      Room[]
+  updatedAt DateTime @updatedAt
+
+  nickname String
+  email    String @unique
+  hash     String
+
+  avatar Int
+
+  Room Room[]
+
+  @@map("users")
 }
 
 model Room {
   itemId      Int      @id @default(autoincrement())
   moderator   User     @relation(fields: [moderatorId], references: [uid])
-  moderatorId String
+  moderatorId Int
   title       String
   details     String?
   tags        String[]
@@ -30,4 +38,6 @@ model Room {
   current     Int      @default(0)
   theme       String
   createdAt   DateTime @default(now())
+
+  @@map("rooms")
 }
