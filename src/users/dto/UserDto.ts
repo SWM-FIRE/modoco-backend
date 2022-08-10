@@ -81,6 +81,7 @@ export class GetUserDTO {
 export class UpdateUserDTO {
   @ApiProperty({
     description: 'The nickname of the user',
+    required: false,
     type: String,
   })
   @IsString()
@@ -89,6 +90,7 @@ export class UpdateUserDTO {
 
   @ApiProperty({
     description: 'The avatar type of the user',
+    required: false,
     type: Number,
   })
   @IsNumber()
@@ -97,6 +99,7 @@ export class UpdateUserDTO {
 
   @ApiProperty({
     description: 'The email of the user',
+    required: false,
     type: String,
   })
   @IsEmail()
@@ -105,6 +108,7 @@ export class UpdateUserDTO {
 
   @ApiProperty({
     description: 'The password of the user',
+    required: false,
     type: String,
   })
   @IsString()

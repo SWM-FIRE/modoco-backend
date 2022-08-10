@@ -4,6 +4,7 @@ import {
   IsNotEmpty,
   IsNumber,
   IsObject,
+  IsOptional,
   IsString,
 } from 'class-validator';
 
@@ -37,6 +38,7 @@ export class CreateRoomDTO {
     required: false,
     type: String,
   })
+  @IsOptional()
   @IsString()
   details?: string;
 
