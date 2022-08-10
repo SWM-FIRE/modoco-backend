@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiTags } from '@nestjs/swagger';
 import {
   IsArray,
   IsNotEmpty,
@@ -8,6 +8,7 @@ import {
   IsString,
 } from 'class-validator';
 
+@ApiTags('rooms')
 class Moderator {
   @ApiProperty({
     description: 'The user id',
@@ -16,15 +17,8 @@ class Moderator {
   uid: number;
 }
 
+@ApiTags('rooms')
 export class CreateRoomDTO {
-  @ApiProperty({
-    description: 'The creater of the room',
-    type: Moderator,
-  })
-  @IsNotEmpty()
-  @IsObject()
-  moderator: Moderator;
-
   @ApiProperty({
     description: 'The name of the room',
     type: String,
@@ -69,6 +63,7 @@ export class CreateRoomDTO {
   theme: string;
 }
 
+@ApiTags('rooms')
 export class GetRoomDTO {
   @ApiProperty({
     description: 'The creater of the room',
