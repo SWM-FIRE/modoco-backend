@@ -15,7 +15,12 @@ const SWAGGER_OPTIONS = new DocumentBuilder()
   .addTag('users', 'Users API')
   .addTag('rooms', 'Rooms API')
   .addTag('sessions', 'Users Session API')
+  .addBearerAuth({
+    type: 'http',
+    scheme: 'bearer',
+    name: 'Authorization',
+    in: 'header',
+  })
   .addServer('https://api.modocode.com/' + API_VERSION, 'Production Server')
-  .addServer('https://모도코.com/' + API_VERSION, 'Test Server')
   .addServer('http://localhost:3333/' + API_VERSION, 'Localhost Server')
   .build();
