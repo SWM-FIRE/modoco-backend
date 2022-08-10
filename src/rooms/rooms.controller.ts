@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { GetUserDecorator } from 'src/auth/decorator';
 import { JwtGuard } from 'src/auth/guard';
 import { CreateRoomDTO, GetRoomDTO } from './dto';
 import { RoomsService } from './rooms.service';
@@ -20,8 +21,8 @@ export class RoomsController {
 
   @UseGuards(JwtGuard)
   @Post()
-  async create(@Body() dto: CreateRoomDTO) {
-    return this.roomsService.create(dto);
+  async create(@GetUserDecorator() user, @Body() dto: CreateRoomDTO) {
+    return this.roomsService.create(user, dto);
   }
 
   @Get()

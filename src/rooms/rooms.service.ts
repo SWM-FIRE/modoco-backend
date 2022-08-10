@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { CreateRoomDTO, GetRoomDTO, getRoomSelector } from './dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
@@ -7,16 +7,18 @@ import { Prisma } from '@prisma/client';
 export class RoomsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private logger = new Logger('RoomsService');
+
   /**
    * Create a room and return the room object
    * @param {CreateRoomDTO} dto create room dto
    * @returns {Promise<CreateRoomDTO>}
    */
-  async create(dto: CreateRoomDTO) {
+  async create(user, dto: CreateRoomDTO) {
     const room = await this.prisma.room.create({
       data: {
         moderator: {
-          connect: { uid: dto.moderator.uid },
+          connect: { uid: user.uid },
         },
         title: dto.title,
         details: dto.details,
@@ -31,6 +33,9 @@ export class RoomsService {
     delete room.createdAt;
     delete room.moderatorId;
     delete room.moderator.createdAt;
+    delete room.moderator.updatedAt;
+    delete room.moderator.hash;
+    delete room.moderator.email;
 
     return room;
   }
@@ -39,7 +44,7 @@ export class RoomsService {
    * find all rooms and return all rooms
    * @returns {Promise<GetRoomDTO[]>}
    */
-  async findAll(): Promise<GetRoomDTO[]> {
+  async findAll() {
     const rooms: GetRoomDTO[] = await this.prisma.room.findMany({
       select: getRoomSelector,
     });
@@ -52,7 +57,7 @@ export class RoomsService {
    * @param {number} id roomId(=itemId in DB)
    * @returns {Promise<GetRoomDTO>}
    */
-  async getOne(id: number): Promise<GetRoomDTO> {
+  async getOne(id: number) {
     const room: GetRoomDTO = await this.prisma.room.findFirst({
       where: { itemId: id },
       select: getRoomSelector,
@@ -73,8 +78,7 @@ export class RoomsService {
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
         if (e.code === 'P2025') {
-          console.warn('Room not found');
-          console.warn(e.message);
+          this.logger.warn('Room not found');
         }
       }
       //throw e;
@@ -95,15 +99,14 @@ export class RoomsService {
       });
 
       if (!room) {
-        throw new Error('Room not found');
+        throw new ForbiddenException('Room not found');
       }
 
       return room;
-    } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        if (e.code === 'P2025') {
-          console.warn('Room not found');
-          console.warn(e.message);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          this.logger.warn('Room not found');
         }
       }
       //throw e;
@@ -124,7 +127,7 @@ export class RoomsService {
       });
 
       if (!room) {
-        throw new Error('Room not found');
+        throw new ForbiddenException('Room not found');
       }
 
       if (room.current < 0) {
@@ -139,8 +142,7 @@ export class RoomsService {
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
         if (e.code === 'P2025') {
-          console.warn('Room not found');
-          console.warn(e.message);
+          this.logger.warn('Room not found');
         }
       }
       //throw e;
@@ -168,8 +170,7 @@ export class RoomsService {
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
         if (e.code === 'P2025') {
-          console.warn('Room not found');
-          console.warn(e.message);
+          this.logger.warn('Room not found');
         }
       }
       //throw e;
