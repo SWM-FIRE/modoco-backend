@@ -21,7 +21,7 @@ exports.config = {
      * issues with the agent, 'info' and higher will impose the least overhead on
      * production applications.
      */
-    level: 'info',
+    level: 'trace',
   },
   /**
    * When true, all request headers except for those listed in attributes.exclude
@@ -58,5 +58,72 @@ exports.config = {
       'response.headers.setCookie*',
       'response.headers.x*',
     ],
+  },
+  /**
+   * Browser Monitoring
+   *
+   * Browser monitoring lets you correlate transactions between the server and browser
+   * giving you accurate data on how long a page request takes, from request,
+   * through the server response, up until the actual page render completes.
+   */
+  browser_monitoring: {
+    attributes: {
+      /**
+       * If `true`, the agent captures attributes from browser monitoring.
+       *
+       * @env NEW_RELIC_BROWSER_MONITOR_ATTRIBUTES
+       */
+      enabled: true,
+      /**
+       * Prefix of attributes to exclude from browser monitoring.
+       * Allows * as wildcard at end.
+       *
+       * @env NEW_RELIC_BROWSER_MONITORING_ATTRIBUTES_EXCLUDE
+       */
+      exclude: [],
+      /**
+       * Prefix of attributes to include in browser monitoring.
+       * Allows * as wildcard at end.
+       *
+       * @env NEW_RELIC_BROWSER_MONITORING_ATTRIBUTES_INCLUDE
+       */
+      include: [],
+    },
+    /**
+     * Enable browser monitoring header generation.
+     *
+     * This does not auto-instrument, rather it enables the agent to generate headers.
+     * The newrelic module can generate the appropriate <script> header, but you must
+     * inject the header yourself, or use a module that does so.
+     *
+     * Usage:
+     *
+     *     var newrelic = require('newrelic');
+     *
+     *     router.get('/', function (req, res) {
+     *       var header = newrelic.getBrowserTimingHeader();
+     *       res.write(header)
+     *       // write the rest of the page
+     *     });
+     *
+     * This generates the <script>...</script> header necessary for Browser Monitoring
+     * This script must be manually injected into your templates, as high as possible
+     * in the header, but _after_ any X-UA-COMPATIBLE HTTP-EQUIV meta tags.
+     * Otherwise you may hurt IE!
+     *
+     * This method must be called _during_ a transaction, and must be called every
+     * time you want to generate the headers.
+     *
+     * Do *not* reuse the headers between users, or even between requests.
+     *
+     * @env NEW_RELIC_BROWSER_MONITOR_ENABLE
+     */
+    enable: true,
+    /**
+     * Request un-minified sources from the server.
+     *
+     * @env NEW_RELIC_BROWSER_MONITOR_DEBUG
+     */
+    debug: false,
   },
 };
