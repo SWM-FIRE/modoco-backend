@@ -22,7 +22,8 @@ model User {
 
   avatar Int
 
-  Room Room[]
+  Room   Room[]
+  Record Record[]
 
   @@map("users")
 }
@@ -40,4 +41,16 @@ model Room {
   createdAt   DateTime @default(now())
 
   @@map("rooms")
+}
+
+model Record {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [uid])
+  userId    Int
+  duration  Int      @default(0)
+  room      String?
+
+  @@map("records")
 }
