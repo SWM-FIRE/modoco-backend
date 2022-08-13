@@ -7,16 +7,18 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 
-import { Logger } from '@nestjs/common';
+import { Logger, UseGuards } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { RoomsService } from 'src/rooms/rooms.service';
 import { EVENT } from './constants/event.enum';
+import { WsJwtGuard } from 'src/auth/guard/wsJwt.guard';
 
 @WebSocketGateway({
   cors: { origin: '*' },
   transports: ['websocket', 'polling'],
   namespace: 'socket/room',
 })
+@UseGuards(WsJwtGuard)
 export class RoomGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
@@ -43,7 +45,7 @@ export class RoomGateway
   @SubscribeMessage(EVENT.JOIN_ROOM)
   async joinRoom(client: Socket, { room, uid }): Promise<void> {
     const hasJoined = client.rooms.has(room);
-
+    // console.log(client.user);
     // if already in room, do nothing
     if (hasJoined) {
       client.emit(EVENT.ALREADY_JOINED, room);
