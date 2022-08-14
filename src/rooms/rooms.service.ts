@@ -78,7 +78,7 @@ export class RoomsService {
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
         if (e.code === 'P2025') {
-          this.logger.warn('Room not found');
+          this.logger.debug('Room not found');
         }
       }
       //throw e;
@@ -106,7 +106,7 @@ export class RoomsService {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
-          this.logger.warn('Room not found');
+          this.logger.debug('Room not found');
         }
       }
       //throw e;
@@ -142,7 +142,7 @@ export class RoomsService {
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
         if (e.code === 'P2025') {
-          this.logger.warn('Room not found');
+          this.logger.debug('Room not found');
         }
       }
       //throw e;
@@ -170,7 +170,7 @@ export class RoomsService {
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
         if (e.code === 'P2025') {
-          this.logger.warn('Room not found');
+          this.logger.debug('Room not found');
         }
       }
       //throw e;

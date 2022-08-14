@@ -29,7 +29,7 @@ export class UsersService {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
-          this.logger.warn('User already exists');
+          this.logger.debug('User already exists');
           throw new ForbiddenException('User already exists');
         }
       }
@@ -142,7 +142,7 @@ export class UsersService {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
-          this.logger.warn('User not found');
+          this.logger.debug('User not found');
         }
       } else {
         throw error;
