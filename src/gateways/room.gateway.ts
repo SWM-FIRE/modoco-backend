@@ -7,28 +7,32 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 
-import { Logger } from '@nestjs/common';
+import { Logger, UseGuards } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { RoomsService } from 'src/rooms/rooms.service';
 import { EVENT } from './constants/event.enum';
+import { WsJwtGuard } from 'src/auth/guard/wsJwt.guard';
+import { RecordsService } from 'src/records/records.service';
 
 @WebSocketGateway({
   cors: { origin: '*' },
   transports: ['websocket', 'polling'],
   namespace: 'socket/room',
 })
+@UseGuards(WsJwtGuard)
 export class RoomGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  constructor(private roomsService: RoomsService) {}
+  constructor(
+    private roomsService: RoomsService,
+    private recordsService: RecordsService,
+  ) {}
 
   @WebSocketServer()
   server: Server;
 
+  // Map<clientID, userID> used to track users in a room
   private userList = new Map<string, string>();
-
-  // active sockets used to track users in a room
-  //private activeSockets: { room: string; id: string; uid: string }[] = [];
 
   // logger for this class
   private logger: Logger = new Logger('RoomGateway');
@@ -162,6 +166,17 @@ export class RoomGateway
       sid: client.id,
       candidate: data.candidate,
     });
+  }
+
+  /**
+   * record the duration of a user in a room
+   * @param {Socket} client client socket
+   * @param {any} data
+   */
+  @SubscribeMessage(EVENT.RECORD_TIME)
+  public recordTime(client: Socket, data: any): void {
+    const user = client.handshake['user'];
+    this.recordsService.recordTime(user, data);
   }
 
   /**

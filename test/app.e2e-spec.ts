@@ -36,6 +36,7 @@ describe('Application e2e test', () => {
 
   afterAll(() => {
     app.close();
+    prisma.$disconnect();
   });
 
   describe('Check test server', () => {
@@ -140,7 +141,7 @@ describe('Application e2e test', () => {
             );
         });
 
-        it('shoud create new user `test` and return token', async () => {
+        it('should create new user `test` and return token', async () => {
           return await pactum
             .spec()
             .post('/users')
@@ -169,7 +170,7 @@ describe('Application e2e test', () => {
             .expectBodyContains('User already exists');
         });
 
-        it('shoud create new user `test2` and return token', async () => {
+        it('should create new user `test2` and return token', async () => {
           return await pactum
             .spec()
             .post('/users')
@@ -183,18 +184,17 @@ describe('Application e2e test', () => {
             .stores('testToken2', 'access_token');
         });
 
-        it('shoud read user info with valid token', async () => {
+        it('should read user info with valid token', async () => {
           return await pactum
             .spec()
             .get('/users/me')
             .withHeaders({
               Authorization: 'Bearer $S{testToken}',
             })
-            .expectStatus(200)
-            .inspect();
+            .expectStatus(200);
         });
 
-        it('user list should return have one user', () => {
+        it('users list should return one user', () => {
           return pactum
             .spec()
             .get('/users')
@@ -207,11 +207,11 @@ describe('Application e2e test', () => {
       });
 
       describe('read user info', () => {
-        it('shoud not return user info without token', async () => {
+        it('should not return user info without token', async () => {
           return await pactum.spec().get('/users/me').expectStatus(401);
         });
 
-        it('shoud return user `test` info with token', async () => {
+        it('should return user `test` info with token', async () => {
           return await pactum
             .spec()
             .withHeaders({
@@ -222,7 +222,7 @@ describe('Application e2e test', () => {
             .stores('testTokenUID', 'uid');
         });
 
-        it('shoud return user `test2` info with token', async () => {
+        it('should return user `test2` info with token', async () => {
           return await pactum
             .spec()
             .withHeaders({
@@ -235,7 +235,7 @@ describe('Application e2e test', () => {
       });
 
       // /user/:uid
-      describe('/users/:uid', () => {
+      describe('action on a specifica user', () => {
         describe('GET /users/:uid', () => {
           it('should return a user by uid', () => {
             return pactum
@@ -261,30 +261,84 @@ describe('Application e2e test', () => {
           });
         });
 
-        describe('POST /users/:uid', () => {
-          it.todo('should update new information about a user');
+        describe('PUT /users', () => {
+          describe('should update new information about a user', () => {
+            it('create new user', async () => {
+              return await pactum
+                .spec()
+                .post('/users')
+                .withBody({
+                  nickname: 'test_put',
+                  password: 'test',
+                  email: 'put@test.com',
+                  avatar: 3,
+                })
+                .stores('testPutToken', 'access_token')
+                .expectStatus(201);
+            });
+
+            it('read new user information and store uid', async () => {
+              return await pactum
+                .spec()
+                .withHeaders({
+                  Authorization: 'Bearer $S{testPutToken}',
+                })
+                .get('/users/me')
+                .expectStatus(200)
+                .expectBodyContains('test_put')
+                .expectBodyContains('put@test.com')
+                .stores('testPutTokenUID', 'uid');
+            });
+
+            it('update nickname of a user', async () => {
+              return await pactum
+                .spec()
+                .withHeaders({
+                  Authorization: 'Bearer $S{testPutToken}',
+                })
+                .withBody({
+                  nickname: 'test_updated',
+                })
+                .put('/users')
+                .expectStatus(200)
+                .expectBody('');
+            });
+
+            it('read updated user information', async () => {
+              return await pactum
+                .spec()
+                .withHeaders({
+                  Authorization: 'Bearer $S{testPutToken}',
+                })
+                .get('/users/me')
+                .expectStatus(200)
+                .expectBodyContains('test_updated')
+                .expectBodyContains('put@test.com');
+            });
+          });
         });
 
-        describe('DELETE /users/:uid', () => {
+        describe('DELETE /users', () => {
           it('should delete a user by uid', () => {
             return pactum
               .spec()
+              .wait(500)
               .withHeaders({
-                Authorization: 'Bearer $S{testToken2}',
+                Authorization: 'Bearer $S{testPutToken}',
               })
+              .withBody({ uid: '$S{testPutTokenUID}' })
               .delete('/users')
-              .withBody({ uid: '$S{testTokenUID2}' })
               .expectStatus(200);
           });
 
-          it('user list should return have one user', () => {
+          it('users list should return one user', () => {
             return pactum
               .spec()
               .get('/users')
               .withHeaders({
                 Authorization: 'Bearer $S{testToken}',
               })
-              .expectJsonLength(1)
+              .expectJsonLength(2)
               .expectStatus(200);
           });
         });
@@ -297,15 +351,77 @@ describe('Application e2e test', () => {
   describe('Session', () => {
     // 세션 생성 (실제 DB에 반영)
     describe('POST /session', () => {
-      it.todo('should create a session to be logged in');
+      it('should create a session and return login', async () => {
+        return await pactum
+          .spec()
+          .post('/session')
+          .withBody({
+            password: 'test',
+            email: 'test@test.com',
+          })
+          .expectStatus(201)
+          .stores('testSession', 'access_token')
+          .expectBodyContains('access_token');
+      });
 
-      it.todo('should throw if email empty');
-      it.todo('should throw if email not found');
+      it('should throw if email empty', async () => {
+        return await pactum
+          .spec()
+          .post('/session')
+          .withBody({
+            password: 'test',
+          })
+          .expectStatus(400)
+          .expectBodyContains('email should not be empty')
+          .expectBodyContains('Bad Request');
+      });
 
-      it.todo('should throw if password empty');
-      it.todo('should throw if password wrong');
+      it('should throw if email empty', async () => {
+        return await pactum
+          .spec()
+          .post('/session')
+          .withBody({
+            email: 'email.that@doesnt.exist',
+            password: 'test',
+          })
+          .expectStatus(403)
+          .expectBodyContains('Credential incorrect')
+          .expectBodyContains('Forbidden');
+      });
 
-      it.todo('should throw if body is empty');
+      it('should throw if password empty', async () => {
+        return await pactum
+          .spec()
+          .post('/session')
+          .withBody({
+            email: 'test@test.com',
+          })
+          .expectStatus(400)
+          .expectBodyContains('password should not be empty')
+          .expectBodyContains('Bad Request');
+      });
+
+      it('should throw if password wrong', async () => {
+        return await pactum
+          .spec()
+          .post('/session')
+          .withBody({
+            email: 'test@test.com',
+            password: 'wrong',
+          })
+          .expectStatus(403)
+          .expectBodyContains('Credential incorrect')
+          .expectBodyContains('Forbidden');
+      });
+
+      it('should throw if body is empty', async () => {
+        return await pactum
+          .spec()
+          .post('/session')
+          .expectStatus(400)
+          .expectBodyContains('email should not be empty')
+          .expectBodyContains('password should not be empty');
+      });
     });
 
     // 세션 삭제
@@ -318,26 +434,161 @@ describe('Application e2e test', () => {
     describe('/rooms', () => {
       // 방 생성
       describe('POST /rooms', () => {
-        it.todo('should create a room');
+        it('should create a room', async () => {
+          return await pactum
+            .spec()
+            .withHeaders({
+              Authorization: 'Bearer $S{testToken2}',
+            })
+            .post('/rooms')
+            .withBody({
+              title: 'test_room',
+              total: 4,
+              theme: 'ocean',
+              tags: ['ts', 'study'],
+            })
+            .expectStatus(201)
+            .stores('testRoomId', 'itemId');
+        });
+
+        it('should fail if no title', async () => {
+          return await pactum
+            .spec()
+            .withHeaders({
+              Authorization: 'Bearer $S{testToken2}',
+            })
+            .post('/rooms')
+            .withBody({
+              theme: 'ocean',
+              tags: ['react, ts'],
+              total: 4,
+            })
+            .expectStatus(400)
+            .expectBodyContains('title should not be empty');
+        });
+
+        it('should fail if no theme', async () => {
+          return await pactum
+            .spec()
+            .withHeaders({
+              Authorization: 'Bearer $S{testToken2}',
+            })
+            .post('/rooms')
+            .withBody({
+              title: 'test_room',
+              tags: ['javascript', 'react', 'ts'],
+              total: 4,
+            })
+            .expectStatus(400)
+            .expectBodyContains('theme should not be empty');
+        });
+
+        it('should fail if no total', async () => {
+          return await pactum
+            .spec()
+            .withHeaders({
+              Authorization: 'Bearer $S{testToken2}',
+            })
+            .post('/rooms')
+            .withBody({
+              title: 'test_room',
+              tags: ['javascript', 'react', 'ts'],
+              theme: 'ocean',
+            })
+            .expectStatus(400)
+            .expectBodyContains('total should not be empty');
+        });
+
+        it('should fail if no tags', async () => {
+          return await pactum
+            .spec()
+            .withHeaders({
+              Authorization: 'Bearer $S{testToken2}',
+            })
+            .post('/rooms')
+            .withBody({
+              title: 'test_room',
+              theme: 'ocean',
+              total: 4,
+            })
+            .expectStatus(400)
+            .expectBodyContains('tags must be an array');
+        });
       });
 
       // 모든 방 조회
       describe('GET /rooms', () => {
         it('room list should return without credential', () => {
-          return pactum.spec().get('/rooms').expectStatus(200);
+          return pactum
+            .spec()
+            .get('/rooms')
+            .expectStatus(200)
+            .expectBodyContains('test_room')
+            .expectJsonLength(1);
         });
       });
 
       // /rooms/:roomId
       describe('/rooms/:roomId', () => {
-        // 특정 방 조회
+        // 특정 방 조회 - testRoomId
         describe('GET /rooms/:roomId', () => {
-          it.todo('should find a room');
+          it('should throw if find a room without token', () => {
+            return pactum
+              .spec()
+              .withHeaders({
+                Authorization: 'Bearer $S{testToken2}',
+              })
+              .get('/rooms/$S{testRoomId}')
+              .expectStatus(200)
+              .expectBodyContains('test_room');
+          });
+
+          it('should throw if find a room without token', () => {
+            return pactum
+              .spec()
+              .get('/rooms/S{testRoomId}')
+              .expectStatus(401)
+              .expectBodyContains('Unauthorized');
+          });
         });
 
         // 방 삭제
         describe('DELETE /rooms/:roomId', () => {
-          it.todo('should delete a room');
+          it('should delete a room by room itemId', () => {
+            return pactum
+              .spec()
+              .withHeaders({
+                Authorization: 'Bearer $S{testToken}',
+              })
+              .delete('/rooms/$S{testRoomId}')
+              .expectStatus(200);
+          });
+
+          it('should throw if delete a room without token', () => {
+            return pactum
+              .spec()
+              .delete('/rooms/$S{testRoomId}')
+              .expectStatus(401);
+          });
+
+          it('check if room is deleted by room list', () => {
+            return pactum
+              .spec()
+              .get('/rooms')
+              .expectStatus(200)
+              .expectJsonLength(0);
+          });
+
+          it('check if room is deleted by finding with room itemId', () => {
+            return pactum
+              .spec()
+              .withHeaders({
+                Authorization: 'Bearer $S{testToken}',
+              })
+              .get('/rooms/$S{testRoomId}')
+              .expectStatus(200)
+              .withBody('');
+          });
         });
       });
     });

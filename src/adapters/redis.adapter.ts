@@ -4,6 +4,8 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import { ConfigService } from '@nestjs/config';
 import { createClient } from 'redis';
 import { INestApplicationContext, Logger } from '@nestjs/common';
+import { AuthService } from 'src/auth/auth.service';
+import { SocketWithAuth } from 'src/auth/types/types';
 
 export class RedisIoAdapter extends IoAdapter {
   constructor(

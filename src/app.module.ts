@@ -8,6 +8,7 @@ import { GatewayModule } from './gateways/gateways.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { SessionModule } from './session/session.module';
+import { RecordsModule } from './records/records.module';
 import environmentConfig from './config/environmentConfig';
 import swaggerConfig from './config/swaggerConfig';
 import jwtConfig from './config/jwtConfig';
@@ -25,6 +26,7 @@ import jwtConfig from './config/jwtConfig';
     PrismaModule,
     AuthModule,
     SessionModule,
+    RecordsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
