@@ -593,4 +593,9 @@ describe('Application e2e test', () => {
       });
     });
   });
+
+  describe('Records', () => {
+    it.todo('Get + /records');
+    it.todo('Delete + /records');
+  });
 });
