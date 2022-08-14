@@ -34,6 +34,7 @@ export const EVENT = {
   MAKE_ANSWER: 'make-answer',
   ANSWER_MADE: 'answer-made',
   ICE_CANDIDATE: 'ice-candidate',
+  RECORD_TIME: 'recordTime',
 } as const;
 
 type EVENT = typeof EVENT[keyof typeof EVENT];

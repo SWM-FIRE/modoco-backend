@@ -12,6 +12,7 @@ import { Server, Socket } from 'socket.io';
 import { RoomsService } from 'src/rooms/rooms.service';
 import { EVENT } from './constants/event.enum';
 import { WsJwtGuard } from 'src/auth/guard/wsJwt.guard';
+import { RecordsService } from 'src/records/records.service';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -22,7 +23,10 @@ import { WsJwtGuard } from 'src/auth/guard/wsJwt.guard';
 export class RoomGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  constructor(private roomsService: RoomsService) {}
+  constructor(
+    private roomsService: RoomsService,
+    private recordsService: RecordsService,
+  ) {}
 
   @WebSocketServer()
   server: Server;
@@ -43,7 +47,7 @@ export class RoomGateway
   @SubscribeMessage(EVENT.JOIN_ROOM)
   async joinRoom(client: Socket, { room, uid }): Promise<void> {
     const hasJoined = client.rooms.has(room);
-    // console.log(client.user);
+
     // if already in room, do nothing
     if (hasJoined) {
       client.emit(EVENT.ALREADY_JOINED, room);
@@ -162,6 +166,17 @@ export class RoomGateway
       sid: client.id,
       candidate: data.candidate,
     });
+  }
+
+  /**
+   * record the duration of a user in a room
+   * @param {Socket} client client socket
+   * @param {any} data
+   */
+  @SubscribeMessage(EVENT.RECORD_TIME)
+  public recordTime(client: Socket, data: any): void {
+    const user = client.handshake['user'];
+    this.recordsService.recordTime(user, data);
   }
 
   /**
