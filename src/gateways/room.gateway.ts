@@ -27,10 +27,8 @@ export class RoomGateway
   @WebSocketServer()
   server: Server;
 
+  // Map<clientID, userID> used to track users in a room
   private userList = new Map<string, string>();
-
-  // active sockets used to track users in a room
-  //private activeSockets: { room: string; id: string; uid: string }[] = [];
 
   // logger for this class
   private logger: Logger = new Logger('RoomGateway');
