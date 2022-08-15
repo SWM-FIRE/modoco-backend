@@ -8,7 +8,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 const PORT = 3336;
 const BASE_URL = `http://localhost:${PORT}`;
 
-describe('Application e2e test', () => {
+describe('Application integration test', () => {
   let app: INestApplication;
   let prisma: PrismaService;
 

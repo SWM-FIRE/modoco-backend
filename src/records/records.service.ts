@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Record, User } from '@prisma/client';
+import { User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateRecordDTO } from './dto/CreateRecordDto';
 
@@ -17,6 +17,7 @@ export class RecordsService {
     } else {
       // update record
       const recordId = await this.getRecentRecordId(user);
+
       this.updateRecord(user, recordId);
     }
   }
@@ -35,16 +36,20 @@ export class RecordsService {
   }
 
   private async updateRecord(user: User, recordId: number) {
-    await this.prismaService.record.update({
-      where: {
-        id: recordId,
-      },
-      data: {
-        duration: {
-          increment: 1,
+    //console.log(this.longerThen1min(user));
+    if (await this.longerThen1min(user)) {
+      await this.prismaService.record.update({
+        where: {
+          id: recordId,
         },
-      },
-    });
+        data: {
+          duration: {
+            increment: 1,
+          },
+        },
+      });
+      return;
+    }
   }
 
   findAllRecord(user: User) {
@@ -60,7 +65,7 @@ export class RecordsService {
   }
 
   async getRecentRecordId(user: User) {
-    // assume only one record existsx
+    // assume only one record exists
     const record = await this.prismaService.record.findFirst({
       where: {
         user: {
@@ -98,5 +103,35 @@ export class RecordsService {
     });
 
     return count;
+  }
+
+  private async longerThen1min(user: User) {
+    const ADVANTAGE_SECOND = 5000;
+
+    try {
+      const record = await this.prismaService.record.findFirst({
+        where: {
+          user: {
+            uid: user.uid,
+          },
+        },
+        select: {
+          updatedAt: true,
+        },
+      });
+
+      // check if record is older than 1 minute
+      const deltaTime = Date.now() - new Date(record.updatedAt).getTime();
+      const deltaMinutes = Math.floor(
+        (deltaTime + ADVANTAGE_SECOND) / (60 * 1000),
+      );
+
+      if (deltaMinutes >= 1) {
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.log(e);
+    }
   }
 }
