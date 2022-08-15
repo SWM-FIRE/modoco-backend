@@ -31,9 +31,6 @@ export class RoomGateway
   @WebSocketServer()
   server: Server;
 
-  // Map<clientID, userID> used to track users in a room
-  private userList = new Map<string, string>();
-
   // logger for this class
   private logger: Logger = new Logger('RoomGateway');
 
@@ -54,6 +51,9 @@ export class RoomGateway
       return;
     }
 
+    // store the user in the room
+    client.data.uid = uid;
+
     // check if room exceeds max capacity
     const roomCapacity = await this.roomsService.getRoomCapacity(
       parseInt(room),
@@ -67,7 +67,17 @@ export class RoomGateway
       return;
     }
 
-    // if room does not exist, join it
+    // get all users who in currently in the room
+    const roomMembers = await this.server.in(room).fetchSockets();
+    // extract data from each roomMember
+    const existingMembers = roomMembers.map((roomMember) => {
+      return {
+        sid: roomMember.id,
+        uid: roomMember.data.uid,
+      };
+    });
+
+    // join the room
     client.join(room);
     client.emit(EVENT.JOINED_ROOM, { room });
 
@@ -77,28 +87,14 @@ export class RoomGateway
       uid,
     });
 
-    // [temporary] get existing users in the room
-    const existingRoomUsers = [...this.server.adapter['rooms'].get(room)];
-    const users = existingRoomUsers
-      .filter((sid) => sid !== client.id)
-      .map((sid) => {
-        return {
-          sid,
-          uid: this.userList.get(sid),
-        };
-      });
-
-    // existing users in the room
+    // emit to client who is currently in the room
     client.emit(EVENT.EXISTING_ROOM_USERS, {
-      users: users,
+      users: existingMembers,
       current: { sid: client.id, uid },
     });
 
     // increment room current count
     this.roomsService.joinRoom(room);
-
-    // [temporary] store the user in the room
-    this.userList.set(client.id, uid);
 
     this.logger.log(
       `Client joined room(${room}), sid: ${client.id}), uid: ${uid}`,
@@ -191,35 +187,31 @@ export class RoomGateway
    * [COMMON]
    * onConnection - on connection
    * @param {Socket} client client socket
-   * @note in here we overide onClose handler in order to notify users in the room that the user has left.
-   * this could be done in the handleDisconnect(which is invoked after socket is emptied) method
-   * but we want to notify users in the room
-   *
+   * @note used disconnecting event of each client to notify users in the room that the user has left.
+   * this cannot be done in the handleDisconnect(which is invoked after socket is emptied)
    */
   handleConnection(client: Socket): void {
     this.logger.log(`Client connected, sid: ${client.id}`);
+    client.on('disconnecting', (reason) => {
+      console.log('disconnecting', reason);
+      const roomsToLeave: Set<string> = this.server.adapter['sids'].get(
+        client.id,
+      );
+      if (roomsToLeave) {
+        // rooms excluding the room the user's id room
+        const rooms = [...roomsToLeave].filter((room) => room !== client.id);
 
-    client._onclose = function (reason) {
-      //this.logger.log(`OnClose Client(${client.id})`);
-      const roomsToLeave = this.server.adapter['sids'].get(client.id);
+        rooms.forEach((room) => {
+          // decrement room current count
+          this.roomsService.leaveRoom(room);
 
-      if (!roomsToLeave) {
-        return Object.getPrototypeOf(client)._onclose.call(client, reason);
-      }
-
-      const rooms = [...roomsToLeave];
-      rooms.forEach((room) => {
-        // decrement room current count
-        this.roomsService.leaveRoom(room);
-
-        // emit a `leftRoom` event to all users in the room except the sender
-        client.to(room).emit(EVENT.LEFT_ROOM, {
-          sid: client.id,
+          // emit a `leftRoom` event to all users in the room except the sender
+          client.to(room).emit(EVENT.LEFT_ROOM, {
+            sid: client.id,
+          });
         });
-      });
-
-      return Object.getPrototypeOf(client)._onclose.call(client, reason);
-    }.bind(this);
+      }
+    });
   }
 
   /**
@@ -231,9 +223,6 @@ export class RoomGateway
    */
   public handleDisconnect(client: Socket): void {
     this.logger.log(`Client disconnected, sid: ${client.id}`);
-
-    // [temporary] delete the user from the room
-    this.userList.delete(client.id);
   }
 
   /**
