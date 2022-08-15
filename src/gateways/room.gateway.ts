@@ -17,7 +17,7 @@ import { RecordsService } from 'src/records/records.service';
 @WebSocketGateway({
   cors: { origin: '*' },
   transports: ['websocket', 'polling'],
-  namespace: 'socket/room',
+  namespace: 'socket/room/',
 })
 @UseGuards(WsJwtGuard)
 export class RoomGateway
