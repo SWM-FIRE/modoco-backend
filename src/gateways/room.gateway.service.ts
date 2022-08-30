@@ -53,8 +53,9 @@ export class RoomGatewayService {
     this.logger.debug(`Client connected, sid: ${client.id}`);
 
     // before leaving the room, notify all users in the room that the user has left
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     client.on('disconnecting', (reason) => {
-      this.logger.debug('disconnecting', reason);
+      //this.logger.debug('disconnecting', reason);
       const roomsToLeave: Set<string> = this.server.adapter['sids'].get(
         client.id,
       );
@@ -62,9 +63,12 @@ export class RoomGatewayService {
         // rooms excluding the room the user's id room
         const rooms = [...roomsToLeave].filter((room) => room !== client.id);
 
-        rooms.forEach((room) => {
+        rooms.forEach(async (room) => {
+          // get all users who in currently in the room
+          const currentRoomMembers = await this.server.in(room).fetchSockets();
           // decrement room current count
-          this.roomsService.leaveRoom(room);
+          // minus one because current user, who is leaving, is still in the room
+          this.roomsService.leaveRoom(room, currentRoomMembers.length - 1);
 
           // emit a `leftRoom` event to all users in the room except the sender
           client.to(room).emit(EVENT.LEFT_ROOM, {
@@ -142,7 +146,7 @@ export class RoomGatewayService {
     });
 
     // increment room current count
-    this.roomsService.joinRoom(room);
+    this.roomsService.joinRoom(room, roomMembers.length);
 
     this.logger.debug(
       `Client joined room(${room}), sid: ${client.id}), uid: ${uid}`,
@@ -154,16 +158,18 @@ export class RoomGatewayService {
    * leaveRoom - leave a room
    * called by a user when he leaves a room
    * @param {Socket} client client socket
-   * @param {string} room room id
+   * @param {LeaveRoomPayload} payload leave room payload, contains room id
    * @emit emit a `leftRoom` event to all users in the room
    */
-  onLeaveRoom(client: Socket, payload: LeaveRoomPayload) {
+  async onLeaveRoom(client: Socket, payload: LeaveRoomPayload) {
     const room = payload.room;
 
     client.leave(room);
 
+    // get all users who in currently in the room
+    const currentRoomMembers = await this.server.in(room).fetchSockets();
     // decrement room current count
-    this.roomsService.leaveRoom(room);
+    await this.roomsService.leaveRoom(room, currentRoomMembers.length);
 
     client.emit(EVENT.LEFT_ROOM, {
       sid: client.id,

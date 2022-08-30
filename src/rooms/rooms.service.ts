@@ -90,11 +90,19 @@ export class RoomsService {
    * @param {number} id roomId(=itemId in DB)
    * @returns {Promise<GetRoomDTO>}
    */
-  async joinRoom(id: string): Promise<GetRoomDTO> {
+  async joinRoom(
+    id: string,
+    existingRoomMembersLength: number,
+  ): Promise<GetRoomDTO> {
     try {
+      const itemId = parseInt(id, 10);
+      if (isNaN(itemId)) {
+        throw new ForbiddenException('Room not found');
+      }
+
       const room: GetRoomDTO = await this.prisma.room.update({
-        where: { itemId: parseInt(id, 10) },
-        data: { current: { increment: 1 } },
+        where: { itemId },
+        data: { current: existingRoomMembersLength + 1 },
         select: getRoomSelector,
       });
 
@@ -118,11 +126,19 @@ export class RoomsService {
    * @param {number} id roomId(=itemId in DB)
    * @returns {Promise<GetRoomDTO>}
    */
-  async leaveRoom(id: string): Promise<GetRoomDTO> {
+  async leaveRoom(
+    id: string,
+    currentRoomMembersLength: number,
+  ): Promise<GetRoomDTO> {
     try {
+      const itemId = parseInt(id, 10);
+      if (isNaN(itemId)) {
+        throw new ForbiddenException('Room not found');
+      }
+
       let room = await this.prisma.room.update({
-        where: { itemId: parseInt(id, 10) },
-        data: { current: { decrement: 1 } },
+        where: { itemId },
+        data: { current: currentRoomMembersLength },
         select: getRoomSelector,
       });
 
@@ -131,6 +147,7 @@ export class RoomsService {
       }
 
       if (room.current < 0) {
+        this.logger.warn('[ASSERT] Tried to set room current value to minus');
         room = await this.prisma.room.update({
           where: { itemId: parseInt(id, 10) },
           data: { current: 0 },
