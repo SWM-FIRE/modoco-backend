@@ -5,6 +5,6 @@ export class CandidatePayload {
   @IsNotEmpty()
   to: string;
 
-  @IsString()
+  @IsNotEmpty()
   candidate: RTCIceCandidateInit;
 }
