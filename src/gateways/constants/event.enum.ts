@@ -35,6 +35,8 @@ export const EVENT = {
   ANSWER_MADE: 'answer-made',
   ICE_CANDIDATE: 'ice-candidate',
   RECORD_TIME: 'recordTime',
+  VIDEO_STATE_CHANGE: 'videoStateChange',
+  AUDIO_STATE_CHANGE: 'audioStateChange',
 } as const;
 
-type EVENT = typeof EVENT[keyof typeof EVENT];
+export type EVENT = typeof EVENT[keyof typeof EVENT];

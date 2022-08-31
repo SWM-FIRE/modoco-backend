@@ -11,6 +11,7 @@ import {
   AnswerOfferPayload,
   RecordPayload,
   CandidatePayload,
+  MediaStateChangePayload,
 } from './dto';
 import { User } from 'src/users/dto';
 
@@ -250,5 +251,26 @@ export class RoomGatewayService {
    */
   getSocketUser(client: Socket): User {
     return client.handshake['user'];
+  }
+
+  /**
+   * on media(video or audio) state change
+   * @param {Socket} client client socket
+   * @param {RecordPayload} payload Media state change event Payload
+   */
+  onMediaStateChange(
+    mediaType: EVENT,
+    client: Socket,
+    payload: MediaStateChangePayload,
+  ) {
+    payload.sid = client.id;
+
+    if (mediaType === EVENT.VIDEO_STATE_CHANGE) {
+      this.server.to(payload.room).emit(EVENT.VIDEO_STATE_CHANGE, payload);
+    } else if (mediaType === EVENT.AUDIO_STATE_CHANGE) {
+      this.server.to(payload.room).emit(EVENT.AUDIO_STATE_CHANGE, payload);
+    } else {
+      this.logger.error(`Invalid media type onMediaStateChange: ${mediaType}`);
+    }
   }
 }
