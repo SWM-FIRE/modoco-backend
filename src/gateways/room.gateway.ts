@@ -20,6 +20,7 @@ import {
   LeaveRoomPayload,
   RecordPayload,
   CandidatePayload,
+  MediaStateChangePayload,
 } from './dto';
 
 @WebSocketGateway({
@@ -82,5 +83,23 @@ export class RoomGateway
   @SubscribeMessage(EVENT.RECORD_TIME)
   recordTime(client: Socket, payload: RecordPayload) {
     this.roomGatewayService.onRecordTime(client, payload);
+  }
+
+  @SubscribeMessage(EVENT.VIDEO_STATE_CHANGE)
+  onVideoStateChange(client: Socket, payload: MediaStateChangePayload) {
+    this.roomGatewayService.onMediaStateChange(
+      EVENT.VIDEO_STATE_CHANGE,
+      client,
+      payload,
+    );
+  }
+
+  @SubscribeMessage(EVENT.AUDIO_STATE_CHANGE)
+  onAudioStateChange(client: Socket, payload: MediaStateChangePayload) {
+    this.roomGatewayService.onMediaStateChange(
+      EVENT.AUDIO_STATE_CHANGE,
+      client,
+      payload,
+    );
   }
 }
