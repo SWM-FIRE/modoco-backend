@@ -73,6 +73,7 @@ export class GetRoomDTO {
   @IsObject()
   moderator: {
     nickname: string;
+    uid: number;
     avatar: number;
   };
 
@@ -132,6 +133,7 @@ export const getRoomSelector = {
   moderator: {
     select: {
       nickname: true,
+      uid: true,
       avatar: true,
     },
   },

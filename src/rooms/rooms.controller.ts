@@ -35,7 +35,7 @@ export class RoomsController {
   async findOne(
     @Param('id', new ParseIntPipe()) id: number,
   ): Promise<GetRoomDTO> {
-    return this.roomsService.getOne(id);
+    return this.roomsService.findRoomById(id);
   }
 
   @UseGuards(JwtGuard)

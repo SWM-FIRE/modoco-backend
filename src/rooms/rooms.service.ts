@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { CreateRoomDTO, GetRoomDTO, getRoomSelector } from './dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { User } from '../users/dto';
 
 @Injectable()
 export class RoomsService {
@@ -58,7 +59,7 @@ export class RoomsService {
    * @param {number} id roomId(=itemId in DB)
    * @returns {Promise<GetRoomDTO>}
    */
-  async getOne(id: number) {
+  async findRoomById(id: number) {
     const room: GetRoomDTO = await this.prisma.room.findFirst({
       where: { itemId: id },
       select: getRoomSelector,
@@ -195,5 +196,23 @@ export class RoomsService {
       }
       //throw e;
     }
+  }
+
+  async getRoomModerator(id: number) {
+    const room = await this.findRoomById(id);
+    if (!room) {
+      return null;
+    }
+
+    return room.moderator;
+  }
+
+  async isRoomModerator(id: number, user: User) {
+    const roomModerator = await this.getRoomModerator(id);
+    if (!roomModerator) {
+      return false;
+    }
+
+    return roomModerator.uid === user.uid;
   }
 }
