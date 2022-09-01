@@ -59,7 +59,7 @@ export class UsersService {
    * @param uid user id
    * @returns user object
    */
-  async findOne(uid: number) {
+  async findUserByUid(uid: number) {
     try {
       const user = await this.prisma.user.findUnique({
         where: {

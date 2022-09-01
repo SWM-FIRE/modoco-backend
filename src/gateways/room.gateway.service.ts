@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { RoomsService } from 'src/rooms/rooms.service';
-import { EVENT } from './constants/event.enum';
 import { RecordsService } from 'src/records/records.service';
+import { UsersService } from 'src/users/users.service';
 import {
   ChatMessagePayload,
   LeaveRoomPayload,
@@ -14,11 +14,14 @@ import {
   MediaStateChangePayload,
 } from './dto';
 import { User } from 'src/users/dto';
+import { KickUserPayload } from './dto/kick-user.dto';
+import { EVENT } from './constants/event.enum';
 
 @Injectable()
 export class RoomGatewayService {
   constructor(
     private readonly roomsService: RoomsService,
+    private readonly usersService: UsersService,
     private readonly recordsService: RecordsService,
   ) {}
 
@@ -157,6 +160,79 @@ export class RoomGatewayService {
     );
   }
 
+  async onKickUser(moderatorSocket: Socket, payload: KickUserPayload) {
+    const moderator = this.getSocketUser(moderatorSocket);
+    if (!moderator) {
+      return;
+    }
+
+    // check if moderator is in the room
+    const hasModeratorJoined = moderatorSocket.rooms.has(payload.room);
+    if (!hasModeratorJoined) {
+      moderatorSocket.emit(EVENT.EXCEPTION, 'You are not in the room');
+      return;
+    }
+
+    const userUid = parseInt(payload.userToKick.uid);
+    if (isNaN(userUid)) {
+      moderatorSocket.emit(EVENT.EXCEPTION, 'You tried to kick unknown user');
+      return;
+    }
+    const userToKick = await this.usersService.findUserByUid(userUid);
+    //console.log(userToKick);
+    if (!userToKick) {
+      moderatorSocket.emit(EVENT.EXCEPTION, 'User not found');
+      return;
+    }
+
+    const room = parseInt(payload.room);
+    if (isNaN(room)) {
+      moderatorSocket.emit(EVENT.EXCEPTION, 'Invalid room');
+      return;
+    }
+
+    // check if moderator is the room owner
+    const isModerator = await this.roomsService.isRoomModerator(
+      room,
+      moderator,
+    );
+    if (!isModerator) {
+      moderatorSocket.emit(
+        EVENT.EXCEPTION,
+        'You are not the moderator of the room',
+      );
+      return;
+    }
+
+    // check if user to be kicked is in the room
+    const targetSockets = await this.getMatchingSocketsBySid(
+      payload.room,
+      payload.userToKick.sid,
+    );
+    if (targetSockets.length === 0) {
+      moderatorSocket.emit(EVENT.EXCEPTION, 'User is not in the room');
+      return;
+    }
+    const userToKickSocket = targetSockets[0];
+
+    // check if user to be kicked is the room owner
+    if (
+      userUid === moderator.uid ||
+      userToKickSocket.id === moderatorSocket.id
+    ) {
+      moderatorSocket.emit(EVENT.EXCEPTION, 'You cannot kick yourself');
+      return;
+    }
+
+    // kick user
+    userToKickSocket.leave(payload.room);
+
+    // emit a `kicked` event to all user in the room
+    this.server.to(payload.room).emit(EVENT.KICK_USER, {
+      kickUser: userToKick,
+    });
+  }
+
   /**
    * [COMMON]
    * leaveRoom - leave a room
@@ -276,5 +352,12 @@ export class RoomGatewayService {
     } else {
       this.logger.error(`Invalid media type onMediaStateChange: ${mediaType}`);
     }
+  }
+
+  async getMatchingSocketsBySid(room: string, sid: string) {
+    const roomMembers = await this.server.in(room).fetchSockets();
+    return roomMembers.filter((socket) => {
+      return socket.id === sid;
+    });
   }
 }

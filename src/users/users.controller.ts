@@ -44,7 +44,7 @@ export class UsersController {
   @UseGuards(JwtGuard)
   @Get(':uid')
   async findOne(@Param('uid', ParseIntPipe) uid: number) {
-    return this.usersService.findOne(uid);
+    return this.usersService.findUserByUid(uid);
   }
 
   @UseGuards(JwtGuard)

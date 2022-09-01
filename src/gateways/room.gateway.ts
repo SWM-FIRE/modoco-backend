@@ -22,6 +22,7 @@ import {
   CandidatePayload,
   MediaStateChangePayload,
 } from './dto';
+import { KickUserPayload } from './dto/kick-user.dto';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -58,6 +59,11 @@ export class RoomGateway
   @SubscribeMessage(EVENT.LEAVE_ROOM)
   async handleLeaveRoom(client: Socket, payload: LeaveRoomPayload) {
     await this.roomGatewayService.onLeaveRoom(client, payload);
+  }
+
+  @SubscribeMessage(EVENT.KICK_USER)
+  async onKickUser(client: Socket, payload: KickUserPayload) {
+    await this.roomGatewayService.onKickUser(client, payload);
   }
 
   @SubscribeMessage(EVENT.CHAT_MESSAGE)
