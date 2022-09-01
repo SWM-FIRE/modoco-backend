@@ -1,1 +1,1 @@
-export * from './CreateRecordDto';
+export * from './record.dto';

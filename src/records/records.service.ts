@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from 'src/users/dto';
-import { CreateRecordDTO } from './dto/CreateRecordDto';
+import { CreateRecordDTO } from './dto';
 
 @Injectable()
 export class RecordsService {
@@ -13,12 +13,12 @@ export class RecordsService {
     // check if record exists
     if (count === 0) {
       // create record
-      this.createRecord(user, dto);
+      await this.createRecord(user, dto);
     } else {
       // update record
       const recordId = await this.getRecentRecordId(user);
 
-      this.updateRecord(user, recordId);
+      await this.updateRecord(user, recordId);
     }
   }
 
@@ -53,15 +53,13 @@ export class RecordsService {
   }
 
   findAllRecord(user: User) {
-    const records = this.prismaService.record.findMany({
+    return this.prismaService.record.findMany({
       where: {
         user: {
           uid: user.uid,
         },
       },
     });
-
-    return records;
   }
 
   async getRecentRecordId(user: User) {
@@ -81,28 +79,24 @@ export class RecordsService {
   }
 
   public deleteAllRecords(user: User) {
-    const record = this.prismaService.record.deleteMany({
+    return this.prismaService.record.deleteMany({
       where: {
         user: {
           uid: user.uid,
         },
       },
     });
-
-    return record;
   }
 
   // check number of records that user has
   private async getRecordCount(user: User) {
-    const count = await this.prismaService.record.count({
+    return await this.prismaService.record.count({
       where: {
         user: {
           uid: user.uid,
         },
       },
     });
-
-    return count;
   }
 
   private async longerThen1min(user: User) {
@@ -126,10 +120,7 @@ export class RecordsService {
         (deltaTime + ADVANTAGE_SECOND) / (60 * 1000),
       );
 
-      if (deltaMinutes >= 1) {
-        return true;
-      }
-      return false;
+      return deltaMinutes >= 1;
     } catch (e) {
       console.log(e);
     }

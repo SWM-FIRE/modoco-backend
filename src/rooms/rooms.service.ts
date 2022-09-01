@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateRoomDTO, GetRoomDTO, getRoomSelector } from './dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
@@ -11,6 +11,7 @@ export class RoomsService {
 
   /**
    * Create a room and return the room object
+   * @param user
    * @param {CreateRoomDTO} dto create room dto
    * @returns {Promise<CreateRoomDTO>}
    */
@@ -88,6 +89,7 @@ export class RoomsService {
   /**
    * update room in DB when user join room
    * @param {number} id roomId(=itemId in DB)
+   * @param {number} existingRoomMembersLength length of existing room members
    * @returns {Promise<GetRoomDTO>}
    */
   async joinRoom(
@@ -97,7 +99,7 @@ export class RoomsService {
     try {
       const itemId = parseInt(id, 10);
       if (isNaN(itemId)) {
-        throw new ForbiddenException('Room not found');
+        this.logger.warn('Room not found :: room id is NaN');
       }
 
       const room: GetRoomDTO = await this.prisma.room.update({
@@ -107,7 +109,7 @@ export class RoomsService {
       });
 
       if (!room) {
-        throw new ForbiddenException('Room not found');
+        this.logger.warn('Room not found :: no data');
       }
 
       return room;
@@ -124,6 +126,7 @@ export class RoomsService {
   /**
    * update room in DB when user leave room
    * @param {number} id roomId(=itemId in DB)
+   * @param {number} currentRoomMembersLength length of current room members
    * @returns {Promise<GetRoomDTO>}
    */
   async leaveRoom(
@@ -133,7 +136,7 @@ export class RoomsService {
     try {
       const itemId = parseInt(id, 10);
       if (isNaN(itemId)) {
-        throw new ForbiddenException('Room not found');
+        this.logger.warn('Room not found :: room id is NaN');
       }
 
       let room = await this.prisma.room.update({
@@ -143,7 +146,7 @@ export class RoomsService {
       });
 
       if (!room) {
-        throw new ForbiddenException('Room not found');
+        this.logger.warn('Room not found :: no data');
       }
 
       if (room.current < 0) {

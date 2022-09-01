@@ -50,12 +50,12 @@ export class UsersController {
   @UseGuards(JwtGuard)
   @Put()
   update(@GetUserDecorator() user: User, @Body() dto: UpdateUserDTO) {
-    this.usersService.update(user, dto);
+    return this.usersService.update(user, dto);
   }
 
   @UseGuards(JwtGuard)
   @Delete()
   remove(@Body('uid', ParseIntPipe) uid: number) {
-    this.usersService.delete(uid);
+    return this.usersService.delete(uid);
   }
 }

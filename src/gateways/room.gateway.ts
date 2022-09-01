@@ -52,12 +52,12 @@ export class RoomGateway
 
   @SubscribeMessage(EVENT.JOIN_ROOM)
   async onJoinRoom(client: Socket, payload: JoinRoomPayload) {
-    this.roomGatewayService.onJoinRoom(client, payload);
+    await this.roomGatewayService.onJoinRoom(client, payload);
   }
 
   @SubscribeMessage(EVENT.LEAVE_ROOM)
-  handleLeaveRoom(client: Socket, payload: LeaveRoomPayload) {
-    this.roomGatewayService.onLeaveRoom(client, payload);
+  async handleLeaveRoom(client: Socket, payload: LeaveRoomPayload) {
+    await this.roomGatewayService.onLeaveRoom(client, payload);
   }
 
   @SubscribeMessage(EVENT.CHAT_MESSAGE)
@@ -81,8 +81,8 @@ export class RoomGateway
   }
 
   @SubscribeMessage(EVENT.RECORD_TIME)
-  recordTime(client: Socket, payload: RecordPayload) {
-    this.roomGatewayService.onRecordTime(client, payload);
+  async recordTime(client: Socket, payload: RecordPayload) {
+    await this.roomGatewayService.onRecordTime(client, payload);
   }
 
   @SubscribeMessage(EVENT.VIDEO_STATE_CHANGE)

@@ -3,9 +3,9 @@ import { Server, Socket } from 'socket.io';
 import { RoomsService } from 'src/rooms/rooms.service';
 import { EVENT } from './constants/event.enum';
 import { RecordsService } from 'src/records/records.service';
-import { ChatMessagePayload } from './dto/chat-message.dto';
-import { LeaveRoomPayload } from './dto/leave-room.dto';
 import {
+  ChatMessagePayload,
+  LeaveRoomPayload,
   JoinRoomPayload,
   CallOfferPayload,
   AnswerOfferPayload,
@@ -69,7 +69,10 @@ export class RoomGatewayService {
           const currentRoomMembers = await this.server.in(room).fetchSockets();
           // decrement room current count
           // minus one because current user, who is leaving, is still in the room
-          this.roomsService.leaveRoom(room, currentRoomMembers.length - 1);
+          await this.roomsService.leaveRoom(
+            room,
+            currentRoomMembers.length - 1,
+          );
 
           // emit a `leftRoom` event to all users in the room except the sender
           client.to(room).emit(EVENT.LEFT_ROOM, {
@@ -147,7 +150,7 @@ export class RoomGatewayService {
     });
 
     // increment room current count
-    this.roomsService.joinRoom(room, roomMembers.length);
+    await this.roomsService.joinRoom(room, roomMembers.length);
 
     this.logger.debug(
       `Client joined room(${room}), sid: ${client.id}), uid: ${uid}`,
@@ -199,7 +202,7 @@ export class RoomGatewayService {
   /**
    * [WEBRTC]
    * call-user - call a user
-   * send a offer to a given user
+   * send an offer to a given user
    * @param {Socket} client client socket
    * @param {CallOfferPayload} payload call-user event payload
    */
@@ -213,7 +216,7 @@ export class RoomGatewayService {
   /**
    * [WEBRTC]
    * make-answer - make an answer
-   * send a answer to a given user
+   * send an answer to a given user
    * @param {Socket} client client socket
    * @param {AnswerOfferPayload} payload make-answer event payload
    */
@@ -241,9 +244,9 @@ export class RoomGatewayService {
    * @param {Socket} client client socket
    * @param {RecordPayload} payload Record event Payload
    */
-  onRecordTime(client: Socket, payload: RecordPayload) {
+  async onRecordTime(client: Socket, payload: RecordPayload) {
     const user = this.getSocketUser(client);
-    this.recordsService.recordTime(user, payload);
+    await this.recordsService.recordTime(user, payload);
   }
 
   /**
@@ -255,6 +258,7 @@ export class RoomGatewayService {
 
   /**
    * on media(video or audio) state change
+   * @param {EVENT} mediaType
    * @param {Socket} client client socket
    * @param {RecordPayload} payload Media state change event Payload
    */

@@ -1,7 +1,7 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import * as pactum from 'pactum';
-import { AppModule } from './../src/app.module';
+import { AppModule } from '../src/app.module';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 // const
@@ -41,7 +41,7 @@ describe('Application integration test', () => {
 
   describe('Check test server', () => {
     it('should return 200', async () => {
-      return await pactum
+      return pactum
         .spec()
         .get('/')
         .expectStatus(200)
@@ -69,7 +69,7 @@ describe('Application integration test', () => {
         it('should throw if email empty', async () => {
           const body = { ...fineBody };
           delete body.email;
-          return await pactum
+          return pactum
             .spec()
             .post('/users')
             .withBody(body)
@@ -81,7 +81,7 @@ describe('Application integration test', () => {
         it('should throw if email is not valid', async () => {
           const body = { ...fineBody };
           body.email = 'not an email';
-          return await pactum
+          return pactum
             .spec()
             .post('/users')
             .withBody(body)
@@ -93,7 +93,7 @@ describe('Application integration test', () => {
         it('should throw if password empty', async () => {
           const body = { ...fineBody };
           delete body.password;
-          return await pactum
+          return pactum
             .spec()
             .post('/users')
             .withBody(body)
@@ -105,7 +105,7 @@ describe('Application integration test', () => {
         it('should throw if password is empty string', async () => {
           const body = { ...fineBody };
           body.password = '';
-          return await pactum
+          return pactum
             .spec()
             .post('/users')
             .withBody(body)
@@ -116,7 +116,7 @@ describe('Application integration test', () => {
         it('should throw if avatar empty', async () => {
           const body = { ...fineBody };
           delete body.avatar;
-          return await pactum
+          return pactum
             .spec()
             .post('/users')
             .withBody(body)
@@ -125,7 +125,7 @@ describe('Application integration test', () => {
             .expectBodyContains('avatar should not be empty');
         });
         it('should throw if avatar is not valid', async () => {
-          return await pactum
+          return pactum
             .spec()
             .post('/users')
             .withBody({
@@ -142,7 +142,7 @@ describe('Application integration test', () => {
         });
 
         it('should create new user `test` and return token', async () => {
-          return await pactum
+          return pactum
             .spec()
             .post('/users')
             .withBody({
@@ -156,7 +156,7 @@ describe('Application integration test', () => {
         });
 
         it('duplicate email cannot register', async () => {
-          return await pactum
+          return pactum
             .spec()
             .post('/users')
             .withBody({
@@ -171,7 +171,7 @@ describe('Application integration test', () => {
         });
 
         it('should create new user `test2` and return token', async () => {
-          return await pactum
+          return pactum
             .spec()
             .post('/users')
             .withBody({
@@ -185,7 +185,7 @@ describe('Application integration test', () => {
         });
 
         it('should read user info with valid token', async () => {
-          return await pactum
+          return pactum
             .spec()
             .get('/users/me')
             .withHeaders({
@@ -208,11 +208,11 @@ describe('Application integration test', () => {
 
       describe('read user info', () => {
         it('should not return user info without token', async () => {
-          return await pactum.spec().get('/users/me').expectStatus(401);
+          return pactum.spec().get('/users/me').expectStatus(401);
         });
 
         it('should return user `test` info with token', async () => {
-          return await pactum
+          return pactum
             .spec()
             .withHeaders({
               Authorization: 'Bearer $S{testToken}',
@@ -223,7 +223,7 @@ describe('Application integration test', () => {
         });
 
         it('should return user `test2` info with token', async () => {
-          return await pactum
+          return pactum
             .spec()
             .withHeaders({
               Authorization: 'Bearer $S{testToken2}',
@@ -235,7 +235,7 @@ describe('Application integration test', () => {
       });
 
       // /user/:uid
-      describe('action on a specifica user', () => {
+      describe('action on a specific user', () => {
         describe('GET /users/:uid', () => {
           it('should return a user by uid', () => {
             return pactum
@@ -264,7 +264,7 @@ describe('Application integration test', () => {
         describe('PUT /users', () => {
           describe('should update new information about a user', () => {
             it('create new user', async () => {
-              return await pactum
+              return pactum
                 .spec()
                 .post('/users')
                 .withBody({
@@ -278,7 +278,7 @@ describe('Application integration test', () => {
             });
 
             it('read new user information and store uid', async () => {
-              return await pactum
+              return pactum
                 .spec()
                 .withHeaders({
                   Authorization: 'Bearer $S{testPutToken}',
@@ -291,7 +291,7 @@ describe('Application integration test', () => {
             });
 
             it('update nickname of a user', async () => {
-              return await pactum
+              return pactum
                 .spec()
                 .withHeaders({
                   Authorization: 'Bearer $S{testPutToken}',
@@ -305,7 +305,7 @@ describe('Application integration test', () => {
             });
 
             it('read updated user information', async () => {
-              return await pactum
+              return pactum
                 .spec()
                 .withHeaders({
                   Authorization: 'Bearer $S{testPutToken}',
@@ -352,7 +352,7 @@ describe('Application integration test', () => {
     // 세션 생성 (실제 DB에 반영)
     describe('POST /session', () => {
       it('should create a session and return login', async () => {
-        return await pactum
+        return pactum
           .spec()
           .post('/session')
           .withBody({
@@ -365,7 +365,7 @@ describe('Application integration test', () => {
       });
 
       it('should throw if email empty', async () => {
-        return await pactum
+        return pactum
           .spec()
           .post('/session')
           .withBody({
@@ -377,7 +377,7 @@ describe('Application integration test', () => {
       });
 
       it('should throw if email empty', async () => {
-        return await pactum
+        return pactum
           .spec()
           .post('/session')
           .withBody({
@@ -390,7 +390,7 @@ describe('Application integration test', () => {
       });
 
       it('should throw if password empty', async () => {
-        return await pactum
+        return pactum
           .spec()
           .post('/session')
           .withBody({
@@ -402,7 +402,7 @@ describe('Application integration test', () => {
       });
 
       it('should throw if password wrong', async () => {
-        return await pactum
+        return pactum
           .spec()
           .post('/session')
           .withBody({
@@ -415,7 +415,7 @@ describe('Application integration test', () => {
       });
 
       it('should throw if body is empty', async () => {
-        return await pactum
+        return pactum
           .spec()
           .post('/session')
           .expectStatus(400)
@@ -435,7 +435,7 @@ describe('Application integration test', () => {
       // 방 생성
       describe('POST /rooms', () => {
         it('should create a room', async () => {
-          return await pactum
+          return pactum
             .spec()
             .withHeaders({
               Authorization: 'Bearer $S{testToken2}',
@@ -452,7 +452,7 @@ describe('Application integration test', () => {
         });
 
         it('should fail if no title', async () => {
-          return await pactum
+          return pactum
             .spec()
             .withHeaders({
               Authorization: 'Bearer $S{testToken2}',
@@ -468,7 +468,7 @@ describe('Application integration test', () => {
         });
 
         it('should fail if no theme', async () => {
-          return await pactum
+          return pactum
             .spec()
             .withHeaders({
               Authorization: 'Bearer $S{testToken2}',
@@ -484,7 +484,7 @@ describe('Application integration test', () => {
         });
 
         it('should fail if no total', async () => {
-          return await pactum
+          return pactum
             .spec()
             .withHeaders({
               Authorization: 'Bearer $S{testToken2}',
@@ -500,7 +500,7 @@ describe('Application integration test', () => {
         });
 
         it('should fail if no tags', async () => {
-          return await pactum
+          return pactum
             .spec()
             .withHeaders({
               Authorization: 'Bearer $S{testToken2}',

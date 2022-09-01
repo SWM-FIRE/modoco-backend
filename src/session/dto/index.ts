@@ -1,1 +1,1 @@
-export * from './CreateSessionDto';
+export * from './session.dto';

@@ -4,8 +4,6 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import { ConfigService } from '@nestjs/config';
 import { createClient } from 'redis';
 import { INestApplicationContext, Logger } from '@nestjs/common';
-import { AuthService } from 'src/auth/auth.service';
-import { SocketWithAuth } from 'src/auth/types/types';
 
 export class RedisIoAdapter extends IoAdapter {
   constructor(
@@ -21,10 +19,9 @@ export class RedisIoAdapter extends IoAdapter {
 
   /**
    * connect to redis and create redis adapter
-   * @param {NestExpressApplication} app NestExpressApplication app
    * @returns {Promise<void>}
    */
-  async connectToRedis(): Promise<void> {
+  async connectToRedis() {
     const pubClient = createClient({
       url: this.REDIS_HOST,
     });

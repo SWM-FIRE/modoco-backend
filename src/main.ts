@@ -33,13 +33,13 @@ async function bootstrap() {
  * @returns {Promise<NestExpressApplication>} NestExpressApplication app
  */
 async function createServer(): Promise<NestExpressApplication> {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  return app;
+  return await NestFactory.create<NestExpressApplication>(AppModule);
 }
 
 /**
  * use middleware that should be executed before server init
  * @param {NestExpressApplication} app NestExpressApplication app
+ * @param {ConfigService} configService config service
  */
 function preInitServer(
   app: NestExpressApplication,
@@ -72,6 +72,7 @@ function preInitServer(
 /**
  * create RedisIoAdapter and connect to redis
  * @param {NestExpressApplication} app NestExpressApplication app
+ * @param {ConfigService} configService config service
  * @returns {Promise<RedisIoAdapter>} redis adapter
  */
 async function connectRedis(
@@ -102,6 +103,7 @@ function createDocument(
  * initialize server
  * @param {NestExpressApplication} app NestExpressApplication app
  * @param {RedisIoAdapter} redisIoAdapter redis adapter
+ * @param {ConfigService} configService config service
  */
 async function initServer(
   app: NestExpressApplication,

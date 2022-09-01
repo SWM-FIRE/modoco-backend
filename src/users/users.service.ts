@@ -39,15 +39,13 @@ export class UsersService {
 
   async findAll() {
     try {
-      const users = await this.prisma.user.findMany({
+      return await this.prisma.user.findMany({
         select: {
           uid: true,
           nickname: true,
           avatar: true,
         },
       });
-
-      return users;
     } catch (error) {
       this.logger.error({
         code: error.code,
