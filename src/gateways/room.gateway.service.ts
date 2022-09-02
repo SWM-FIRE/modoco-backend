@@ -224,13 +224,13 @@ export class RoomGatewayService {
       return;
     }
 
-    // kick user
-    userToKickSocket.leave(payload.room);
-
     // emit a `kicked` event to all user in the room
     this.server.to(payload.room).emit(EVENT.KICK_USER, {
       kickUser: userToKick,
     });
+    
+    // kick user
+    userToKickSocket.leave(payload.room);
   }
 
   /**
