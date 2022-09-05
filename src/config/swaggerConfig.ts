@@ -21,7 +21,7 @@ const SWAGGER_OPTIONS = new DocumentBuilder()
     {
       type: 'http',
       scheme: 'bearer',
-      name: 'Authorization',
+      name: 'authorization',
       in: 'header',
     },
     'access_token',

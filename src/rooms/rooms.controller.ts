@@ -8,7 +8,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { GetUserDecorator } from 'src/auth/decorator';
 import { JwtGuard } from 'src/auth/guard';
 import { User } from 'src/users/dto';
@@ -20,6 +20,7 @@ import { RoomsService } from './rooms.service';
 export class RoomsController {
   constructor(private roomsService: RoomsService) {}
 
+  @ApiBearerAuth('access_token')
   @UseGuards(JwtGuard)
   @Post()
   async createRoom(@GetUserDecorator() user: User, @Body() dto: CreateRoomDTO) {
@@ -31,6 +32,7 @@ export class RoomsController {
     return this.roomsService.findAllRooms();
   }
 
+  @ApiBearerAuth('access_token')
   @UseGuards(JwtGuard)
   @Get(':id')
   async findRoomById(
@@ -39,6 +41,7 @@ export class RoomsController {
     return this.roomsService.findRoomById(id);
   }
 
+  @ApiBearerAuth('access_token')
   @UseGuards(JwtGuard)
   @Delete(':id')
   async removeRoomById(@Param('id', ParseIntPipe) id: number): Promise<void> {
