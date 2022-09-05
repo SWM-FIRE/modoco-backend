@@ -21,11 +21,9 @@ import {
   RecordPayload,
   CandidatePayload,
   MediaStateChangePayload,
+  KickUserPayload,
 } from './dto';
-import { KickUserPayload } from './dto/kick-user.dto';
-import { ApiTags } from '@nestjs/swagger';
 
-@ApiTags('socket')
 @WebSocketGateway({
   cors: { origin: '*' },
   transports: ['websocket', 'polling'],
