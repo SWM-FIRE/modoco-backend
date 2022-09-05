@@ -12,11 +12,11 @@ export class RoomsService {
 
   /**
    * Create a room and return the room object
-   * @param user
+   * @param {User} user
    * @param {CreateRoomDTO} dto create room dto
    * @returns {Promise<CreateRoomDTO>}
    */
-  async create(user, dto: CreateRoomDTO) {
+  async createRoom(user: User, dto: CreateRoomDTO) {
     const room = await this.prisma.room.create({
       data: {
         moderator: {
@@ -43,10 +43,10 @@ export class RoomsService {
   }
 
   /**
-   * find all rooms and return all rooms
+   * return all rooms
    * @returns {Promise<GetRoomDTO[]>}
    */
-  async findAll() {
+  async findAllRooms() {
     const rooms: GetRoomDTO[] = await this.prisma.room.findMany({
       select: getRoomSelector,
     });
@@ -56,12 +56,12 @@ export class RoomsService {
 
   /**
    * find one room and return room object
-   * @param {number} id roomId(=itemId in DB)
+   * @param {number} roomId roomId(=itemId in DB)
    * @returns {Promise<GetRoomDTO>}
    */
-  async findRoomById(id: number) {
+  async findRoomById(roomId: number) {
     const room: GetRoomDTO = await this.prisma.room.findFirst({
-      where: { itemId: id },
+      where: { itemId: roomId },
       select: getRoomSelector,
     });
 
@@ -70,12 +70,12 @@ export class RoomsService {
 
   /**
    * delete one room
-   * @param {number} id roomId(=itemId in DB)
+   * @param {number} roomId roomId(=itemId in DB)
    */
-  async deleteOne(id: number) {
+  async removeRoomById(roomId: number) {
     try {
       await this.prisma.room.delete({
-        where: { itemId: id },
+        where: { itemId: roomId },
       });
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
@@ -89,22 +89,17 @@ export class RoomsService {
 
   /**
    * update room in DB when user join room
-   * @param {number} id roomId(=itemId in DB)
+   * @param {number} roomId roomId(=itemId in DB)
    * @param {number} existingRoomMembersLength length of existing room members
    * @returns {Promise<GetRoomDTO>}
    */
   async joinRoom(
-    id: string,
+    roomId: number,
     existingRoomMembersLength: number,
   ): Promise<GetRoomDTO> {
     try {
-      const itemId = parseInt(id, 10);
-      if (isNaN(itemId)) {
-        this.logger.warn('Room not found :: room id is NaN');
-      }
-
       const room: GetRoomDTO = await this.prisma.room.update({
-        where: { itemId },
+        where: { itemId: roomId },
         data: { current: existingRoomMembersLength + 1 },
         select: getRoomSelector,
       });
@@ -126,22 +121,17 @@ export class RoomsService {
 
   /**
    * update room in DB when user leave room
-   * @param {number} id roomId(=itemId in DB)
+   * @param {number} roomId roomId(=itemId in DB)
    * @param {number} currentRoomMembersLength length of current room members
    * @returns {Promise<GetRoomDTO>}
    */
   async leaveRoom(
-    id: string,
+    roomId: number,
     currentRoomMembersLength: number,
   ): Promise<GetRoomDTO> {
     try {
-      const itemId = parseInt(id, 10);
-      if (isNaN(itemId)) {
-        this.logger.warn('Room not found :: room id is NaN');
-      }
-
       let room = await this.prisma.room.update({
-        where: { itemId },
+        where: { itemId: roomId },
         data: { current: currentRoomMembersLength },
         select: getRoomSelector,
       });
@@ -153,7 +143,7 @@ export class RoomsService {
       if (room.current < 0) {
         this.logger.warn('[ASSERT] Tried to set room current value to minus');
         room = await this.prisma.room.update({
-          where: { itemId: parseInt(id, 10) },
+          where: { itemId: roomId },
           data: { current: 0 },
           select: getRoomSelector,
         });
@@ -172,17 +162,17 @@ export class RoomsService {
 
   /**
    * get room capacity(total)
-   * @param {number} id roomId(=itemId in DB)
+   * @param {number} roomId roomId(=itemId in DB)
    * @returns {Promise<number>}
    */
-  async getRoomCapacity(id: number): Promise<number> {
+  async getRoomCapacity(roomId: number): Promise<number> {
     try {
-      if (isNaN(id)) {
+      if (roomId < 0) {
         return 0;
       }
 
       const room = await this.prisma.room.findFirst({
-        where: { itemId: id },
+        where: { itemId: roomId },
         select: {
           total: true,
         },
@@ -198,8 +188,12 @@ export class RoomsService {
     }
   }
 
-  async getRoomModerator(id: number) {
-    const room = await this.findRoomById(id);
+  /**
+   * get moderator of the room by roomId
+   * @param {number} roomId roomId(=itemId in DB)
+   */
+  async getRoomModerator(roomId: number) {
+    const room = await this.findRoomById(roomId);
     if (!room) {
       return null;
     }
@@ -207,8 +201,14 @@ export class RoomsService {
     return room.moderator;
   }
 
-  async isRoomModerator(id: number, user: User) {
-    const roomModerator = await this.getRoomModerator(id);
+  /**
+   * check if user is room moderator
+   * @param {number} roomId roomId(=itemId in DB)
+   * @param {User} user user
+   * @returns {Promise<boolean>} true if user is moderator of the room
+   */
+  async isRoomModerator(roomId: number, user: User) {
+    const roomModerator = await this.getRoomModerator(roomId);
     if (!roomModerator) {
       return false;
     }

@@ -11,6 +11,7 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { GetUserDecorator } from 'src/auth/decorator';
 import { JwtGuard } from 'src/auth/guard';
+import { User } from 'src/users/dto';
 import { CreateRoomDTO, GetRoomDTO } from './dto';
 import { RoomsService } from './rooms.service';
 
@@ -21,26 +22,26 @@ export class RoomsController {
 
   @UseGuards(JwtGuard)
   @Post()
-  async create(@GetUserDecorator() user, @Body() dto: CreateRoomDTO) {
-    return this.roomsService.create(user, dto);
+  async createRoom(@GetUserDecorator() user: User, @Body() dto: CreateRoomDTO) {
+    return this.roomsService.createRoom(user, dto);
   }
 
   @Get()
-  async findAll(): Promise<GetRoomDTO[]> {
-    return this.roomsService.findAll();
+  async findAllRooms(): Promise<GetRoomDTO[]> {
+    return this.roomsService.findAllRooms();
   }
 
   @UseGuards(JwtGuard)
   @Get(':id')
-  async findOne(
-    @Param('id', new ParseIntPipe()) id: number,
+  async findRoomById(
+    @Param('id', ParseIntPipe) id: number,
   ): Promise<GetRoomDTO> {
     return this.roomsService.findRoomById(id);
   }
 
   @UseGuards(JwtGuard)
   @Delete(':id')
-  async remove(@Param('id', new ParseIntPipe()) id: number): Promise<void> {
-    return this.roomsService.deleteOne(id);
+  async removeRoomById(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    return this.roomsService.removeRoomById(id);
   }
 }

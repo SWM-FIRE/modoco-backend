@@ -5,8 +5,8 @@ export class MediaStateChangePayload {
   @IsString()
   sid?: string;
 
-  @IsString()
   @IsNotEmpty()
+  @IsString()
   room: string;
 
   @IsBoolean()

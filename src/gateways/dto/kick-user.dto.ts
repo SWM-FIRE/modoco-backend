@@ -1,13 +1,13 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
 export class KickUserPayload {
-  @IsString()
   @IsNotEmpty()
+  @IsString()
   room: string;
 
   @IsNotEmpty()
   userToKick: {
-    uid: string;
+    uid: number;
     sid: string;
   };
 }

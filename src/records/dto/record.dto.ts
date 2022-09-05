@@ -1,16 +1,10 @@
-import {
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsPositive,
-  IsString,
-} from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsPositive } from 'class-validator';
 import { GetUserDTO } from 'src/users/dto';
 
 export class CreateRecordDTO {
   @IsOptional()
-  @IsString()
-  room?: string;
+  @IsNumber()
+  room?: number;
 }
 
 export class GetRecordDTO {
@@ -33,6 +27,6 @@ export class GetRecordDTO {
   duration: number;
 
   @IsOptional()
-  @IsString()
-  room?: string;
+  @IsNumber()
+  room?: number;
 }

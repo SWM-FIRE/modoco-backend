@@ -13,7 +13,7 @@ export class UsersService {
 
   private readonly logger = new Logger('UsersService');
 
-  async create(dto: CreateUserDTO) {
+  async createUser(dto: CreateUserDTO) {
     const hash = await this.authService.generateHash(dto.password);
     try {
       const user = await this.prisma.user.create({
@@ -37,7 +37,7 @@ export class UsersService {
     }
   }
 
-  async findAll() {
+  async findAllUsers() {
     try {
       return await this.prisma.user.findMany({
         select: {
@@ -56,7 +56,7 @@ export class UsersService {
 
   /**
    *
-   * @param uid user id
+   * @param {number} uid user id
    * @returns user object
    */
   async findUserByUid(uid: number) {
@@ -85,7 +85,7 @@ export class UsersService {
     }
   }
 
-  async update(user: User, dto: UpdateUserDTO) {
+  async updateUser(user: User, dto: UpdateUserDTO) {
     try {
       let updatedUser = await this.prisma.user.update({
         where: {
@@ -130,7 +130,7 @@ export class UsersService {
     }
   }
 
-  async delete(uid: number) {
+  async deleteUserById(uid: number) {
     try {
       await this.prisma.user.delete({
         where: {

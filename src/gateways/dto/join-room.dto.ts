@@ -1,11 +1,11 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class JoinRoomPayload {
   @IsString()
   @IsNotEmpty()
   room: string;
 
-  @IsString()
+  @IsNumber()
   @IsNotEmpty()
-  uid: string;
+  uid: number;
 }

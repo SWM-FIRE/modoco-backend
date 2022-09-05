@@ -25,14 +25,14 @@ export class UsersController {
 
   @HttpCode(HttpStatus.CREATED)
   @Post()
-  async create(@Body() user: CreateUserDTO) {
-    return this.usersService.create(user);
+  async createUser(@Body() user: CreateUserDTO) {
+    return this.usersService.createUser(user);
   }
 
   @UseGuards(JwtGuard)
   @Get()
-  async findAll() {
-    return this.usersService.findAll();
+  async findAllUsers() {
+    return this.usersService.findAllUsers();
   }
 
   @UseGuards(JwtGuard)
@@ -43,19 +43,19 @@ export class UsersController {
 
   @UseGuards(JwtGuard)
   @Get(':uid')
-  async findOne(@Param('uid', ParseIntPipe) uid: number) {
-    return this.usersService.findUserByUid(uid);
+  async findUserByUid(@Param('uid') uid: number) {
+    if (typeof uid === 'number') return this.usersService.findUserByUid(uid);
   }
 
   @UseGuards(JwtGuard)
   @Put()
-  update(@GetUserDecorator() user: User, @Body() dto: UpdateUserDTO) {
-    return this.usersService.update(user, dto);
+  updateUser(@GetUserDecorator() user: User, @Body() dto: UpdateUserDTO) {
+    return this.usersService.updateUser(user, dto);
   }
 
   @UseGuards(JwtGuard)
   @Delete()
-  remove(@Body('uid', ParseIntPipe) uid: number) {
-    return this.usersService.delete(uid);
+  deleteUserById(@Body('uid') uid: number) {
+    if (typeof uid === 'number') return this.usersService.deleteUserById(uid);
   }
 }

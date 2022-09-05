@@ -48,7 +48,7 @@ export class GetUserDTO {
     description: "The user's uid",
     type: Number,
   })
-  @IsString()
+  @IsNumber()
   @IsNotEmpty()
   uid: number;
 

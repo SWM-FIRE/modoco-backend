@@ -3,18 +3,18 @@ import { Server, Socket } from 'socket.io';
 import { RoomsService } from 'src/rooms/rooms.service';
 import { RecordsService } from 'src/records/records.service';
 import { UsersService } from 'src/users/users.service';
+import { User } from 'src/users/dto';
 import {
   ChatMessagePayload,
   LeaveRoomPayload,
   JoinRoomPayload,
+  KickUserPayload,
   CallOfferPayload,
   AnswerOfferPayload,
   RecordPayload,
   CandidatePayload,
   MediaStateChangePayload,
 } from './dto';
-import { User } from 'src/users/dto';
-import { KickUserPayload } from './dto/kick-user.dto';
 import { EVENT } from './constants/event.enum';
 
 @Injectable()
@@ -73,7 +73,7 @@ export class RoomGatewayService {
           // decrement room current count
           // minus one because current user, who is leaving, is still in the room
           await this.roomsService.leaveRoom(
-            room,
+            parseInt(room, 10),
             currentRoomMembers.length - 1,
           );
 
@@ -153,7 +153,7 @@ export class RoomGatewayService {
     });
 
     // increment room current count
-    await this.roomsService.joinRoom(room, roomMembers.length);
+    await this.roomsService.joinRoom(parseInt(room, 10), roomMembers.length);
 
     this.logger.debug(
       `Client joined room(${room}), sid: ${client.id}), uid: ${uid}`,
@@ -173,7 +173,7 @@ export class RoomGatewayService {
       return;
     }
 
-    const userUid = parseInt(payload.userToKick.uid);
+    const userUid = payload.userToKick.uid;
     if (isNaN(userUid)) {
       moderatorSocket.emit(EVENT.EXCEPTION, 'You tried to kick unknown user');
       return;
@@ -228,7 +228,7 @@ export class RoomGatewayService {
     this.server.to(payload.room).emit(EVENT.KICK_USER, {
       kickUser: userToKick,
     });
-    
+
     // kick user
     userToKickSocket.leave(payload.room);
   }
@@ -249,7 +249,10 @@ export class RoomGatewayService {
     // get all users who in currently in the room
     const currentRoomMembers = await this.server.in(room).fetchSockets();
     // decrement room current count
-    await this.roomsService.leaveRoom(room, currentRoomMembers.length);
+    await this.roomsService.leaveRoom(
+      parseInt(room, 10),
+      currentRoomMembers.length,
+    );
 
     client.emit(EVENT.LEFT_ROOM, {
       sid: client.id,
