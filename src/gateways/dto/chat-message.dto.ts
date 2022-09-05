@@ -1,13 +1,13 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class ChatMessagePayload {
   @IsString()
   @IsNotEmpty()
   room: string;
 
-  @IsString()
+  @IsNumber()
   @IsNotEmpty()
-  sender: string;
+  sender: number;
 
   @IsString()
   @IsNotEmpty()
