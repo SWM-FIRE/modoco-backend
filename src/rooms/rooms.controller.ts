@@ -40,8 +40,18 @@ export class RoomsController {
     description: 'Room 생성 성공',
     schema: {
       example: {
-        access_token:
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjE3NSwiZW1haWwiOiJhc2RAYS5jb20iLCJpYXQiOjE2NjIzNzQyNTEsImV4cCI6MTY2MjQ2MDY1MX0.FeVh3pfkPFjqgylfMbCXaxfkyPewJpQTt0U0r_E5acY',
+        itemId: 115,
+        title: 'React 같이 할 분~',
+        details: 'React를 뿌셔보고 싶은 분 들어오세용.',
+        tags: ['React', 'Javascript'],
+        total: 4,
+        current: 0,
+        theme: 'camping',
+        moderator: {
+          uid: 15,
+          nickname: 'lambda',
+          avatar: 16,
+        },
       },
     },
   })

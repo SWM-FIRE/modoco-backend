@@ -14,6 +14,7 @@ import {
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiBody,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiNoContentResponse,
@@ -176,13 +177,23 @@ export class UsersController {
     summary: '유저 계정 삭제',
     description: '유저 계정을 삭제하는 API',
   })
+  @ApiBody({
+    schema: {
+      properties: {
+        uid: { type: 'number' },
+      },
+      example: {
+        uid: 21,
+      },
+    },
+  })
   @ApiUnauthorizedResponse({
     description: 'Unauthorized. Invalid token.',
   })
   @ApiNoContentResponse({
     description: '유저 삭제 성공',
     schema: {
-      example: {},
+      example: '',
     },
   })
   @ApiBearerAuth('access_token')
