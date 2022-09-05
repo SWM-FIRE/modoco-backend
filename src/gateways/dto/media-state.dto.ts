@@ -1,5 +1,7 @@
+import { ApiTags } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
+@ApiTags('socket')
 export class MediaStateChangePayload {
   @IsOptional()
   @IsString()
