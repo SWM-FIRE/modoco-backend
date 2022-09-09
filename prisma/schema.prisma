@@ -12,7 +12,12 @@ datasource db {
 }
 
 model User {
-  uid       Int      @id @default(autoincrement())
+  uid Int @id @default(autoincrement())
+
+  kakaoId  Int? @unique
+  googleId Int? @unique
+  githubId Int? @unique
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
