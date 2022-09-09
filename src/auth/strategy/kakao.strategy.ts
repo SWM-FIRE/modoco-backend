@@ -4,13 +4,11 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-kakao';
 import { CreateKakaoUserDTO } from 'src/users/dto';
 import { UsersService } from 'src/users/users.service';
-import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class kakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
   constructor(
     readonly configService: ConfigService,
-    private readonly prismaService: PrismaService,
     private readonly usersService: UsersService,
   ) {
     const KAKAO_CLIENT_ID = configService.get('KAKAO_CLIENT_ID');
@@ -35,11 +33,16 @@ export class kakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
     // find user in modoco db
     let user = await this.usersService.findUserByKakaoId(kakaoId);
     if (!user) {
-      // create user in modoco db
-      user = await this.usersService.createKakaoUser(createUserDTO);
+      try {
+        // create user in modoco db
+        user = await this.usersService.createKakaoUser(createUserDTO);
+      } catch (error) {
+        done(error);
+      }
     }
 
-    done(null, createUserDTO);
+    // attach user to express request
+    done(null, user);
   }
 }
 

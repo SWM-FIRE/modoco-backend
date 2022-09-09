@@ -38,8 +38,6 @@ export class UsersService {
   }
 
   async createKakaoUser(dto: CreateKakaoUserDTO) {
-    console.log({ email: dto.email ? dto.email : null });
-
     try {
       const user = await this.prisma.user.create({
         data: {
@@ -57,7 +55,8 @@ export class UsersService {
           throw new ForbiddenException('User already exists');
         }
       }
-      //throw error;
+
+      throw error;
     }
   }
 
