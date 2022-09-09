@@ -22,10 +22,10 @@ model User {
   updatedAt DateTime @updatedAt
 
   nickname String
-  email    String @unique
-  hash     String
+  email    String? @unique
+  hash     String?
 
-  avatar Int
+  avatar Int @default(1)
 
   Room   Room[]
   Record Record[]
