@@ -43,6 +43,29 @@ export class CreateUserDTO {
 }
 
 @ApiTags('users')
+export class CreateKakaoUserDTO {
+  @ApiProperty({
+    description: 'The nickname of the user',
+    type: String,
+  })
+  @IsString()
+  @IsNotEmpty()
+  nickname: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  kakaoId: number;
+
+  @ApiProperty({
+    description: 'The email of the user',
+    type: String,
+  })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+}
+
+@ApiTags('users')
 export class GetUserDTO {
   @ApiProperty({
     description: "The user's uid",

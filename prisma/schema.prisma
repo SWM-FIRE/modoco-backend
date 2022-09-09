@@ -12,15 +12,20 @@ datasource db {
 }
 
 model User {
-  uid       Int      @id @default(autoincrement())
+  uid Int @id @default(autoincrement())
+
+  kakaoId  BigInt? @unique
+  googleId BigInt? @unique
+  githubId BigInt? @unique
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   nickname String
-  email    String @unique
-  hash     String
+  email    String? @unique
+  hash     String?
 
-  avatar Int
+  avatar Int @default(1)
 
   Room   Room[]
   Record Record[]

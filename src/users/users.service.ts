@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateUserDTO, UpdateUserDTO } from './dto';
+import { CreateKakaoUserDTO, CreateUserDTO, UpdateUserDTO } from './dto';
 
 @Injectable()
 export class UsersService {
@@ -34,6 +34,29 @@ export class UsersService {
         }
       }
       //throw error;
+    }
+  }
+
+  async createKakaoUser(dto: CreateKakaoUserDTO): Promise<User> {
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          nickname: dto.nickname,
+          email: dto.email ? dto.email : null,
+          kakaoId: dto.kakaoId,
+        },
+      });
+
+      return user; //this.authService.signToken(user.uid, user.email);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          this.logger.debug('User already exists');
+          throw new ForbiddenException('User already exists');
+        }
+      }
+
+      throw error;
     }
   }
 
@@ -145,6 +168,21 @@ export class UsersService {
       } else {
         throw error;
       }
+    }
+  }
+
+  async findUserByKakaoId(kakaoId: number) {
+    try {
+      return await this.prisma.user.findUnique({
+        where: {
+          kakaoId,
+        },
+      });
+    } catch (error) {
+      this.logger.error({
+        code: error.code,
+        message: error.message,
+      });
     }
   }
 }
