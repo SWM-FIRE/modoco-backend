@@ -37,7 +37,7 @@ export class UsersService {
     }
   }
 
-  async createKakaoUser(dto: CreateKakaoUserDTO) {
+  async createKakaoUser(dto: CreateKakaoUserDTO): Promise<User> {
     try {
       const user = await this.prisma.user.create({
         data: {
@@ -176,11 +176,6 @@ export class UsersService {
       return await this.prisma.user.findUnique({
         where: {
           kakaoId,
-        },
-        select: {
-          uid: true,
-          nickname: true,
-          avatar: true,
         },
       });
     } catch (error) {

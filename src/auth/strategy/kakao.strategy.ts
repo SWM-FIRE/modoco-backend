@@ -4,12 +4,14 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-kakao';
 import { CreateKakaoUserDTO } from 'src/users/dto';
 import { UsersService } from 'src/users/users.service';
+import { AuthService } from '../auth.service';
 
 @Injectable()
 export class kakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
   constructor(
     readonly configService: ConfigService,
     private readonly usersService: UsersService,
+    private readonly authService: AuthService,
   ) {
     const KAKAO_CLIENT_ID = configService.get('KAKAO_CLIENT_ID');
     const KAKAO_CALLBACK_URL = configService.get('KAKAO_CALLBACK_URL');
@@ -41,8 +43,17 @@ export class kakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
       }
     }
 
+    // create jwt token
+    const { access_token } = await this.authService.signToken(
+      user.uid,
+      user.email,
+    );
+
     // attach user to express request
-    done(null, user);
+    done(null, {
+      ...user,
+      access_token,
+    });
   }
 }
 
