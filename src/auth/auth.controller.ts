@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Query, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUserDecorator } from './decorator';
@@ -8,7 +8,16 @@ export class AuthController {
   constructor(private readonly configService: ConfigService) {}
   @Get('kakao')
   @UseGuards(AuthGuard('kakao'))
-  loginKakao(@GetUserDecorator() user) {
-    return user;
+  loginKakao() {
+    return 'loginKakao';
+  }
+
+  @Get('kakao/callback')
+  @UseGuards(AuthGuard('kakao'))
+  loginKakaoRedirect(@GetUserDecorator() user, @Query('code') code) {
+    return {
+      user,
+      code,
+    };
   }
 }

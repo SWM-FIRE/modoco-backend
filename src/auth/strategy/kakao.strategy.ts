@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
-import { User } from '@prisma/client';
 import { Strategy } from 'passport-kakao';
+import { CreateKakaoUserDTO } from 'src/users/dto';
 import { UsersService } from 'src/users/users.service';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -26,21 +26,20 @@ export class kakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
     const { id, kakao_account }: profileJson = profile._json;
     const kakaoId = id;
 
-    const payload = {
+    const createUserDTO: CreateKakaoUserDTO = {
       kakaoId,
       nickname: kakao_account.profile.nickname,
       email: kakao_account.email,
     };
 
-    console.log(payload);
-
-    const user = await this.usersService.findUserByKakaoId(kakaoId);
-
+    // find user in modoco db
+    let user = await this.usersService.findUserByKakaoId(kakaoId);
     if (!user) {
-      // 회원가입
+      // create user in modoco db
+      user = await this.usersService.createKakaoUser(createUserDTO);
     }
 
-    done(null, payload);
+    done(null, createUserDTO);
   }
 }
 

@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateUserDTO, UpdateUserDTO } from './dto';
+import { CreateKakaoUserDTO, CreateUserDTO, UpdateUserDTO } from './dto';
 
 @Injectable()
 export class UsersService {
@@ -37,20 +37,19 @@ export class UsersService {
     }
   }
 
-  async createKakaoUser(dto: CreateUserDTO, kakaoId: number) {
-    const hash = await this.authService.generateHash(dto.password);
+  async createKakaoUser(dto: CreateKakaoUserDTO) {
+    console.log({ email: dto.email ? dto.email : null });
+
     try {
       const user = await this.prisma.user.create({
         data: {
           nickname: dto.nickname,
-          email: dto.email,
-          kakaoId: kakaoId,
-          hash,
-          avatar: dto.avatar,
+          email: dto.email ? dto.email : null,
+          kakaoId: dto.kakaoId,
         },
       });
 
-      return this.authService.signToken(user.uid, user.email);
+      return user; //this.authService.signToken(user.uid, user.email);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {

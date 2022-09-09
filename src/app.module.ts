@@ -12,12 +12,13 @@ import { RecordsModule } from './records/records.module';
 import environmentConfig from './config/environmentConfig';
 import swaggerConfig from './config/swaggerConfig';
 import jwtConfig from './config/jwtConfig';
+import authConfig from './config/authConfig';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [environmentConfig, swaggerConfig, jwtConfig],
+      load: [environmentConfig, swaggerConfig, jwtConfig, authConfig],
       cache: true,
     }),
     UsersModule,
