@@ -6,11 +6,7 @@ import * as argon from 'argon2';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private prisma: PrismaService,
-    private jwt: JwtService,
-    private configService: ConfigService,
-  ) {}
+  constructor(private jwt: JwtService, private configService: ConfigService) {}
 
   passwordMatch(password: string, hash: string): Promise<boolean> {
     return argon.verify(hash, password);

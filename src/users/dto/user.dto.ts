@@ -66,6 +66,29 @@ export class CreateKakaoUserDTO {
 }
 
 @ApiTags('users')
+export class CreateGithubUserDTO {
+  @ApiProperty({
+    description: 'The nickname of the user',
+    type: String,
+  })
+  @IsString()
+  @IsNotEmpty()
+  nickname: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  githubId: number;
+
+  @ApiProperty({
+    description: 'The email of the user',
+    type: String,
+  })
+  @IsOptional()
+  @IsEmail()
+  email: string;
+}
+
+@ApiTags('users')
 export class GetUserDTO {
   @ApiProperty({
     description: "The user's uid",

@@ -3,17 +3,23 @@ import { JwtModule } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { jwtStrategy, wsJwtStrategy, kakaoStrategy } from './strategy/';
+import {
+  JwtStrategy,
+  WsJwtStrategy,
+  KakaoStrategy,
+  GithubStrategy,
+} from './strategy/';
 
 @Module({
   imports: [JwtModule.register({})],
   controllers: [AuthController],
   providers: [
     AuthService,
-    jwtStrategy,
-    wsJwtStrategy,
-    kakaoStrategy,
+    JwtStrategy,
+    WsJwtStrategy,
+    KakaoStrategy,
     UsersService,
+    GithubStrategy,
   ],
   exports: [AuthService],
 })

@@ -2,7 +2,12 @@ import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateKakaoUserDTO, CreateUserDTO, UpdateUserDTO } from './dto';
+import {
+  CreateGithubUserDTO,
+  CreateKakaoUserDTO,
+  CreateUserDTO,
+  UpdateUserDTO,
+} from './dto';
 
 @Injectable()
 export class UsersService {
@@ -48,6 +53,29 @@ export class UsersService {
       });
 
       return user; //this.authService.signToken(user.uid, user.email);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          this.logger.debug('User already exists');
+          throw new ForbiddenException('User already exists');
+        }
+      }
+
+      throw error;
+    }
+  }
+
+  async createGithubUser(dto: CreateGithubUserDTO): Promise<User> {
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          nickname: dto.nickname,
+          email: dto.email,
+          githubId: dto.githubId,
+        },
+      });
+
+      return user;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
@@ -176,6 +204,21 @@ export class UsersService {
       return await this.prisma.user.findUnique({
         where: {
           kakaoId,
+        },
+      });
+    } catch (error) {
+      this.logger.error({
+        code: error.code,
+        message: error.message,
+      });
+    }
+  }
+
+  async findUserByGithubId(githubId: number) {
+    try {
+      return await this.prisma.user.findUnique({
+        where: {
+          githubId,
         },
       });
     } catch (error) {
