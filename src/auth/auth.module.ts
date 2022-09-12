@@ -8,6 +8,7 @@ import {
   WsJwtStrategy,
   KakaoStrategy,
   GithubStrategy,
+  GoogleStrategy,
 } from './strategy/';
 
 @Module({
@@ -20,6 +21,7 @@ import {
     KakaoStrategy,
     UsersService,
     GithubStrategy,
+    GoogleStrategy,
   ],
   exports: [AuthService],
 })

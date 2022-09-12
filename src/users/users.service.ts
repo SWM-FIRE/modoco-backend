@@ -4,6 +4,7 @@ import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   CreateGithubUserDTO,
+  CreateGoogleUserDTO,
   CreateKakaoUserDTO,
   CreateUserDTO,
   UpdateUserDTO,
@@ -72,6 +73,29 @@ export class UsersService {
           nickname: dto.nickname,
           email: dto.email,
           githubId: dto.githubId,
+        },
+      });
+
+      return user;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          this.logger.debug('User already exists');
+          throw new ForbiddenException('User already exists');
+        }
+      }
+
+      throw error;
+    }
+  }
+
+  async createGoogleUser(dto: CreateGoogleUserDTO): Promise<User> {
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          nickname: dto.nickname,
+          email: dto.email,
+          googleId: dto.googleId,
         },
       });
 
@@ -219,6 +243,21 @@ export class UsersService {
       return await this.prisma.user.findUnique({
         where: {
           githubId,
+        },
+      });
+    } catch (error) {
+      this.logger.error({
+        code: error.code,
+        message: error.message,
+      });
+    }
+  }
+
+  async findUserByGoogleId(googleId: string) {
+    try {
+      return await this.prisma.user.findUnique({
+        where: {
+          googleId,
         },
       });
     } catch (error) {

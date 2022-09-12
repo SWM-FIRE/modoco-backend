@@ -15,7 +15,7 @@ model User {
   uid Int @id @default(autoincrement())
 
   kakaoId  BigInt? @unique
-  googleId BigInt? @unique
+  googleId String? @unique
   githubId BigInt? @unique
 
   createdAt DateTime @default(now())
