@@ -8,4 +8,9 @@ export default () => ({
     process.env.GITHUB_CALLBACK_URL ||
     'http://localhost:3333/api/v1/auth/github/oauth',
   GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET || '',
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
+  GOOGLE_CALLBACK_URL:
+    process.env.GOOGLE_CALLBACK_URL ||
+    'http://localhost:3333/api/v1/auth/google/oauth',
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
 });
