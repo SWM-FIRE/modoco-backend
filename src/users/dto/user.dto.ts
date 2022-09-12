@@ -89,6 +89,29 @@ export class CreateGithubUserDTO {
 }
 
 @ApiTags('users')
+export class CreateGoogleUserDTO {
+  @ApiProperty({
+    description: 'The nickname of the user',
+    type: String,
+  })
+  @IsString()
+  @IsNotEmpty()
+  nickname: string;
+
+  @IsString()
+  @IsNotEmpty()
+  googleId: string;
+
+  @ApiProperty({
+    description: 'The email of the user',
+    type: String,
+  })
+  @IsOptional()
+  @IsEmail()
+  email: string;
+}
+
+@ApiTags('users')
 export class GetUserDTO {
   @ApiProperty({
     description: "The user's uid",
