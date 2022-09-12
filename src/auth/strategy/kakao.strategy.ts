@@ -7,7 +7,7 @@ import { UsersService } from 'src/users/users.service';
 import { AuthService } from '../auth.service';
 
 @Injectable()
-export class kakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
+export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
   constructor(
     readonly configService: ConfigService,
     private readonly usersService: UsersService,
