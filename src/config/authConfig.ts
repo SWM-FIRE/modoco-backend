@@ -7,4 +7,5 @@ export default () => ({
   GITHUB_CALLBACK_URL:
     process.env.GITHUB_CALLBACK_URL ||
     'http://localhost:3333/api/v1/auth/github/oauth',
+  GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET || '',
 });
