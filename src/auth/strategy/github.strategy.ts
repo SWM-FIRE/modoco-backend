@@ -53,7 +53,6 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
       user.email,
     );
 
-    console.log(user);
     // attach user to express request
     done(null, {
       ...user,
