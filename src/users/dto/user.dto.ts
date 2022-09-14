@@ -52,9 +52,9 @@ export class CreateKakaoUserDTO {
   @IsNotEmpty()
   nickname: string;
 
-  @IsNumber()
+  @IsString()
   @IsNotEmpty()
-  kakaoId: number;
+  kakaoId: string;
 
   @ApiProperty({
     description: 'The email of the user',
@@ -75,9 +75,9 @@ export class CreateGithubUserDTO {
   @IsNotEmpty()
   nickname: string;
 
-  @IsNumber()
+  @IsString()
   @IsNotEmpty()
-  githubId: number;
+  githubId: string;
 
   @ApiProperty({
     description: 'The email of the user',

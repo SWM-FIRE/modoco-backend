@@ -14,9 +14,9 @@ datasource db {
 model User {
   uid Int @id @default(autoincrement())
 
-  kakaoId  BigInt? @unique
+  kakaoId  String? @unique
   googleId String? @unique
-  githubId BigInt? @unique
+  githubId String? @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
