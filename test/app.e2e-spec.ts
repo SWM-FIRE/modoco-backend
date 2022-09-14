@@ -301,7 +301,7 @@ describe('Application integration test', () => {
                 })
                 .put('/users')
                 .expectStatus(200)
-                .expectBody('');
+                .expectBodyContains('email');
             });
 
             it('read updated user information', async () => {
@@ -328,7 +328,7 @@ describe('Application integration test', () => {
               })
               .withBody({ uid: '$S{testPutTokenUID}' })
               .delete('/users')
-              .expectStatus(200);
+              .expectStatus(204);
           });
 
           it('users list should return one user', () => {
@@ -561,7 +561,7 @@ describe('Application integration test', () => {
                 Authorization: 'Bearer $S{testToken}',
               })
               .delete('/rooms/$S{testRoomId}')
-              .expectStatus(200);
+              .expectStatus(204);
           });
 
           it('should throw if delete a room without token', () => {
