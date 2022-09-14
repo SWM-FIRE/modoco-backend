@@ -46,13 +46,14 @@ export class UsersService {
   }
 
   async createKakaoUser(dto: CreateKakaoUserDTO): Promise<User> {
+    const avatar = this.getRandomAvatar();
     try {
       const user = await this.prisma.user.create({
         data: {
           nickname: dto.nickname,
           email: dto.email ? dto.email : null,
           kakaoId: dto.kakaoId,
-          avatar: this.getRandomAvatar(),
+          avatar,
         },
       });
 
@@ -70,13 +71,15 @@ export class UsersService {
   }
 
   async createGithubUser(dto: CreateGithubUserDTO): Promise<User> {
+    const avatar = this.getRandomAvatar();
+
     try {
       const user = await this.prisma.user.create({
         data: {
           nickname: dto.nickname,
           email: dto.email,
           githubId: dto.githubId,
-          avatar: this.getRandomAvatar(),
+          avatar,
         },
       });
 
@@ -94,13 +97,15 @@ export class UsersService {
   }
 
   async createGoogleUser(dto: CreateGoogleUserDTO): Promise<User> {
+    const avatar = this.getRandomAvatar();
+
     try {
       const user = await this.prisma.user.create({
         data: {
           nickname: dto.nickname,
           email: dto.email,
           googleId: dto.googleId,
-          avatar: this.getRandomAvatar(),
+          avatar,
         },
       });
 
@@ -275,7 +280,8 @@ export class UsersService {
 
   getRandomAvatar(): number {
     const min = 1;
-    const max = this.configService.get('AVATAR_COUNT') as number;
+    const max = this.configService.get('AVATAR_MAX_COUNT') as number;
+
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 }
