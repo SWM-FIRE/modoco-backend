@@ -5,11 +5,16 @@ import {
   Redirect,
   UseGuards,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { GetUserDecorator } from './decorator';
 import { GithubGuard, KakaoGuard, GoogleGuard } from './guard';
 
 @Controller('auth')
 export class AuthController {
+  AUTH_FRONTEND_URL: string = this.configService.get('AUTH_FRONTEND_URL');
+
+  constructor(private readonly configService: ConfigService) {}
+
   @Get('kakao')
   @UseGuards(KakaoGuard)
   loginKakao() {
@@ -18,10 +23,11 @@ export class AuthController {
 
   @Get('kakao/oauth')
   @UseGuards(KakaoGuard)
-  @Redirect('https://modocode.com', HttpStatus.FOUND)
+  @Redirect('https://modocode.com/auth', HttpStatus.FOUND)
   loginKakaoRedirect(@GetUserDecorator() user) {
-    // redirect to frontend
-    return { url: `https://modocode.com?access_token=${user.access_token}` };
+    return {
+      url: `${this.AUTH_FRONTEND_URL}?access_token=${user.access_token}`,
+    };
   }
 
   @Get('github')
@@ -32,10 +38,11 @@ export class AuthController {
 
   @Get('github/oauth')
   @UseGuards(GithubGuard)
-  @Redirect('https://modocode.com', HttpStatus.FOUND)
+  @Redirect('https://modocode.com/auth', HttpStatus.FOUND)
   loginGithubRedirect(@GetUserDecorator() user) {
-    // redirect to frontend
-    return { url: `https://modocode.com?access_token=${user.access_token}` };
+    return {
+      url: `${this.AUTH_FRONTEND_URL}?access_token=${user.access_token}`,
+    };
   }
 
   @Get('google')
@@ -46,9 +53,10 @@ export class AuthController {
 
   @Get('google/oauth')
   @UseGuards(GoogleGuard)
-  @Redirect('https://modocode.com', HttpStatus.FOUND)
+  @Redirect('https://modocode.com/auth', HttpStatus.FOUND)
   loginGoogleRedirect(@GetUserDecorator() user) {
-    // redirect to frontend
-    return { url: `https://modocode.com?access_token=${user.access_token}` };
+    return {
+      url: `${this.AUTH_FRONTEND_URL}?access_token=${user.access_token}`,
+    };
   }
 }
