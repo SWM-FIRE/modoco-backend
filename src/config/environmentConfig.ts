@@ -31,4 +31,5 @@ export default () => ({
     PORT: parseInt(process.env.REDIS_PORT, 10) || 6379,
     PASSWORD: process.env.REDIS_PASSWORD || '',
   },
+  AVATAR_MAX_COUNT: 30,
 });

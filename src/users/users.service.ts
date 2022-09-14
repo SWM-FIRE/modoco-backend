@@ -1,4 +1,5 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma, User } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -15,6 +16,7 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly authService: AuthService,
+    private readonly configService: ConfigService,
   ) {}
 
   private readonly logger = new Logger('UsersService');
@@ -50,6 +52,7 @@ export class UsersService {
           nickname: dto.nickname,
           email: dto.email ? dto.email : null,
           kakaoId: dto.kakaoId,
+          avatar: this.getRandomAvatar(),
         },
       });
 
@@ -73,6 +76,7 @@ export class UsersService {
           nickname: dto.nickname,
           email: dto.email,
           githubId: dto.githubId,
+          avatar: this.getRandomAvatar(),
         },
       });
 
@@ -96,6 +100,7 @@ export class UsersService {
           nickname: dto.nickname,
           email: dto.email,
           googleId: dto.googleId,
+          avatar: this.getRandomAvatar(),
         },
       });
 
@@ -266,5 +271,11 @@ export class UsersService {
         message: error.message,
       });
     }
+  }
+
+  getRandomAvatar(): number {
+    const min = 1;
+    const max = this.configService.get('AVATAR_COUNT') as number;
+    return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 }
