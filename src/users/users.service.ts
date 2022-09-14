@@ -223,7 +223,7 @@ export class UsersService {
     }
   }
 
-  async findUserByKakaoId(kakaoId: number) {
+  async findUserByKakaoId(kakaoId: string) {
     try {
       return await this.prisma.user.findUnique({
         where: {
@@ -238,7 +238,7 @@ export class UsersService {
     }
   }
 
-  async findUserByGithubId(githubId: number) {
+  async findUserByGithubId(githubId: string) {
     try {
       return await this.prisma.user.findUnique({
         where: {

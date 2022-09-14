@@ -1,8 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CreateRoomDTO, GetRoomDTO, getRoomSelector } from './dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma } from '@prisma/client';
-import { User } from '../users/dto';
+import { Prisma, User } from '@prisma/client';
 
 @Injectable()
 export class RoomsService {

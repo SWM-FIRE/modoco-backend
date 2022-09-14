@@ -184,17 +184,3 @@ export class UpdateUserDTO {
   @IsOptional()
   password?: string;
 }
-
-/**
- * jwtToken UserDTO
- * User without hash
- */
-export type User = {
-  uid: number;
-  createdAt: Date;
-  updatedAt: Date;
-  nickname: string;
-  email: string;
-  hash?: string;
-  avatar: number;
-};

@@ -3,7 +3,6 @@ import { Server, Socket } from 'socket.io';
 import { RoomsService } from 'src/rooms/rooms.service';
 import { RecordsService } from 'src/records/records.service';
 import { UsersService } from 'src/users/users.service';
-import { User } from 'src/users/dto';
 import {
   ChatMessagePayload,
   LeaveRoomPayload,
@@ -16,6 +15,7 @@ import {
   MediaStateChangePayload,
 } from './dto';
 import { EVENT } from './constants/event.enum';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class RoomGatewayService {

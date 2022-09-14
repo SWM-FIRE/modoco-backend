@@ -21,9 +21,9 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { User } from '@prisma/client';
 import { GetUserDecorator } from 'src/auth/decorator';
 import { JwtGuard } from 'src/auth/guard';
-import { User } from 'src/users/dto';
 import { CreateRoomDTO, GetRoomDTO } from './dto';
 import { RoomsService } from './rooms.service';
 
@@ -112,7 +112,7 @@ export class RoomsController {
     },
   })
   @Get()
-  async findAllRooms(): Promise<GetRoomDTO[]> {
+  async findAllRooms() {
     return this.roomsService.findAllRooms();
   }
 
@@ -165,7 +165,7 @@ export class RoomsController {
   @UseGuards(JwtGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
-  async removeRoomById(@Param('id', ParseIntPipe) id: number): Promise<void> {
+  async removeRoomById(@Param('id', ParseIntPipe) id: number) {
     return this.roomsService.removeRoomById(id);
   }
 }
