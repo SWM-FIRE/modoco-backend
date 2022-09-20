@@ -18,7 +18,7 @@ Docker와 관련된 파일은 `/dockers`에 있습니다.
 
 상세한 설정 값에 관해서는 `/src/config/` 아래에 있는 파일들을 참고해주세요.
 
-```text
+```env
 # *********************************************** #
 #  This is an example env file for modoco server  #
 # *********************************************** #
@@ -124,7 +124,7 @@ $ yarn test:e2e
 $ yarn test:cov
 ```
 
-## Prisam
+## Prisma
 
 ### Migration
 
