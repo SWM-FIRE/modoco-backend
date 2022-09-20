@@ -3,11 +3,13 @@ import {
   Get,
   HttpStatus,
   Redirect,
+  UseFilters,
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GetUserDecorator } from './decorator';
 import { GithubGuard, KakaoGuard, GoogleGuard } from './guard';
+import { OAuthFilter } from './filters/oauth.filter';
 
 @Controller('auth')
 export class AuthController {
@@ -23,6 +25,7 @@ export class AuthController {
 
   @Get('kakao/oauth')
   @UseGuards(KakaoGuard)
+  @UseFilters(OAuthFilter)
   @Redirect('https://modocode.com/auth', HttpStatus.FOUND)
   loginKakaoRedirect(@GetUserDecorator() user) {
     return {
@@ -38,6 +41,7 @@ export class AuthController {
 
   @Get('github/oauth')
   @UseGuards(GithubGuard)
+  @UseFilters(OAuthFilter)
   @Redirect('https://modocode.com/auth', HttpStatus.FOUND)
   loginGithubRedirect(@GetUserDecorator() user) {
     return {
@@ -53,6 +57,7 @@ export class AuthController {
 
   @Get('google/oauth')
   @UseGuards(GoogleGuard)
+  @UseFilters(OAuthFilter)
   @Redirect('https://modocode.com/auth', HttpStatus.FOUND)
   loginGoogleRedirect(@GetUserDecorator() user) {
     return {

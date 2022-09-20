@@ -13,5 +13,6 @@ export default () => ({
     process.env.GOOGLE_CALLBACK_URL ||
     'http://localhost:3333/api/v1/auth/google/oauth',
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
+  FRONTEND_URL: 'https://modocode.com',
   AUTH_FRONTEND_URL: 'https://modocode.com/auth',
 });
