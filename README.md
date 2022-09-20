@@ -124,12 +124,53 @@ $ yarn test:e2e
 $ yarn test:cov
 ```
 
-## Database (ORM)
+## Prisam
 
-### Prisam
+### Migration
+
+- Migration files are in `/prisma/migrations/`.
+- Schema is `/prisma/schema.prisma`
+  - you have to configure `binaryTargets` depending on what OS you use
+
+#### Migrate to production database
+
+```bash
+# migrate migration files to database
+yarn prisma:dev:deploy
+```
+
+#### Create migration
+
+```bash
+prisma migrate dev
+```
+
+This command
+
+- Create migration from your schema
+- Apply migrations to database
+- Generate artifacts (e.g. Prisma Client)
+
+### Management
+
+```bash
+# Pull and update schema from existing db
+$ prisma db pull
+
+# Push schema state to db
+$ prisma db push
+```
+
+### Tool
 
 Simple database helper embeded in prisma
 
 ```bash
 yarn prisma studio
+```
+
+Generate prisma artifacts (ex. client file)
+
+```bash
+yarn prisma generate
 ```
