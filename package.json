@@ -4,7 +4,7 @@
   "description": "WebRTC signaling server using websocket",
   "author": "Juhyeong Ko",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "ci": "rm -rf node_modules && yarn install --frozen-lockfile",
     "prebuild": "rimraf dist",
