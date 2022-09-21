@@ -13,10 +13,11 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  nickname String
-  email    String? @unique
-  hash     String?
-  avatar   Int     @default(1)
+  nickname  String
+  email     String? @unique
+  hash      String?
+  statusQuo String  @default("")
+  avatar    Int     @default(1)
 
   githubId String? @unique
   googleId String? @unique
