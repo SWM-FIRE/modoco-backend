@@ -71,8 +71,8 @@ $ yarn ci
 ### 2. Run Containers
 
 ```bash
-# run redis and postgresql container
-$ docker:dev:up
+# run redis, postgresql container and migrate to postgresql
+$ yarn docker:dev:up && yarn prisma:dev:deploy
 ```
 
 ### 3. Run nestjs
@@ -142,7 +142,7 @@ yarn prisma:dev:deploy
 #### Create migration
 
 ```bash
-prisma migrate dev
+yarn prisma migrate dev
 ```
 
 This command
@@ -155,10 +155,10 @@ This command
 
 ```bash
 # Pull and update schema from existing db
-$ prisma db pull
+$ yarn prisma db pull
 
 # Push schema state to db
-$ prisma db push
+$ yarn prisma db push
 ```
 
 ### Tool
