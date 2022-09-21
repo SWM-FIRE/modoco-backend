@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-1.0.x"]
@@ -12,38 +9,41 @@ datasource db {
 }
 
 model User {
-  uid Int @id @default(autoincrement())
-
-  kakaoId  String? @unique
-  googleId String? @unique
-  githubId String? @unique
-
+  uid       Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   nickname String
   email    String? @unique
   hash     String?
+  avatar   Int     @default(1)
 
-  avatar Int @default(1)
+  githubId String? @unique
+  googleId String? @unique
+  kakaoId  String? @unique
 
-  Room   Room[]
+  friendship_friendFromTousers Friendship[] @relation("friendship_friendFromTousers")
+  friendship_friendToTousers   Friendship[] @relation("friendship_friendToTousers")
+
   Record Record[]
+  Room   Room[]
 
   @@map("users")
 }
 
 model Room {
-  itemId      Int      @id @default(autoincrement())
-  moderator   User     @relation(fields: [moderatorId], references: [uid], onDelete: SetNull)
+  itemId    Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  title   String
+  details String?
+  tags    String[]
+  total   Int
+  current Int      @default(0)
+  theme   String
+
   moderatorId Int
-  title       String
-  details     String?
-  tags        String[]
-  total       Int
-  current     Int      @default(0)
-  theme       String
-  createdAt   DateTime @default(now())
+  moderator   User @relation(fields: [moderatorId], references: [uid], onDelete: SetNull)
 
   @@map("rooms")
 }
@@ -52,10 +52,33 @@ model Record {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [uid], onDelete: Cascade)
-  userId    Int
-  duration  Int      @default(0)
-  room      String?
+
+  userId   Int
+  duration Int     @default(0)
+  room     String?
+  user     User    @relation(fields: [userId], references: [uid], onDelete: Cascade)
 
   @@map("records")
+}
+
+model Friendship {
+  friendFrom Int
+  friendTo   Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  status status @default(PENDING)
+
+  friendship_friendFromTousers User @relation("friendship_friendFromTousers", fields: [friendFrom], references: [uid], onDelete: Cascade, onUpdate: NoAction)
+  friendship_friendToTousers   User @relation("friendship_friendToTousers", fields: [friendTo], references: [uid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([friendFrom, friendTo])
+  @@map("friendships")
+}
+
+enum status {
+  PENDING
+  ACCEPTED
+  YOU
 }
