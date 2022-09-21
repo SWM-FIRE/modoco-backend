@@ -175,7 +175,8 @@ export class UsersController {
 
   @ApiOperation({
     summary: '유저 계정 삭제',
-    description: '유저 계정을 삭제하는 API',
+    description:
+      '로그인한 유저와 일치하는 uid를 보냈을 때 유저 계정을 삭제하는 API',
   })
   @ApiBody({
     schema: {
@@ -200,7 +201,10 @@ export class UsersController {
   @UseGuards(JwtGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete()
-  deleteUserById(@Body('uid', ParseIntPipe) uid: number) {
-    return this.usersService.deleteUserById(uid);
+  deleteUserById(
+    @Body('uid', ParseIntPipe) uid: number,
+    @GetUserDecorator('uid') loginUserId: number,
+  ) {
+    return this.usersService.deleteUserById(uid, loginUserId);
   }
 }

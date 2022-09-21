@@ -140,7 +140,7 @@ export class UsersService {
   }
 
   /**
-   *
+   * find user by uid
    * @param {number} uid user id
    * @returns user object
    */
@@ -215,7 +215,17 @@ export class UsersService {
     }
   }
 
-  async deleteUserById(uid: number) {
+  /**
+   * delete user by uid
+   * @param uid uid of user to delete given by body of request
+   * @param loginUserId uid of user logged in
+   */
+  async deleteUserById(uid: number, loginUserId: number) {
+    // check if correct user id is given
+    if (uid !== loginUserId) {
+      return;
+    }
+
     try {
       await this.prisma.user.delete({
         where: {
