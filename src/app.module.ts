@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { RoomsModule } from './rooms/rooms.module';
 import { GatewayModule } from './gateways/gateways.module';
+import { LobbyGatewayModule } from './lobbyGateways/lobbyGateways.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { SessionModule } from './session/session.module';
@@ -25,6 +26,7 @@ import authConfig from './config/authConfig';
     UsersModule,
     RoomsModule,
     GatewayModule,
+    LobbyGatewayModule,
     PrismaModule,
     AuthModule,
     SessionModule,
