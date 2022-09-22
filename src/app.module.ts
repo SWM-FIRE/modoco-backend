@@ -9,6 +9,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { SessionModule } from './session/session.module';
 import { RecordsModule } from './records/records.module';
+import { FriendsModule } from './friends/friends.module';
 import environmentConfig from './config/environmentConfig';
 import swaggerConfig from './config/swaggerConfig';
 import jwtConfig from './config/jwtConfig';
@@ -28,6 +29,7 @@ import authConfig from './config/authConfig';
     AuthModule,
     SessionModule,
     RecordsModule,
+    FriendsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
