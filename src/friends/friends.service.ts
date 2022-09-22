@@ -14,6 +14,15 @@ export class FriendsService {
   // add friend
   async addFriend(dto: CreateFriendDto, user: any) {
     try {
+      const isUser = await this.prisma.user.count({
+        where: {
+          uid: dto.friend,
+        },
+      });
+      if (isUser === 0) {
+        throw new ForbiddenException('Friend does not exist');
+      }
+
       const friendship = await this.prisma.friendship.create({
         data: {
           friendFrom: user.uid,
