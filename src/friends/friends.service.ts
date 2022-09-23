@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { Prisma } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateFriendDto } from './dto';
 
@@ -12,7 +12,7 @@ export class FriendsService {
   private readonly logger = new Logger('FriendsService');
 
   // add friend
-  async addFriend(dto: CreateFriendDto, user: any) {
+  async addFriend(dto: CreateFriendDto, user: User) {
     try {
       const isUser = await this.prisma.user.count({
         where: {
@@ -39,5 +39,61 @@ export class FriendsService {
       }
       throw error;
     }
+  }
+
+  // get friendship table
+  async getFriendship(user: User) {
+    const friendship: FriendshipResult[] =
+      await this.prisma.friendship.findMany({
+        where: {
+          OR: [
+            {
+              friendFrom: user.uid,
+            },
+            {
+              friendTo: user.uid,
+            },
+          ],
+        },
+        select: {
+          status: true,
+          friendship_friendFromTousers: {
+            select: {
+              uid: true,
+              nickname: true,
+              email: true,
+              avatar: true,
+            },
+          },
+          friendship_friendToTousers: {
+            select: {
+              uid: true,
+              nickname: true,
+              email: true,
+              avatar: true,
+            },
+          },
+        },
+      });
+
+    const results: FriendshipDTO[] = [];
+
+    friendship.forEach((fs) => {
+      const result: FriendshipDTO = {
+        status: fs.status,
+      };
+
+      if (fs.friendship_friendFromTousers.uid === user.uid) {
+        // user is sender
+        result.receiver = fs.friendship_friendToTousers;
+      } else {
+        // user is receiver
+        result.sender = fs.friendship_friendFromTousers;
+      }
+
+      results.push(result);
+    });
+
+    return results;
   }
 }
