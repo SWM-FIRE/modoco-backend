@@ -83,9 +83,6 @@ export class FriendsController {
     @GetUserDecorator() user: User,
     @Query()
     query: { status?: FriendshipStatus; type?: TYPES; friend?: number },
-    // @Query('status') status?: FriendshipStatus,
-    // @Query('type') type?: TYPES,
-    // @Query('friend', ParseIntPipe) friendUid?: number,
   ) {
     if (query.status) {
       return this.friendsService.getFriendshipsByStatus(user, query.status);
