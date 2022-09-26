@@ -1,5 +1,5 @@
-type FriendshipResult = {
-  status: 'PENDING' | 'ACCEPTED' | 'YOU';
+export type FriendshipResult = {
+  status: FriendshipStatus;
   friendship_friendFromTousers: {
     uid: number;
     nickname: string;
@@ -14,7 +14,7 @@ type FriendshipResult = {
   };
 };
 
-type FriendshipDTO = {
+export type FriendshipDTO = {
   status: string;
   sender?: {
     uid: number;
@@ -29,3 +29,5 @@ type FriendshipDTO = {
     avatar: number;
   };
 };
+
+export type FriendshipStatus = 'PENDING' | 'ACCEPTED' | 'YOU';

@@ -1,14 +1,16 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { User } from '@prisma/client';
 import { GetUserDecorator } from 'src/auth/decorator';
 import { JwtGuard } from 'src/auth/guard';
 import { CreateFriendDto } from './dto';
 import { FriendsService } from './friends.service';
+import { FriendshipStatus } from './types/friendship.type';
 
 @Controller('friends')
 @UseGuards(JwtGuard)
@@ -66,7 +68,21 @@ export class FriendsController {
   })
   @ApiBearerAuth('access_token')
   @Get()
-  getFriendship(@GetUserDecorator() user) {
-    return this.friendsService.getFriendship(user);
+  getFriendship(
+    @GetUserDecorator() user: User,
+    @Query('status') status: FriendshipStatus,
+  ) {
+    if (status === undefined) {
+      return this.friendsService.getFriendship(user);
+    } else if (status === 'ACCEPTED') {
+      // ?status=ACCEPTED
+      return this.friendsService.getAcceptedFriend(status, user);
+    } else if (status === 'PENDING') {
+      // NOT IMPLEMENTED
+    } else if (status === 'YOU') {
+      // NOT IMPLEMENTED
+    } else {
+      console.log('err', status);
+    }
   }
 }

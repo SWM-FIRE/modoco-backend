@@ -3,6 +3,11 @@ import { ApiTags } from '@nestjs/swagger';
 import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateFriendDto } from './dto';
+import {
+  FriendshipDTO,
+  FriendshipResult,
+  FriendshipStatus,
+} from './types/friendship.type';
 
 @ApiTags('users')
 @Injectable()
@@ -76,6 +81,59 @@ export class FriendsService {
         },
       });
 
+    const results: FriendshipDTO[] = this.makeResult(friendship, user);
+
+    return results;
+  }
+
+  // return accepted friend request
+  async getAcceptedFriend(status: FriendshipStatus, user: User) {
+    const acceptedFriends: FriendshipResult[] =
+      await this.prisma.friendship.findMany({
+        where: {
+          AND: [
+            {
+              OR: [
+                {
+                  friendFrom: user.uid,
+                },
+                {
+                  friendTo: user.uid,
+                },
+              ],
+            },
+            {
+              status: 'ACCEPTED',
+            },
+          ],
+        },
+        select: {
+          status: true,
+          friendship_friendFromTousers: {
+            select: {
+              uid: true,
+              nickname: true,
+              email: true,
+              avatar: true,
+            },
+          },
+          friendship_friendToTousers: {
+            select: {
+              uid: true,
+              nickname: true,
+              email: true,
+              avatar: true,
+            },
+          },
+        },
+      });
+
+    const results: FriendshipDTO[] = this.makeResult(acceptedFriends, user);
+
+    return results;
+  }
+
+  private makeResult(friendship: FriendshipResult[], user: User) {
     const results: FriendshipDTO[] = [];
 
     friendship.forEach((fs) => {
@@ -93,7 +151,6 @@ export class FriendsService {
 
       results.push(result);
     });
-
     return results;
   }
 }
