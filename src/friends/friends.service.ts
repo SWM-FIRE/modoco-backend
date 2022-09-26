@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { TYPES } from './constants/types.enum';
 import { CreateFriendDto } from './dto';
 import {
   FriendshipDTO,
@@ -99,7 +100,7 @@ export class FriendsService {
    * @param {User} user user
    * @returns {Promise<FriendshipResult[]>} accepted friends
    */
-  async getAcceptedFriend(status: FriendshipStatus, user: User) {
+  async getFriendshipsByStatus(user: User, status: FriendshipStatus) {
     const acceptedFriends: FriendshipResult[] =
       await this.prisma.friendship.findMany({
         where: {
@@ -115,7 +116,7 @@ export class FriendsService {
               ],
             },
             {
-              status: 'ACCEPTED',
+              status,
             },
           ],
         },
@@ -184,6 +185,55 @@ export class FriendsService {
       });
 
     return this.formatResult(acceptedFriends, user);
+  }
+
+  getPendingFriendshipsByType(user: User, type: TYPES) {
+    switch (type) {
+      case TYPES.SENT:
+        return this.getPendingSentFriendships(user);
+      case TYPES.RECEIVED:
+        return this.getPendingReceivedFriendships(user);
+      default:
+        return this.getFriendship(user);
+    }
+  }
+
+  private async getPendingSentFriendships(user: User) {
+    return await this.prisma.friendship.findFirst({
+      where: {
+        AND: [{ friendFrom: user.uid }, { status: 'PENDING' }],
+      },
+      select: {
+        status: true,
+        friendship_friendToTousers: {
+          select: {
+            uid: true,
+            nickname: true,
+            email: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+  }
+
+  private async getPendingReceivedFriendships(user: User) {
+    return await this.prisma.friendship.findFirst({
+      where: {
+        AND: [{ friendTo: user.uid }, { status: 'PENDING' }],
+      },
+      select: {
+        status: true,
+        friendship_friendFromTousers: {
+          select: {
+            uid: true,
+            nickname: true,
+            email: true,
+            avatar: true,
+          },
+        },
+      },
+    });
   }
 
   private formatResults(friendship: FriendshipResult[], user: User) {
