@@ -17,7 +17,7 @@ const SWAGGER_OPTIONS = new DocumentBuilder()
   .addTag('sessions', 'Users Session API')
   .addTag('records', 'Records API')
   .addTag('socket', 'Socket of Rooms')
-  .addTag('friends', 'Friendship API')
+  .addTag('friendships', 'Friendship API')
   .addBearerAuth(
     {
       type: 'http',
