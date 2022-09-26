@@ -72,19 +72,21 @@ export class FriendsController {
   @Get()
   getFriendship(
     @GetUserDecorator() user: User,
-    @Query('status') status: FriendshipStatus,
+    @Query('status') status?: FriendshipStatus,
+    @Query('friend') friendUid?: number,
   ) {
     if (status === undefined) {
       return this.friendsService.getFriendship(user);
     } else if (status === 'ACCEPTED') {
+      console.log('friend', friendUid);
       // ?status=ACCEPTED
       return this.friendsService.getAcceptedFriend(status, user);
     } else if (status === 'PENDING') {
       // NOT IMPLEMENTED
-    } else if (status === 'YOU') {
-      // NOT IMPLEMENTED
-    } else {
-      console.log('err', status);
+    }
+    if (friendUid) {
+      // ?friend=1
+      //return this.friendsService.getFriendshipByFriend(user, friendUid);
     }
   }
 }
