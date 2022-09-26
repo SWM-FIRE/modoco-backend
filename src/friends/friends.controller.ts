@@ -17,6 +17,7 @@ import {
 import { User } from '@prisma/client';
 import { GetUserDecorator } from 'src/auth/decorator';
 import { JwtGuard } from 'src/auth/guard';
+import { TYPES } from './constants/types.enum';
 import { CreateFriendDto } from './dto';
 import { FriendsService } from './friends.service';
 import { FriendshipStatus } from './types/friendship.type';
@@ -81,21 +82,23 @@ export class FriendsController {
   getFriendship(
     @GetUserDecorator() user: User,
     @Query('status') status?: FriendshipStatus,
+    @Query('type') type?: TYPES,
     @Query('friend', ParseIntPipe) friendUid?: number,
   ) {
     if (status) {
-      return this.friendsService.getFriendship(user);
-    } else if (status === 'ACCEPTED') {
-      console.log('friend', friendUid);
-      // ?status=ACCEPTED
-      return this.friendsService.getAcceptedFriend(status, user);
-    } else if (status === 'PENDING') {
-      // NOT IMPLEMENTED
+      return this.friendsService.getFriendshipsByStatus(user, status);
     }
 
     if (friendUid) {
       // ?friend=1
       return this.friendsService.getFriendshipByFriendUid(user, friendUid);
     }
+
+    if (type) {
+      // ?types=sent or ?types=received
+      return this.friendsService.getFriendshipsByType(user, type);
+    }
+
+    return this.friendsService.getFriendship(user);
   }
 }
