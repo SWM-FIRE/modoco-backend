@@ -81,22 +81,28 @@ export class FriendsController {
   @Get()
   getFriendship(
     @GetUserDecorator() user: User,
-    @Query('status') status?: FriendshipStatus,
-    @Query('type') type?: TYPES,
-    @Query('friend', ParseIntPipe) friendUid?: number,
+    @Query()
+    query: { status?: FriendshipStatus; type?: TYPES; friend?: number },
+    // @Query('status') status?: FriendshipStatus,
+    // @Query('type') type?: TYPES,
+    // @Query('friend', ParseIntPipe) friendUid?: number,
   ) {
-    if (status) {
-      return this.friendsService.getFriendshipsByStatus(user, status);
+    if (query.status) {
+      return this.friendsService.getFriendshipsByStatus(user, query.status);
     }
 
-    if (friendUid) {
+    if (query.friend) {
+      // query param은 string으로 들어옴
+      if (typeof query.friend === 'string') {
+        query.friend = parseInt(query.friend, 10);
+      }
       // ?friend=1
-      return this.friendsService.getFriendshipByFriendUid(user, friendUid);
+      return this.friendsService.getFriendshipByFriendUid(user, query.friend);
     }
 
-    if (type) {
+    if (query.type) {
       // ?types=sent or ?types=received
-      return this.friendsService.getFriendshipsByType(user, type);
+      return this.friendsService.getFriendshipsByType(user, query.type);
     }
 
     return this.friendsService.getFriendship(user);
