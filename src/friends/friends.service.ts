@@ -81,7 +81,7 @@ export class FriendsService {
         },
       });
 
-    const results: FriendshipDTO[] = this.makeResult(friendship, user);
+    const results: FriendshipDTO[] = this.formatResult(friendship, user);
 
     return results;
   }
@@ -128,12 +128,12 @@ export class FriendsService {
         },
       });
 
-    const results: FriendshipDTO[] = this.makeResult(acceptedFriends, user);
+    const results: FriendshipDTO[] = this.formatResult(acceptedFriends, user);
 
     return results;
   }
 
-  private makeResult(friendship: FriendshipResult[], user: User) {
+  private formatResult(friendship: FriendshipResult[], user: User) {
     const results: FriendshipDTO[] = [];
 
     friendship.forEach((fs) => {
