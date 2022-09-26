@@ -16,7 +16,12 @@ export class FriendsService {
 
   private readonly logger = new Logger('FriendsService');
 
-  // add friend
+  /**
+   * add friend
+   * @param {CreateFriendDto} dto dto
+   * @param {User} user user
+   * @returns {Promise<FriendshipResult>} friendship
+   */
   async addFriend(dto: CreateFriendDto, user: User) {
     try {
       const isUser = await this.prisma.user.count({
@@ -46,9 +51,13 @@ export class FriendsService {
     }
   }
 
-  // get friendship table
+  /**
+   * get friendship table
+   * @param {User} user user
+   * @returns {Promise<FriendshipResult[]>} friendship
+   */
   async getFriendship(user: User) {
-    const friendship: FriendshipResult[] =
+    const friendships: FriendshipResult[] =
       await this.prisma.friendship.findMany({
         where: {
           OR: [
@@ -81,12 +90,15 @@ export class FriendsService {
         },
       });
 
-    const results: FriendshipDTO[] = this.formatResult(friendship, user);
-
-    return results;
+    return this.formatResults(friendships, user);
   }
 
-  // return accepted friend request
+  /**
+   * return accepted friend request
+   * @param {FriendshipStatus} status status
+   * @param {User} user user
+   * @returns {Promise<FriendshipResult[]>} accepted friends
+   */
   async getAcceptedFriend(status: FriendshipStatus, user: User) {
     const acceptedFriends: FriendshipResult[] =
       await this.prisma.friendship.findMany({
@@ -128,29 +140,74 @@ export class FriendsService {
         },
       });
 
-    const results: FriendshipDTO[] = this.formatResult(acceptedFriends, user);
-
-    return results;
+    return this.formatResults(acceptedFriends, user);
   }
 
-  private formatResult(friendship: FriendshipResult[], user: User) {
+  /**
+   * Personal accept friend request
+   * @param {User} user user
+   * @param friendUid friend uid
+   * @returns {Promise<FriendshipResult>} friendship
+   */
+  async getFriendshipByFriendUid(user: User, friendUid) {
+    const acceptedFriends: FriendshipResult =
+      await this.prisma.friendship.findFirst({
+        where: {
+          OR: [
+            {
+              AND: [{ friendFrom: user.uid }, { friendTo: friendUid }],
+            },
+            {
+              AND: [{ friendFrom: friendUid }, { friendTo: user.uid }],
+            },
+          ],
+        },
+        select: {
+          status: true,
+          friendship_friendFromTousers: {
+            select: {
+              uid: true,
+              nickname: true,
+              email: true,
+              avatar: true,
+            },
+          },
+          friendship_friendToTousers: {
+            select: {
+              uid: true,
+              nickname: true,
+              email: true,
+              avatar: true,
+            },
+          },
+        },
+      });
+
+    return this.formatResult(acceptedFriends, user);
+  }
+
+  private formatResults(friendship: FriendshipResult[], user: User) {
     const results: FriendshipDTO[] = [];
 
     friendship.forEach((fs) => {
-      const result: FriendshipDTO = {
-        status: fs.status,
-      };
-
-      if (fs.friendship_friendFromTousers.uid === user.uid) {
-        // user is sender
-        result.receiver = fs.friendship_friendToTousers;
-      } else {
-        // user is receiver
-        result.sender = fs.friendship_friendFromTousers;
-      }
-
-      results.push(result);
+      results.push(this.formatResult(fs, user));
     });
     return results;
+  }
+
+  private formatResult(friendship: FriendshipResult, user: User) {
+    const result: FriendshipDTO = {
+      status: friendship.status,
+    };
+
+    if (friendship.friendship_friendFromTousers.uid === user.uid) {
+      // user is sender
+      result.receiver = friendship.friendship_friendToTousers;
+    } else {
+      // user is receiver
+      result.sender = friendship.friendship_friendFromTousers;
+    }
+
+    return result;
   }
 }
