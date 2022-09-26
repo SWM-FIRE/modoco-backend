@@ -187,18 +187,18 @@ export class FriendsService {
     return this.formatResult(acceptedFriends, user);
   }
 
-  getFriendshipsByType(user: User, type: TYPES) {
+  getPendingFriendshipsByType(user: User, type: TYPES) {
     switch (type) {
       case TYPES.SENT:
-        return this.getSentFriendships(user);
+        return this.getPendingSentFriendships(user);
       case TYPES.RECEIVED:
-        return this.getReceivedFriendships(user);
+        return this.getPendingReceivedFriendships(user);
       default:
         return this.getFriendship(user);
     }
   }
 
-  private async getSentFriendships(user: User) {
+  private async getPendingSentFriendships(user: User) {
     return await this.prisma.friendship.findFirst({
       where: {
         AND: [{ friendFrom: user.uid }, { status: 'PENDING' }],
@@ -217,7 +217,7 @@ export class FriendsService {
     });
   }
 
-  private async getReceivedFriendships(user: User) {
+  private async getPendingReceivedFriendships(user: User) {
     return await this.prisma.friendship.findFirst({
       where: {
         AND: [{ friendTo: user.uid }, { status: 'PENDING' }],

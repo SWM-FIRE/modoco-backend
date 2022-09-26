@@ -102,7 +102,7 @@ export class FriendsController {
 
     if (query.type) {
       // ?types=sent or ?types=received
-      return this.friendsService.getFriendshipsByType(user, query.type);
+      return this.friendsService.getPendingFriendshipsByType(user, query.type);
     }
 
     return this.friendsService.getFriendship(user);
