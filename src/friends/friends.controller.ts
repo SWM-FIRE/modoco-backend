@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  ParseIntPipe,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOkResponse,
@@ -73,9 +81,9 @@ export class FriendsController {
   getFriendship(
     @GetUserDecorator() user: User,
     @Query('status') status?: FriendshipStatus,
-    @Query('friend') friendUid?: number,
+    @Query('friend', ParseIntPipe) friendUid?: number,
   ) {
-    if (status === undefined) {
+    if (status) {
       return this.friendsService.getFriendship(user);
     } else if (status === 'ACCEPTED') {
       console.log('friend', friendUid);
@@ -84,9 +92,10 @@ export class FriendsController {
     } else if (status === 'PENDING') {
       // NOT IMPLEMENTED
     }
+
     if (friendUid) {
       // ?friend=1
-      //return this.friendsService.getFriendshipByFriend(user, friendUid);
+      return this.friendsService.getFriendshipByFriendUid(user, friendUid);
     }
   }
 }
