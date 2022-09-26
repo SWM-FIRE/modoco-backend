@@ -3,6 +3,7 @@ import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
+  ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { User } from '@prisma/client';
@@ -12,7 +13,8 @@ import { CreateFriendDto } from './dto';
 import { FriendsService } from './friends.service';
 import { FriendshipStatus } from './types/friendship.type';
 
-@Controller('friends')
+@ApiTags('friendships')
+@Controller('friendships')
 @UseGuards(JwtGuard)
 export class FriendsController {
   constructor(private readonly friendsService: FriendsService) {}

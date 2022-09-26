@@ -9,7 +9,7 @@ import {
   FriendshipStatus,
 } from './types/friendship.type';
 
-@ApiTags('users')
+@ApiTags('friendships')
 @Injectable()
 export class FriendsService {
   constructor(private readonly prisma: PrismaService) {}
