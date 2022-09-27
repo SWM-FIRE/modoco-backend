@@ -1,3 +1,5 @@
+import { TYPES } from '../constants/types.enum';
+
 export type FriendshipResult = {
   status: FriendshipStatus;
   friendship_friendFromTousers?: {
@@ -31,3 +33,9 @@ export type FriendshipDTO = {
 };
 
 export type FriendshipStatus = 'PENDING' | 'ACCEPTED' | 'YOU';
+
+export type FriendshipQueryParams = {
+  status?: FriendshipStatus;
+  type?: TYPES;
+  friend?: number;
+};

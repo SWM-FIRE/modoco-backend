@@ -7,6 +7,7 @@ import { TYPES } from './constants/types.enum';
 import { CreateFriendDto } from './dto';
 import {
   FriendshipDTO,
+  FriendshipQueryParams,
   FriendshipResult,
   FriendshipStatus,
 } from './types/friendship.type';
@@ -54,11 +55,41 @@ export class FriendsService {
   }
 
   /**
+   *
+   * @param {User} user user
+   * @param {FriendshipQueryParams} query query param
+   * @returns
+   */
+  getFriendshipByParams(user: User, query: FriendshipQueryParams) {
+    if (query.status) {
+      // status=ACCEPTED or status=PENDING or status=YOU
+      return this.getFriendshipsByStatus(user, query.status);
+    }
+
+    if (query.friend) {
+      // query param은 string으로 들어옴
+      if (typeof query.friend === 'string') {
+        query.friend = parseInt(query.friend, 10);
+      }
+      // ?friend=1
+      return this.getFriendshipByFriendUid(user, query.friend);
+    }
+
+    if (query.type) {
+      // ?types=SENT or ?types=RECEIVED
+      return this.getPendingFriendshipsByType(user, query.type);
+    }
+
+    // no query param
+    return this.getAllFriendship(user);
+  }
+
+  /**
    * get friendship table
    * @param {User} user user
    * @returns {Promise<FriendshipResult[]>} friendship
    */
-  async getFriendship(user: User) {
+  async getAllFriendship(user: User) {
     const friendships: FriendshipResult[] =
       await this.prisma.friendship.findMany({
         where: {
@@ -101,7 +132,7 @@ export class FriendsService {
    * @param {User} user user
    * @returns {Promise<FriendshipResult[]>} accepted friends
    */
-  async getFriendshipsByStatus(user: User, status: FriendshipStatus) {
+  private async getFriendshipsByStatus(user: User, status: FriendshipStatus) {
     const acceptedFriends: FriendshipResult[] =
       await this.prisma.friendship.findMany({
         where: {
@@ -151,7 +182,7 @@ export class FriendsService {
    * @param friendUid friend uid
    * @returns {Promise<FriendshipResult>} friendship
    */
-  async getFriendshipByFriendUid(user: User, friendUid) {
+  private async getFriendshipByFriendUid(user: User, friendUid) {
     const acceptedFriends: FriendshipResult =
       await this.prisma.friendship.findFirst({
         where: {
@@ -188,14 +219,14 @@ export class FriendsService {
     return this.formatResult(acceptedFriends, user);
   }
 
-  getPendingFriendshipsByType(user: User, type: TYPES) {
+  private getPendingFriendshipsByType(user: User, type: TYPES) {
     switch (type) {
       case TYPES.SENT:
         return this.getPendingSentFriendships(user);
       case TYPES.RECEIVED:
         return this.getPendingReceivedFriendships(user);
       default:
-        return this.getFriendship(user);
+        return this.getAllFriendship(user);
     }
   }
 
