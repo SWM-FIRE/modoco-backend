@@ -1,12 +1,12 @@
 export type FriendshipResult = {
   status: FriendshipStatus;
-  friendship_friendFromTousers: {
+  friendship_friendFromTousers?: {
     uid: number;
     nickname: string;
     email: string;
     avatar: number;
   };
-  friendship_friendToTousers: {
+  friendship_friendToTousers?: {
     uid: number;
     nickname: string;
     email: string;

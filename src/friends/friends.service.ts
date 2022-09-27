@@ -199,7 +199,7 @@ export class FriendsService {
   }
 
   private async getPendingSentFriendships(user: User) {
-    return await this.prisma.friendship.findFirst({
+    const sentPendingFriendRequests = await this.prisma.friendship.findFirst({
       where: {
         AND: [{ friendFrom: user.uid }, { status: 'PENDING' }],
       },
@@ -215,25 +215,30 @@ export class FriendsService {
         },
       },
     });
+
+    return this.formatResult(sentPendingFriendRequests, user);
   }
 
   private async getPendingReceivedFriendships(user: User) {
-    return await this.prisma.friendship.findFirst({
-      where: {
-        AND: [{ friendTo: user.uid }, { status: 'PENDING' }],
-      },
-      select: {
-        status: true,
-        friendship_friendFromTousers: {
-          select: {
-            uid: true,
-            nickname: true,
-            email: true,
-            avatar: true,
+    const receivedPendingFriendRequests =
+      await this.prisma.friendship.findFirst({
+        where: {
+          AND: [{ friendTo: user.uid }, { status: 'PENDING' }],
+        },
+        select: {
+          status: true,
+          friendship_friendFromTousers: {
+            select: {
+              uid: true,
+              nickname: true,
+              email: true,
+              avatar: true,
+            },
           },
         },
-      },
-    });
+      });
+
+    return this.formatResult(receivedPendingFriendRequests, user);
   }
 
   private formatResults(friendship: FriendshipResult[], user: User) {
@@ -250,7 +255,11 @@ export class FriendsService {
       status: friendship.status,
     };
 
-    if (friendship.friendship_friendFromTousers.uid === user.uid) {
+    const isSender =
+      friendship.friendship_friendFromTousers === undefined ||
+      friendship.friendship_friendFromTousers.uid === user.uid;
+
+    if (isSender) {
       // user is sender
       result.receiver = friendship.friendship_friendToTousers;
     } else {
