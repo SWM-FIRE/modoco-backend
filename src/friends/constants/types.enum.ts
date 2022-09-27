@@ -1,6 +1,6 @@
 export const TYPES = {
-  SENT: 'sent',
-  RECEIVED: 'received',
+  SENT: 'SENT',
+  RECEIVED: 'RECEIVED',
 } as const;
 
 export type TYPES = typeof TYPES[keyof typeof TYPES];

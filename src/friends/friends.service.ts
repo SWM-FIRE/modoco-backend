@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { STATUS } from './constants/status.enum';
 import { TYPES } from './constants/types.enum';
 import { CreateFriendDto } from './dto';
 import {
@@ -201,7 +202,7 @@ export class FriendsService {
   private async getPendingSentFriendships(user: User) {
     const sentPendingFriendRequests = await this.prisma.friendship.findFirst({
       where: {
-        AND: [{ friendFrom: user.uid }, { status: 'PENDING' }],
+        AND: [{ friendFrom: user.uid }, { status: STATUS.PENDING }],
       },
       select: {
         status: true,
@@ -223,7 +224,7 @@ export class FriendsService {
     const receivedPendingFriendRequests =
       await this.prisma.friendship.findFirst({
         where: {
-          AND: [{ friendTo: user.uid }, { status: 'PENDING' }],
+          AND: [{ friendTo: user.uid }, { status: STATUS.PENDING }],
         },
         select: {
           status: true,

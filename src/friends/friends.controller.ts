@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  ParseIntPipe,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOkResponse,
@@ -85,6 +77,7 @@ export class FriendsController {
     query: { status?: FriendshipStatus; type?: TYPES; friend?: number },
   ) {
     if (query.status) {
+      // status=ACCEPTED or status=PENDING or status=YOU
       return this.friendsService.getFriendshipsByStatus(user, query.status);
     }
 
@@ -98,10 +91,11 @@ export class FriendsController {
     }
 
     if (query.type) {
-      // ?types=sent or ?types=received
+      // ?types=SENT or ?types=RECEIVED
       return this.friendsService.getPendingFriendshipsByType(user, query.type);
     }
 
+    // no query param
     return this.friendsService.getFriendship(user);
   }
 }
