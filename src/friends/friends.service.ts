@@ -4,7 +4,7 @@ import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { STATUS } from './constants/status.enum';
 import { TYPES } from './constants/types.enum';
-import { CreateFriendDto } from './dto';
+import { CreateFriendDto, UpdateFriendDto } from './dto';
 import {
   FriendshipDTO,
   FriendshipQueryParams,
@@ -52,6 +52,25 @@ export class FriendsService {
       }
       throw error;
     }
+  }
+
+  /**
+   *
+   * @param {User} user user
+   * @param {UpdateFriendDto} dto target friend uid
+   */
+  acceptFriendRequest(user: User, dto: UpdateFriendDto) {
+    return this.prisma.friendship.update({
+      where: {
+        friendFrom_friendTo: {
+          friendFrom: dto.friend,
+          friendTo: user.uid,
+        },
+      },
+      data: {
+        status: STATUS.ACCEPTED,
+      },
+    });
   }
 
   /**
