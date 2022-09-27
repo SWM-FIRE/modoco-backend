@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOkResponse,
@@ -9,7 +17,7 @@ import {
 import { User } from '@prisma/client';
 import { GetUserDecorator } from 'src/auth/decorator';
 import { JwtGuard } from 'src/auth/guard';
-import { CreateFriendDto } from './dto';
+import { CreateFriendDto, UpdateFriendDto } from './dto';
 import { FriendsService } from './friends.service';
 import { FriendshipQueryParams } from './types/friendship.type';
 
@@ -99,5 +107,11 @@ export class FriendsController {
     query: FriendshipQueryParams,
   ) {
     return this.friendsService.getFriendshipByParams(user, query);
+  }
+
+  // accept friend request
+  @Put()
+  acceptFriendRequest(@Body() dto: UpdateFriendDto, @GetUserDecorator() user) {
+    return this.friendsService.acceptFriendRequest(user, dto);
   }
 }
