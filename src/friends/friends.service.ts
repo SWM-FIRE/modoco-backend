@@ -2,9 +2,10 @@ import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ROLE } from './constants/role.enum';
 import { STATUS } from './constants/status.enum';
 import { TYPES } from './constants/types.enum';
-import { CreateFriendDto, UpdateFriendDto } from './dto';
+import { CreateFriendDto, DeleteFriendDto, UpdateFriendDto } from './dto';
 import {
   FriendshipDTO,
   FriendshipQueryParams,
@@ -311,10 +312,10 @@ export class FriendsService {
       friendship.friendship_friendFromTousers.uid === user.uid;
 
     if (isSender) {
-      // user is sender
+      result.role = ROLE.SENDER; // User is the sender
       result.receiver = friendship.friendship_friendToTousers;
     } else {
-      // user is receiver
+      result.role = ROLE.RECEIVER; // User is the receiver
       result.sender = friendship.friendship_friendFromTousers;
     }
 

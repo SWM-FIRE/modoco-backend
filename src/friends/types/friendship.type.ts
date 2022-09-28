@@ -1,3 +1,5 @@
+import { ROLE } from '../constants/role.enum';
+import { STATUS } from '../constants/status.enum';
 import { TYPES } from '../constants/types.enum';
 
 export type FriendshipResult = {
@@ -17,7 +19,8 @@ export type FriendshipResult = {
 };
 
 export type FriendshipDTO = {
-  status: string;
+  status: STATUS;
+  role?: ROLE;
   sender?: {
     uid: number;
     nickname: string;

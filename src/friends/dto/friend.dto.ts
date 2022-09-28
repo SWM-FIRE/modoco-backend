@@ -14,3 +14,10 @@ export class UpdateFriendDto {
   @IsNumber()
   friend: number;
 }
+
+@ApiTags('friendships')
+export class DeleteFriendDto {
+  @IsNotEmpty()
+  @IsNumber()
+  friend: number;
+}
