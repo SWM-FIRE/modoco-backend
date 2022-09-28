@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Post,
   Put,
@@ -17,7 +18,7 @@ import {
 import { User } from '@prisma/client';
 import { GetUserDecorator } from 'src/auth/decorator';
 import { JwtGuard } from 'src/auth/guard';
-import { CreateFriendDto, UpdateFriendDto } from './dto';
+import { CreateFriendDto, DeleteFriendDto, UpdateFriendDto } from './dto';
 import { FriendsService } from './friends.service';
 import { FriendshipQueryParams } from './types/friendship.type';
 
@@ -31,7 +32,7 @@ export class FriendsController {
   // add friend
   @Post()
   addFriend(@Body() dto: CreateFriendDto, @GetUserDecorator() user) {
-    return this.friendsService.addFriend(dto, user);
+    return this.friendsService.addFriend(user.uid, dto.friend);
   }
 
   // get friendship table
@@ -106,12 +107,21 @@ export class FriendsController {
     @Query()
     query: FriendshipQueryParams,
   ) {
-    return this.friendsService.getFriendshipByParams(user, query);
+    return this.friendsService.getFriendshipByParams(user.uid, query);
   }
 
   // accept friend request
   @Put()
   acceptFriendRequest(@Body() dto: UpdateFriendDto, @GetUserDecorator() user) {
-    return this.friendsService.acceptFriendRequest(user, dto);
+    return this.friendsService.acceptFriendRequest(user.uid, dto.friend);
+  }
+
+  // delete friendship
+  @Delete()
+  deleteFriendship(@Body() dto: DeleteFriendDto, @GetUserDecorator() user) {
+    return this.friendsService.deleteFriendshipByFriendUid(
+      user.uid,
+      dto.friend,
+    );
   }
 }
