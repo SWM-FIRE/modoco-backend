@@ -26,7 +26,11 @@ export class FriendsService {
    * @returns {Promise<FriendshipResult>} friendship
    */
   async addFriend(userUid: number, friendUid: number) {
+    if (userUid === friendUid) {
+      throw new ForbiddenException('Invalid friendship creation request');
+    }
     try {
+      // user 존재 여부 체크
       const isUser = await this.prisma.user.count({
         where: {
           uid: friendUid,
@@ -34,6 +38,17 @@ export class FriendsService {
       });
       if (isUser === 0) {
         throw new ForbiddenException('Friend does not exist');
+      }
+
+      // 이미 친구 관계가 있는지 체크
+      const hasFriendship = await this.prisma.friendship.count({
+        where: {
+          friendFrom: friendUid,
+          friendTo: userUid,
+        },
+      });
+      if (hasFriendship > 0) {
+        throw new ForbiddenException('Already has friendship relation');
       }
 
       const friendship = await this.prisma.friendship.create({
@@ -60,6 +75,9 @@ export class FriendsService {
    * @param {number} friendUid target friend uid
    */
   acceptFriendRequest(userUid: number, friendUid: number) {
+    if (userUid === friendUid) {
+      throw new ForbiddenException('Invalid friendship accept request');
+    }
     return this.prisma.friendship.update({
       where: {
         friendFrom_friendTo: {
