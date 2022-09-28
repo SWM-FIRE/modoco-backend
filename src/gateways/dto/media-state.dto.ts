@@ -1,11 +1,17 @@
 import { ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 @ApiTags('socket')
 export class MediaStateChangePayload {
   @IsOptional()
-  @IsString()
-  uid?: string;
+  @IsNumber()
+  uid?: number;
 
   @IsNotEmpty()
   @IsString()
