@@ -78,15 +78,33 @@ export class FriendsService {
    * @param {user} user user
    * @param {number} friendUid target friend uid
    */
-  deleteFriendshipByFriendUid(userUid: number, friendUid: number) {
-    return this.prisma.friendship.delete({
-      where: {
-        friendFrom_friendTo: {
-          friendFrom: userUid,
-          friendTo: friendUid,
+  async deleteFriendshipByFriendUid(userUid: number, friendUid: number) {
+    const role = await this.checkRole(userUid, friendUid);
+    if (role === ROLE.SELF) {
+      throw new ForbiddenException('Invalid friendship deletion request');
+    }
+
+    if (role === ROLE.RECEIVER) {
+      return this.prisma.friendship.delete({
+        where: {
+          friendFrom_friendTo: {
+            friendFrom: friendUid,
+            friendTo: userUid,
+          },
         },
-      },
-    });
+      });
+    }
+
+    if (role === ROLE.SENDER) {
+      return this.prisma.friendship.delete({
+        where: {
+          friendFrom_friendTo: {
+            friendFrom: userUid,
+            friendTo: friendUid,
+          },
+        },
+      });
+    }
   }
 
   private async checkRole(userUid: number, friendUid: number) {
