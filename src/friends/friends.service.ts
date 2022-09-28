@@ -40,14 +40,11 @@ export class FriendsService {
         throw new ForbiddenException('Friend does not exist');
       }
 
-      // 이미 친구 관계가 있는지 체크
-      const hasFriendship = await this.prisma.friendship.count({
-        where: {
-          friendFrom: friendUid,
-          friendTo: userUid,
-        },
-      });
-      if (hasFriendship > 0) {
+      // 이미 친구가 유저에게 보낸 friendship이 있는지 체크
+      const hasFriendToUserFriendship =
+        await this.checkFriendToUserFriendshipExists(userUid, friendUid);
+
+      if (hasFriendToUserFriendship) {
         throw new ForbiddenException('Already has friendship relation');
       }
 
@@ -133,6 +130,8 @@ export class FriendsService {
     const friendship = await this.getFriendshipByFriendUid(userUid, friendUid);
     if (friendship) {
       return friendship.role;
+    } else {
+      throw new ForbiddenException('Invalid friendship deletion request');
     }
   }
 
@@ -268,40 +267,47 @@ export class FriendsService {
    * @returns {Promise<FriendshipResult>} friendship
    */
   private async getFriendshipByFriendUid(userUid: number, friendUid: number) {
-    const acceptedFriends: FriendshipResult =
-      await this.prisma.friendship.findFirst({
-        where: {
-          OR: [
-            {
-              AND: [{ friendFrom: userUid }, { friendTo: friendUid }],
+    try {
+      const acceptedFriends: FriendshipResult =
+        await this.prisma.friendship.findFirstOrThrow({
+          where: {
+            OR: [
+              {
+                AND: [{ friendFrom: userUid }, { friendTo: friendUid }],
+              },
+              {
+                AND: [{ friendFrom: friendUid }, { friendTo: userUid }],
+              },
+            ],
+          },
+          select: {
+            status: true,
+            friendship_friendFromTousers: {
+              select: {
+                uid: true,
+                nickname: true,
+                email: true,
+                avatar: true,
+              },
             },
-            {
-              AND: [{ friendFrom: friendUid }, { friendTo: userUid }],
-            },
-          ],
-        },
-        select: {
-          status: true,
-          friendship_friendFromTousers: {
-            select: {
-              uid: true,
-              nickname: true,
-              email: true,
-              avatar: true,
+            friendship_friendToTousers: {
+              select: {
+                uid: true,
+                nickname: true,
+                email: true,
+                avatar: true,
+              },
             },
           },
-          friendship_friendToTousers: {
-            select: {
-              uid: true,
-              nickname: true,
-              email: true,
-              avatar: true,
-            },
-          },
-        },
-      });
+        });
 
-    return this.formatResult(acceptedFriends, userUid);
+      return this.formatResult(acceptedFriends, userUid);
+    } catch (error) {
+      // prisma catch not found error
+      if (error instanceof Prisma.NotFoundError) {
+        return null;
+      }
+    }
   }
 
   private getPendingFriendshipsByType(userUid: number, type: TYPES) {
@@ -385,5 +391,43 @@ export class FriendsService {
     }
 
     return result;
+  }
+
+  /**
+   * check if friend to user friendship exists
+   * @param {number} userUid user uid
+   * @param {number} friendUid friend uid
+   */
+  private async checkFriendToUserFriendshipExists(
+    userUid: number,
+    friendUid: number,
+  ) {
+    const friendshipCount = await this.prisma.friendship.count({
+      where: {
+        friendFrom: friendUid,
+        friendTo: userUid,
+      },
+    });
+
+    return friendshipCount > 0;
+  }
+
+  /**
+   * check if user to friend friendship exists
+   * @param {number} userUid user uid
+   * @param {number} friendUid friend uid
+   */
+  private async checkUserToFriendFriendshipExists(
+    userUid: number,
+    friendUid: number,
+  ) {
+    const friendshipCount = await this.prisma.friendship.count({
+      where: {
+        friendFrom: userUid,
+        friendTo: friendUid,
+      },
+    });
+
+    return friendshipCount > 0;
   }
 }
