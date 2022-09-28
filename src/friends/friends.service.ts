@@ -128,11 +128,11 @@ export class FriendsService {
     }
 
     const friendship = await this.getFriendshipByFriendUid(userUid, friendUid);
-    if (friendship) {
-      return friendship.role;
-    } else {
-      throw new ForbiddenException('Invalid friendship deletion request');
+    if (!friendship) {
+      throw new ForbiddenException('Friendship does not exist');
     }
+
+    return friendship.role;
   }
 
   /**
@@ -141,28 +141,41 @@ export class FriendsService {
    * @param {FriendshipQueryParams} query query param
    * @returns
    */
-  getFriendshipByParams(userUid: number, query: FriendshipQueryParams) {
-    if (query.status) {
-      // status=ACCEPTED or status=PENDING or status=YOU
-      return this.getFriendshipsByStatus(userUid, query.status);
-    }
-
-    if (query.friend) {
-      // query param은 string으로 들어옴
-      if (typeof query.friend === 'string') {
-        query.friend = parseInt(query.friend, 10);
+  async getFriendshipByParams(userUid: number, query: FriendshipQueryParams) {
+    try {
+      if (query.status) {
+        // status=ACCEPTED or status=PENDING or status=YOU
+        return this.getFriendshipsByStatus(userUid, query.status);
       }
-      // ?friend=1
-      return this.getFriendshipByFriendUid(userUid, query.friend);
-    }
 
-    if (query.type) {
-      // ?types=SENT or ?types=RECEIVED
-      return this.getPendingFriendshipsByType(userUid, query.type);
-    }
+      if (query.friend) {
+        // query param은 string으로 들어옴
+        if (typeof query.friend === 'string') {
+          query.friend = parseInt(query.friend, 10);
+        }
 
-    // no query param
-    return this.getAllFriendship(userUid);
+        // ?friend=123
+        const friendship = await this.getFriendshipByFriendUid(
+          userUid,
+          query.friend,
+        );
+        if (friendship)
+          return this.getFriendshipByFriendUid(userUid, query.friend);
+
+        return {};
+      }
+
+      if (query.type) {
+        // ?types=SENT or ?types=RECEIVED
+        return this.getPendingFriendshipsByType(userUid, query.type);
+      }
+
+      // no query param
+      return this.getAllFriendship(userUid);
+    } catch (error) {
+      // prisma catch not found error
+      throw new ForbiddenException('Friendship error');
+    }
   }
 
   /**
