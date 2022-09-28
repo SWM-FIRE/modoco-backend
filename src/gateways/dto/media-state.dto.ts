@@ -5,7 +5,7 @@ import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 export class MediaStateChangePayload {
   @IsOptional()
   @IsString()
-  sid?: string;
+  uid?: string;
 
   @IsNotEmpty()
   @IsString()

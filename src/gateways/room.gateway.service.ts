@@ -346,7 +346,7 @@ export class RoomGatewayService {
     client: Socket,
     payload: MediaStateChangePayload,
   ) {
-    payload.sid = client.id;
+    payload.uid = client.data.uid;
 
     if (mediaType === EVENT.VIDEO_STATE_CHANGE) {
       this.server.to(payload.room).emit(EVENT.VIDEO_STATE_CHANGE, payload);
