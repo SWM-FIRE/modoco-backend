@@ -85,7 +85,7 @@ export class FriendsService {
     }
 
     if (role === ROLE.RECEIVER) {
-      return this.prisma.friendship.delete({
+      this.prisma.friendship.delete({
         where: {
           friendFrom_friendTo: {
             friendFrom: friendUid,
@@ -96,7 +96,7 @@ export class FriendsService {
     }
 
     if (role === ROLE.SENDER) {
-      return this.prisma.friendship.delete({
+      this.prisma.friendship.delete({
         where: {
           friendFrom_friendTo: {
             friendFrom: userUid,
