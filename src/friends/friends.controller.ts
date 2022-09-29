@@ -20,7 +20,6 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { User } from '@prisma/client';
-import { number } from 'joi';
 import { GetUserDecorator } from 'src/auth/decorator';
 import { JwtGuard } from 'src/auth/guard';
 import { STATUS } from './constants/status.enum';
