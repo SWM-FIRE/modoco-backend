@@ -44,6 +44,10 @@ export class FriendsController {
   @ApiCreatedResponse({
     description: '친구 요청 성공',
   })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized. Invalid token.',
+  })
+  @ApiBearerAuth('access_token')
   @Post()
   addFriend(@Body() dto: CreateFriendDto, @GetUserDecorator() user) {
     return this.friendsService.addFriend(user.uid, dto.friend);
