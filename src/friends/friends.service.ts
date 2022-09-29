@@ -71,21 +71,32 @@ export class FriendsService {
    * @param {number} userUid user uid
    * @param {number} friendUid target friend uid
    */
-  acceptFriendRequest(userUid: number, friendUid: number) {
+  async acceptFriendRequest(userUid: number, friendUid: number) {
     if (userUid === friendUid) {
       throw new ForbiddenException('Invalid friendship accept request');
     }
-    return this.prisma.friendship.update({
-      where: {
-        friendFrom_friendTo: {
-          friendFrom: friendUid,
-          friendTo: userUid,
+
+    try {
+      return await this.prisma.friendship.update({
+        where: {
+          friendFrom_friendTo: {
+            friendFrom: friendUid,
+            friendTo: userUid,
+          },
         },
-      },
-      data: {
-        status: STATUS.ACCEPTED,
-      },
-    });
+        data: {
+          status: STATUS.ACCEPTED,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new ForbiddenException('Pending friendship not found');
+      }
+      throw new ForbiddenException('Invalid friendship accept request');
+    }
   }
 
   /**
