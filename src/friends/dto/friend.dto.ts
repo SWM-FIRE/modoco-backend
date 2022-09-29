@@ -1,8 +1,13 @@
-import { ApiTags } from '@nestjs/swagger';
+import { ApiProperty, ApiTags } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
 @ApiTags('friendships')
 export class CreateFriendDto {
+  @ApiProperty({
+    description: 'Friend uid',
+    required: true,
+    type: Number,
+  })
   @IsNotEmpty()
   @IsNumber()
   friend: number;
@@ -10,6 +15,11 @@ export class CreateFriendDto {
 
 @ApiTags('friendships')
 export class UpdateFriendDto {
+  @ApiProperty({
+    description: 'Friend uid',
+    required: true,
+    type: Number,
+  })
   @IsNotEmpty()
   @IsNumber()
   friend: number;
@@ -17,6 +27,11 @@ export class UpdateFriendDto {
 
 @ApiTags('friendships')
 export class DeleteFriendDto {
+  @ApiProperty({
+    description: 'Friend uid',
+    required: true,
+    type: Number,
+  })
   @IsNotEmpty()
   @IsNumber()
   friend: number;
