@@ -28,6 +28,7 @@ import { UsersService } from './users.service';
 import { JwtGuard } from '../auth/guard';
 import { GetUserDecorator } from 'src/auth/decorator';
 import { User } from '@prisma/client';
+import { ApiAuthDocument } from 'src/common/decorators/swagger/auth.document';
 
 @ApiTags('users')
 @Controller('users')
@@ -85,10 +86,7 @@ export class UsersController {
       ],
     },
   })
-  @ApiUnauthorizedResponse({
-    description: 'Unauthorized. Invalid token.',
-  })
-  @ApiBearerAuth('access_token')
+  @ApiAuthDocument()
   @UseGuards(JwtGuard)
   @Get()
   async findAllUsers() {
@@ -98,9 +96,6 @@ export class UsersController {
   @ApiOperation({
     summary: '자신의 정보 조회',
     description: '로그인한 유저에 대한 정보를 조회 API',
-  })
-  @ApiUnauthorizedResponse({
-    description: 'Unauthorized. Invalid token.',
   })
   @ApiOkResponse({
     description: '로그인한 유저 정보 반환.',
@@ -115,7 +110,7 @@ export class UsersController {
       },
     },
   })
-  @ApiBearerAuth('access_token')
+  @ApiAuthDocument()
   @UseGuards(JwtGuard)
   @Get('me')
   async getMe(@GetUserDecorator() user: User) {
@@ -126,9 +121,6 @@ export class UsersController {
     summary: 'uid로 유저 조회',
     description: 'uid로 유저 정보를 조회하는 API',
   })
-  @ApiUnauthorizedResponse({
-    description: 'Unauthorized. Invalid token.',
-  })
   @ApiOkResponse({
     description:
       '유저가 있는 경우, 유저 정보를 반환합니다. 없는 경우는 아무것도 반환하지 않습니다.',
@@ -140,7 +132,7 @@ export class UsersController {
       },
     },
   })
-  @ApiBearerAuth('access_token')
+  @ApiAuthDocument()
   @UseGuards(JwtGuard)
   @Get(':uid')
   async findUserByUid(@Param('uid', ParseIntPipe) uid: number) {
@@ -151,9 +143,6 @@ export class UsersController {
     summary: '유저 정보 업데이트',
     description: 'User 데이터로 유저 정보를 업데이트하는 API',
   })
-  @ApiUnauthorizedResponse({
-    description: 'Unauthorized. Invalid token.',
-  })
   @ApiOkResponse({
     description:
       '유저가 있는 경우, 유저 정보를 반환합니다. 없는 경우는 아무것도 반환하지 않습니다.',
@@ -165,7 +154,7 @@ export class UsersController {
       },
     },
   })
-  @ApiBearerAuth('access_token')
+  @ApiAuthDocument()
   @UseGuards(JwtGuard)
   @HttpCode(HttpStatus.OK)
   @Put()
@@ -188,16 +177,13 @@ export class UsersController {
       },
     },
   })
-  @ApiUnauthorizedResponse({
-    description: 'Unauthorized. Invalid token.',
-  })
   @ApiNoContentResponse({
     description: '유저 삭제 성공',
     schema: {
       example: '',
     },
   })
-  @ApiBearerAuth('access_token')
+  @ApiAuthDocument()
   @UseGuards(JwtGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete()

@@ -24,6 +24,7 @@ import {
 import { User } from '@prisma/client';
 import { GetUserDecorator } from 'src/auth/decorator';
 import { JwtGuard } from 'src/auth/guard';
+import { ApiAuthDocument } from 'src/common/decorators/swagger/auth.document';
 import { CreateRoomDTO, GetRoomDTO } from './dto';
 import { RoomsService } from './rooms.service';
 
@@ -61,11 +62,8 @@ export class RoomsController {
   @ApiBadRequestResponse({
     description: 'Bad request. Wrong syntax.',
   })
-  @ApiUnauthorizedResponse({
-    description: 'Unauthorized. Invalid token.',
-  })
+  @ApiAuthDocument()
   @HttpCode(HttpStatus.CREATED)
-  @ApiBearerAuth('access_token')
   @UseGuards(JwtGuard)
   @Post()
   async createRoom(@GetUserDecorator() user: User, @Body() dto: CreateRoomDTO) {
@@ -120,9 +118,6 @@ export class RoomsController {
     summary: 'Room id로 조회',
     description: 'Room id로 Room을 정보를 조회하는 API',
   })
-  @ApiUnauthorizedResponse({
-    description: 'Unauthorized. Invalid token.',
-  })
   @ApiOkResponse({
     description: '모든 Room을 반환합니다.',
     schema: {
@@ -142,7 +137,7 @@ export class RoomsController {
       },
     },
   })
-  @ApiBearerAuth('access_token')
+  @ApiAuthDocument()
   @UseGuards(JwtGuard)
   @Get(':id')
   async findRoomById(
@@ -155,13 +150,10 @@ export class RoomsController {
     summary: 'Room id로 Room 삭제',
     description: 'Room id로 Room을 삭제하는 API',
   })
-  @ApiUnauthorizedResponse({
-    description: 'Unauthorized. Invalid token.',
-  })
   @ApiNoContentResponse({
     description: 'Room 삭제 성공',
   })
-  @ApiBearerAuth('access_token')
+  @ApiAuthDocument()
   @UseGuards(JwtGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')

@@ -11,17 +11,16 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
-  ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
   ApiQuery,
   ApiTags,
-  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { User } from '@prisma/client';
 import { GetUserDecorator } from 'src/auth/decorator';
 import { JwtGuard } from 'src/auth/guard';
+import { ApiAuthDocument } from 'src/common/decorators/swagger/auth.document';
 import { STATUS } from './constants/status.enum';
 import { TYPES } from './constants/types.enum';
 import { CreateFriendDto, DeleteFriendDto, UpdateFriendDto } from './dto';
@@ -36,6 +35,7 @@ export class FriendsController {
 
   // friend requests
   // add friend
+  @ApiAuthDocument()
   @ApiOperation({
     summary: '친구 요청',
     description: '친구 요청을 합니다. PENDING 상태가 됩니다.',
@@ -43,10 +43,6 @@ export class FriendsController {
   @ApiCreatedResponse({
     description: '친구 요청 성공',
   })
-  @ApiUnauthorizedResponse({
-    description: 'Unauthorized. Invalid token.',
-  })
-  @ApiBearerAuth('access_token')
   @Post()
   addFriend(@Body() dto: CreateFriendDto, @GetUserDecorator() user) {
     return this.friendsService.addFriend(user.uid, dto.friend);
@@ -113,10 +109,7 @@ export class FriendsController {
       ],
     },
   })
-  @ApiUnauthorizedResponse({
-    description: 'Unauthorized. Invalid token.',
-  })
-  @ApiBearerAuth('access_token')
+  @ApiAuthDocument()
   @Get()
   getFriendship(
     @GetUserDecorator() user: User,
@@ -131,10 +124,7 @@ export class FriendsController {
     summary: '친구 요청 수락',
     description: '친구 요청을 수락합니다. ACCEPTED 상태가 됩니다.',
   })
-  @ApiUnauthorizedResponse({
-    description: 'Unauthorized. Invalid token.',
-  })
-  @ApiBearerAuth('access_token')
+  @ApiAuthDocument()
   @Put()
   acceptFriendRequest(@Body() dto: UpdateFriendDto, @GetUserDecorator() user) {
     return this.friendsService.acceptFriendRequest(user.uid, dto.friend);
@@ -145,10 +135,7 @@ export class FriendsController {
     summary: '친구 관계 삭제',
     description: '친구 관계를 삭제합니다.',
   })
-  @ApiUnauthorizedResponse({
-    description: 'Unauthorized. Invalid token.',
-  })
-  @ApiBearerAuth('access_token')
+  @ApiAuthDocument()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete()
   deleteFriendship(@Body() dto: DeleteFriendDto, @GetUserDecorator() user) {
