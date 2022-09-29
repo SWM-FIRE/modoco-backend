@@ -1,10 +1,6 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import {
-  ApiBadRequestResponse,
-  ApiCreatedResponse,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
+import { CreateSessionDocumentHelper } from './decorators/session.decorators';
 import { CreateSessionDTO } from './dto';
 import { SessionService } from './session.service';
 
@@ -13,22 +9,7 @@ import { SessionService } from './session.service';
 export class SessionController {
   constructor(private readonly sessionService: SessionService) {}
 
-  @ApiOperation({
-    summary: '로그인',
-    description: '로그인 API',
-  })
-  @ApiCreatedResponse({
-    description: '유저 로그인 성공한 경우 로그인 jwt 토큰을 반환합니다.',
-    schema: {
-      example: {
-        access_token:
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjE3NSwiZW1haWwiOiJhc2RAYS5jb20iLCJpYXQiOjE2NjIzNzQyNTEsImV4cCI6MTY2MjQ2MDY1MX0.FeVh3pfkPFjqgylfMbCXaxfkyPewJpQTt0U0r_E5acY',
-      },
-    },
-  })
-  @ApiBadRequestResponse({
-    description: 'Bad request. Wrong syntax.',
-  })
+  @CreateSessionDocumentHelper()
   @HttpCode(HttpStatus.CREATED)
   @Post()
   async create(@Body() dto: CreateSessionDTO) {
