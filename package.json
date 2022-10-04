@@ -57,6 +57,7 @@
     "helmet": "^5.1.0",
     "joi": "^17.6.0",
     "newrelic": "^8.15.0",
+    "nodemailer": "^6.8.0",
     "passport": "^0.6.0",
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
@@ -66,6 +67,7 @@
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
+    "uuid": "^9.0.0",
     "webpack": "^5.0.0"
   },
   "devDependencies": {
@@ -76,9 +78,11 @@
     "@types/jest": "27.5.0",
     "@types/newrelic": "^7.0.3",
     "@types/node": "^18.0.3",
+    "@types/nodemailer": "^6.4.6",
     "@types/passport-jwt": "^3.0.6",
     "@types/passport-kakao": "^1.0.0",
     "@types/supertest": "^2.0.11",
+    "@types/uuid": "^8.3.4",
     "@types/ws": "^8.5.3",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
