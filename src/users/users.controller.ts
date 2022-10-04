@@ -26,7 +26,7 @@ import { UsersService } from './users.service';
 import { JwtGuard } from '../auth/guard';
 import { GetUserDecorator } from 'src/auth/decorator';
 import { User } from '@prisma/client';
-import { ApiAuthDocument } from 'src/common/decorators/swagger/auth.document';
+import { ApiAuthDocument } from 'src/common/decorator/swagger/auth.document.decorator';
 
 @ApiTags('users')
 @Controller('users')

@@ -7,7 +7,7 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { API_DOC_TYPE } from '../constants/docs.enum';
+import { API_DOC_TYPE } from '../constants/rooms-docs.enum';
 
 export function RoomsDocumentHelper(docType: API_DOC_TYPE) {
   switch (docType) {

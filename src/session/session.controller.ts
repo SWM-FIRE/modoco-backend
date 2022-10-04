@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateSessionDocumentHelper } from './decorators/session.decorators';
+import { CreateSessionDocumentHelper } from './decorator/session-document.decorators';
 import { CreateSessionDTO } from './dto';
 import { SessionService } from './session.service';
 

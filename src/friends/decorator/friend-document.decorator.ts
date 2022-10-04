@@ -5,7 +5,7 @@ import {
   ApiOperation,
   ApiQuery,
 } from '@nestjs/swagger';
-import { API_DOC_TYPE } from '../constants/docs.enum';
+import { API_DOC_TYPE } from '../constants/friends-docs.enum';
 import { STATUS } from '../constants/status.enum';
 import { TYPES } from '../constants/types.enum';
 
