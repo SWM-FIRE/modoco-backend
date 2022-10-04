@@ -185,10 +185,10 @@ export class UsersController {
   @UseGuards(JwtGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete()
-  deleteUserById(
+  deleteUserByUid(
     @Body('uid', ParseIntPipe) uid: number,
     @GetUserDecorator('uid') loginUserId: number,
   ) {
-    return this.usersService.deleteUserById(uid, loginUserId);
+    return this.usersService.deleteUserByUid(uid, loginUserId);
   }
 }

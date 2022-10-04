@@ -220,7 +220,7 @@ export class UsersService {
    * @param uid uid of user to delete given by body of request
    * @param loginUserId uid of user logged in
    */
-  async deleteUserById(uid: number, loginUserId: number) {
+  async deleteUserByUid(uid: number, loginUserId: number) {
     // check if correct user id is given
     if (uid !== loginUserId) {
       return;
