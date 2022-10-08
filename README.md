@@ -86,6 +86,9 @@ $ yarn start:dev
 
 # production mode
 $ yarn start:prod
+
+# repl mode
+$ yarn start:repl
 ```
 
 ## Deployment

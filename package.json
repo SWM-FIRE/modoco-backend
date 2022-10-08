@@ -29,6 +29,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "start:repl": "yarn start:dev --entryFile repl",
     "deploy": "yarn ci && yarn build && yarn start:prod",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
