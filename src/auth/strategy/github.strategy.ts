@@ -3,14 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-github2';
 import { CreateGithubUserDTO } from 'src/users/dto';
-import { UsersService } from 'src/users/users.service';
 import { AuthService } from '../auth.service';
+import { UsersDatabaseHelper } from '../../users/helper/users-database.helper';
 
 @Injectable()
 export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
   constructor(
     readonly configService: ConfigService,
-    private readonly usersService: UsersService,
+    private readonly usersDatabaseHelper: UsersDatabaseHelper,
     private readonly authService: AuthService,
   ) {
     const GITHUB_CLIENT_ID = configService.get('GITHUB_CLIENT_ID');
@@ -37,11 +37,15 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
     };
 
     // find user in modoco db
-    let user = await this.usersService.findUserByGithubId(githubId);
+    let user = await this.usersDatabaseHelper.findUserByGithubId(githubId);
     if (!user) {
       try {
         // create user in modoco db
-        user = await this.usersService.createGithubUser(createUserDTO);
+        user = await this.usersDatabaseHelper.createGithubUser(
+          createUserDTO.nickname,
+          createUserDTO.email,
+          createUserDTO.githubId,
+        );
       } catch (error) {
         done(error);
       }

@@ -3,14 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-kakao';
 import { CreateKakaoUserDTO } from 'src/users/dto';
-import { UsersService } from 'src/users/users.service';
 import { AuthService } from '../auth.service';
+import { UsersDatabaseHelper } from '../../users/helper/users-database.helper';
 
 @Injectable()
 export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
   constructor(
     readonly configService: ConfigService,
-    private readonly usersService: UsersService,
+    private readonly usersDatabaseHelper: UsersDatabaseHelper,
     private readonly authService: AuthService,
   ) {
     const KAKAO_CLIENT_ID = configService.get('KAKAO_CLIENT_ID');
@@ -33,11 +33,15 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
     };
 
     // find user in modoco db
-    let user = await this.usersService.findUserByKakaoId(kakaoId);
+    let user = await this.usersDatabaseHelper.findUserByKakaoId(kakaoId);
     if (!user) {
       try {
         // create user in modoco db
-        user = await this.usersService.createKakaoUser(createUserDTO);
+        user = await this.usersDatabaseHelper.createKakaoUser(
+          createUserDTO.nickname,
+          createUserDTO.email,
+          createUserDTO.kakaoId,
+        );
       } catch (error) {
         done(error);
       }

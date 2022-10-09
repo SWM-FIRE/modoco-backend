@@ -3,14 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-google-oauth20';
 import { CreateGoogleUserDTO } from 'src/users/dto';
-import { UsersService } from 'src/users/users.service';
 import { AuthService } from '../auth.service';
+import { UsersDatabaseHelper } from '../../users/helper/users-database.helper';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(
     readonly configService: ConfigService,
-    private readonly usersService: UsersService,
+    readonly usersDatabaseHelper: UsersDatabaseHelper,
     private readonly authService: AuthService,
   ) {
     const GOOGLE_CLIENT_ID = configService.get('GOOGLE_CLIENT_ID');
@@ -41,11 +41,15 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     };
 
     // find user in modoco db
-    let user = await this.usersService.findUserByGoogleId(googleId);
+    let user = await this.usersDatabaseHelper.findUserByGoogleId(googleId);
     if (!user) {
       try {
         // create user in modoco db
-        user = await this.usersService.createGoogleUser(createUserDTO);
+        user = await this.usersDatabaseHelper.createGoogleUser(
+          createUserDTO.nickname,
+          createUserDTO.email,
+          createUserDTO.googleId,
+        );
       } catch (error) {
         done(error);
       }

@@ -5,6 +5,8 @@ import { RoomGateway } from './room.gateway';
 import { RoomGatewayService } from './room.gateway.service';
 import { UsersService } from '../users/users.service';
 import { AuthModule } from '../auth/auth.module';
+import { UsersDatabaseHelper } from 'src/users/helper/users-database.helper';
+import { UsersHelper } from 'src/users/helper/users.helper';
 
 @Module({
   imports: [AuthModule],
@@ -15,6 +17,8 @@ import { AuthModule } from '../auth/auth.module';
     RoomGatewayService,
     RecordsService,
     UsersService,
+    UsersDatabaseHelper,
+    UsersHelper,
   ],
 })
 export class GatewayModule {}
