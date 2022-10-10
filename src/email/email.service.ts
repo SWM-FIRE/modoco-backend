@@ -33,7 +33,7 @@ export class EmailService {
       html: this.getVerificationHTML(url),
       text: `
       모도코(modocode.com)의 가입 인증을 위해 아래 링크로 접속해주세요.
-      http://localhost:3333/api/v1/users/25/verify/50063bf0-489b-11ed-863b-11410ff17d4e
+      인증 주소: ${url}
       
       감사합니다.
       
