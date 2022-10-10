@@ -2,6 +2,8 @@ import { join } from 'path';
 
 export default () => ({
   ENV: parseInt(process.env.PORT, 10) || 'development',
+  BASE_URL: process.env.BASE_URL || 'http://localhost:3333/api/v1',
+  NOTION_URL: `https://fortune-innocent-45c.notion.site/1-e022efdd1581461b994469a56af037f8`,
   API_VERSION: 'v1',
   PORT: parseInt(process.env.PORT, 10) || 3000,
   STATIC_ASSETS_PATH: join(__dirname, '..', 'static'),
@@ -20,6 +22,7 @@ export default () => ({
     'http://localhost:3000',
     'https://localhost:3000',
   ],
+  AWS_REGION: 'ap-northeast-2',
   DATABASE: {
     HOST:
       process.env.DATABASE_URL || 'postgres://soma13:myPasswd@localhost:5432',

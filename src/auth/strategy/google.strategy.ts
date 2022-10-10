@@ -1,16 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-google-oauth20';
 import { CreateGoogleUserDTO } from 'src/users/dto';
-import { UsersService } from 'src/users/users.service';
 import { AuthService } from '../auth.service';
+import { UsersDatabaseHelper } from '../../users/helper/users-database.helper';
+import { Prisma } from '@prisma/client';
+import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(
     readonly configService: ConfigService,
-    private readonly usersService: UsersService,
+    readonly usersDatabaseHelper: UsersDatabaseHelper,
+    private readonly emailService: EmailService,
     private readonly authService: AuthService,
   ) {
     const GOOGLE_CLIENT_ID = configService.get('GOOGLE_CLIENT_ID');
@@ -41,12 +44,15 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     };
 
     // find user in modoco db
-    let user = await this.usersService.findUserByGoogleId(googleId);
+    let user = await this.usersDatabaseHelper.findUserByGoogleId(googleId);
     if (!user) {
       try {
         // create user in modoco db
-        user = await this.usersService.createGoogleUser(createUserDTO);
+        user = await this.createGoogleUser(createUserDTO);
+        // send signup congratulation email
+        await this.emailService.sendSignupSucceedMail(user.email);
       } catch (error) {
+        console.log(error);
         done(error);
       }
     }
@@ -62,6 +68,27 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       ...user,
       access_token,
     });
+  }
+
+  private async createGoogleUser(dto: CreateGoogleUserDTO) {
+    try {
+      const user = await this.usersDatabaseHelper.createGoogleUser(
+        dto.nickname,
+        dto.email,
+        dto.googleId,
+      );
+
+      return user;
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        // 이미 존재하는 이메일
+        throw new ForbiddenException('Verification email sent');
+      }
+      throw error;
+    }
   }
 }
 

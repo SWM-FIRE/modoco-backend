@@ -1,136 +1,70 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Prisma, User } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
-import { PrismaService } from 'src/prisma/prisma.service';
-import {
-  CreateGithubUserDTO,
-  CreateGoogleUserDTO,
-  CreateKakaoUserDTO,
-  CreateUserDTO,
-  UpdateUserDTO,
-} from './dto';
+import { EmailService } from 'src/email/email.service';
+import { CreateUserDTO, UpdateUserDTO } from './dto';
+import { generateSignupVerifyToken } from './helper/user.utils';
+import { UsersDatabaseHelper } from './helper/users-database.helper';
 
 @Injectable()
 export class UsersService {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly authService: AuthService,
-    private readonly configService: ConfigService,
+    private readonly usersDatabaseHelper: UsersDatabaseHelper,
+    private readonly emailService: EmailService,
   ) {}
 
   private readonly logger = new Logger('UsersService');
 
   async createUser(dto: CreateUserDTO) {
-    const hash = await this.authService.generateHash(dto.password);
     try {
-      const user = await this.prisma.user.create({
-        data: {
-          nickname: dto.nickname,
-          email: dto.email,
-          hash,
-          avatar: dto.avatar,
-        },
-      });
+      const hash = await this.authService.generateHash(dto.password);
+      const verifyToken = generateSignupVerifyToken();
+
+      const user = await this.usersDatabaseHelper.createUser(
+        dto.nickname,
+        dto.email,
+        hash,
+        verifyToken,
+        dto.avatar,
+      );
+
+      await this.emailService.sendVerificationMail(
+        user.uid,
+        user.email,
+        verifyToken,
+      );
 
       return this.authService.signToken(user.uid, user.email);
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2002') {
-          this.logger.debug('User already exists');
-          throw new ForbiddenException('User already exists');
-        }
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        // User already exists
+        throw new ForbiddenException('Verification mail sent');
       }
-      //throw error;
-    }
-  }
-
-  async createKakaoUser(dto: CreateKakaoUserDTO): Promise<User> {
-    const avatar = this.getRandomAvatar();
-    try {
-      const user = await this.prisma.user.create({
-        data: {
-          nickname: dto.nickname,
-          email: dto.email ? dto.email : null,
-          kakaoId: dto.kakaoId,
-          avatar,
-        },
-      });
-
-      return user; //this.authService.signToken(user.uid, user.email);
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2002') {
-          this.logger.debug('User already exists');
-          throw new ForbiddenException('User already exists');
-        }
-      }
-
       throw error;
     }
   }
 
-  async createGithubUser(dto: CreateGithubUserDTO): Promise<User> {
-    const avatar = this.getRandomAvatar();
-
+  async checkSignupVerificationToken(uid: number, verifyToken: string) {
     try {
-      const user = await this.prisma.user.create({
-        data: {
-          nickname: dto.nickname,
-          email: dto.email,
-          githubId: dto.githubId,
-          avatar,
-        },
-      });
-
-      return user;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2002') {
-          this.logger.debug('User already exists');
-          throw new ForbiddenException('User already exists');
-        }
+      const { verified, verify_token } =
+        await this.usersDatabaseHelper.getUserByUid(uid);
+      if (!verified && verify_token === verifyToken) {
+        const user = await this.usersDatabaseHelper.verifyUserSignup(uid);
+        // send signup congratulation email
+        await this.emailService.sendSignupSucceedMail(user.email);
       }
-
-      throw error;
-    }
-  }
-
-  async createGoogleUser(dto: CreateGoogleUserDTO): Promise<User> {
-    const avatar = this.getRandomAvatar();
-
-    try {
-      const user = await this.prisma.user.create({
-        data: {
-          nickname: dto.nickname,
-          email: dto.email,
-          googleId: dto.googleId,
-          avatar,
-        },
-      });
-
-      return user;
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2002') {
-          this.logger.debug('User already exists');
-          throw new ForbiddenException('User already exists');
-        }
-      }
-
-      throw error;
+      throw new ForbiddenException('Invalid verification token');
     }
   }
 
   async findAllUsers() {
     try {
-      return await this.prisma.user.findMany({
-        select: {
-          uid: true,
-          nickname: true,
-          avatar: true,
-        },
-      });
+      return await this.usersDatabaseHelper.getAllUsers();
     } catch (error) {
       this.logger.error({
         code: error.code,
@@ -146,22 +80,7 @@ export class UsersService {
    */
   async findUserByUid(uid: number) {
     try {
-      const user = await this.prisma.user.findUnique({
-        where: {
-          uid,
-        },
-        select: {
-          uid: true,
-          nickname: true,
-          avatar: true,
-        },
-      });
-
-      if (!user) {
-        throw new ForbiddenException('Invalid Credentials');
-      }
-
-      return user;
+      return await this.usersDatabaseHelper.getUserByUid(uid);
     } catch (error) {
       this.logger.error({
         code: error.code,
@@ -170,48 +89,22 @@ export class UsersService {
     }
   }
 
+  /**
+   * update user by uid
+   * @param {User} user user which is logged in
+   * @param {UpdateUserDTO} dto dto which contains data to update
+   */
   async updateUser(user: User, dto: UpdateUserDTO) {
     try {
-      let updatedUser = await this.prisma.user.update({
-        where: {
-          uid: user.uid,
-        },
-        data: {
-          email: dto.email ? dto.email : user.email,
-          nickname: dto.nickname ? dto.nickname : user.nickname,
-          avatar: dto.avatar ? dto.avatar : user.avatar,
-        },
-      });
-
-      // if password is provided update hash
-      if (dto.password) {
-        const hash = await this.authService.generateHash(dto.password);
-
-        updatedUser = await this.prisma.user.update({
-          where: {
-            uid: user.uid,
-          },
-          data: {
-            hash,
-          },
-        });
-      }
-
-      if (!updatedUser) {
-        throw new ForbiddenException('Invalid Credentials');
-      }
-
-      delete updatedUser.hash;
-
-      return updatedUser;
+      return await this.usersDatabaseHelper.updateUser(user, dto);
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          this.logger.warn('User not found');
-        }
-      } else {
-        throw error;
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        this.logger.warn('User update failed: User not found');
       }
+      throw error;
     }
   }
 
@@ -220,78 +113,17 @@ export class UsersService {
    * @param uid uid of user to delete given by body of request
    * @param loginUserId uid of user logged in
    */
-  async deleteUserById(uid: number, loginUserId: number) {
-    // check if correct user id is given
-    if (uid !== loginUserId) {
-      return;
-    }
-
+  async deleteUserByUid(uid: number, loginUserId: number) {
     try {
-      await this.prisma.user.delete({
-        where: {
-          uid,
-        },
-      });
+      await this.usersDatabaseHelper.deleteUserByUid(uid, loginUserId);
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          this.logger.debug('User not found');
-        }
-      } else {
-        throw error;
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        this.logger.debug('User not found');
       }
+      throw error;
     }
-  }
-
-  async findUserByKakaoId(kakaoId: string) {
-    try {
-      return await this.prisma.user.findUnique({
-        where: {
-          kakaoId,
-        },
-      });
-    } catch (error) {
-      this.logger.error({
-        code: error.code,
-        message: error.message,
-      });
-    }
-  }
-
-  async findUserByGithubId(githubId: string) {
-    try {
-      return await this.prisma.user.findUnique({
-        where: {
-          githubId,
-        },
-      });
-    } catch (error) {
-      this.logger.error({
-        code: error.code,
-        message: error.message,
-      });
-    }
-  }
-
-  async findUserByGoogleId(googleId: string) {
-    try {
-      return await this.prisma.user.findUnique({
-        where: {
-          googleId,
-        },
-      });
-    } catch (error) {
-      this.logger.error({
-        code: error.code,
-        message: error.message,
-      });
-    }
-  }
-
-  getRandomAvatar(): number {
-    const min = 1;
-    const max = this.configService.get('AVATAR_MAX_COUNT') as number;
-
-    return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 }

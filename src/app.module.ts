@@ -11,6 +11,7 @@ import { AuthModule } from './auth/auth.module';
 import { SessionModule } from './session/session.module';
 import { RecordsModule } from './records/records.module';
 import { FriendsModule } from './friends/friends.module';
+import { EmailService } from './email/email.service';
 import environmentConfig from './config/environmentConfig';
 import swaggerConfig from './config/swaggerConfig';
 import jwtConfig from './config/jwtConfig';
@@ -34,6 +35,6 @@ import authConfig from './config/authConfig';
     FriendsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, EmailService],
 })
 export class AppModule {}

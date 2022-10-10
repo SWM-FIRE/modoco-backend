@@ -1,17 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-kakao';
 import { CreateKakaoUserDTO } from 'src/users/dto';
-import { UsersService } from 'src/users/users.service';
 import { AuthService } from '../auth.service';
+import { UsersDatabaseHelper } from '../../users/helper/users-database.helper';
+import { EmailService } from 'src/email/email.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
   constructor(
     readonly configService: ConfigService,
-    private readonly usersService: UsersService,
+    private readonly usersDatabaseHelper: UsersDatabaseHelper,
     private readonly authService: AuthService,
+    private readonly emailService: EmailService,
   ) {
     const KAKAO_CLIENT_ID = configService.get('KAKAO_CLIENT_ID');
     const KAKAO_CALLBACK_URL = configService.get('KAKAO_CALLBACK_URL');
@@ -33,11 +36,13 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
     };
 
     // find user in modoco db
-    let user = await this.usersService.findUserByKakaoId(kakaoId);
+    let user = await this.usersDatabaseHelper.findUserByKakaoId(kakaoId);
     if (!user) {
       try {
         // create user in modoco db
-        user = await this.usersService.createKakaoUser(createUserDTO);
+        user = await this.createKakaoUser(createUserDTO);
+        // send signup congratulation email
+        await this.emailService.sendSignupSucceedMail(user.email);
       } catch (error) {
         done(error);
       }
@@ -54,6 +59,27 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
       ...user,
       access_token,
     });
+  }
+
+  private async createKakaoUser(dto: CreateKakaoUserDTO) {
+    try {
+      const user = await this.usersDatabaseHelper.createKakaoUser(
+        dto.nickname,
+        dto?.email,
+        dto.kakaoId,
+      );
+
+      return user;
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        // 이미 존재하는 이메일
+        throw new ForbiddenException('Verification email sent');
+      }
+      throw error;
+    }
   }
 }
 
