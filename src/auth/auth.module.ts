@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
+import { EmailService } from 'src/email/email.service';
 import { UsersDatabaseHelper } from 'src/users/helper/users-database.helper';
 import { UsersHelper } from 'src/users/helper/users.helper';
 import { UsersService } from 'src/users/users.service';
@@ -26,6 +27,7 @@ import {
     GoogleStrategy,
     UsersDatabaseHelper,
     UsersHelper,
+    EmailService,
   ],
   exports: [AuthService],
 })
