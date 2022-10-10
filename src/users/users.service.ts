@@ -8,6 +8,7 @@ import {
   CreateUserDTO,
   UpdateUserDTO,
 } from './dto';
+import { generateSignupVerifyToken } from './helper/user.utils';
 import { UsersDatabaseHelper } from './helper/users-database.helper';
 
 @Injectable()
@@ -22,10 +23,13 @@ export class UsersService {
   async createUser(dto: CreateUserDTO) {
     try {
       const hash = await this.authService.generateHash(dto.password);
+      const verifyToken = generateSignupVerifyToken();
+
       const user = await this.usersDatabaseHelper.createUser(
         dto.nickname,
         dto.email,
         hash,
+        verifyToken,
         dto.avatar,
       );
 
@@ -43,9 +47,12 @@ export class UsersService {
 
   async createKakaoUser(dto: CreateKakaoUserDTO): Promise<User> {
     try {
+      const verifyToken = generateSignupVerifyToken();
+
       return await this.usersDatabaseHelper.createKakaoUser(
         dto.nickname,
         dto?.email,
+        verifyToken,
         dto.kakaoId,
       );
     } catch (error) {
@@ -61,9 +68,12 @@ export class UsersService {
 
   async createGithubUser(dto: CreateGithubUserDTO): Promise<User> {
     try {
+      const verifyToken = generateSignupVerifyToken();
+
       return await this.usersDatabaseHelper.createGithubUser(
         dto.nickname,
         dto.email,
+        verifyToken,
         dto.githubId,
       );
     } catch (error) {
@@ -79,9 +89,12 @@ export class UsersService {
 
   async createGoogleUser(dto: CreateGoogleUserDTO): Promise<User> {
     try {
+      const verifyToken = generateSignupVerifyToken();
+
       return await this.usersDatabaseHelper.createGoogleUser(
         dto.nickname,
         dto.email,
+        verifyToken,
         dto.googleId,
       );
     } catch (error) {

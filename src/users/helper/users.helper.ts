@@ -1,14 +1,9 @@
-import * as uuid from 'uuid';
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class UsersHelper {
   constructor(private readonly configService: ConfigService) {}
-
-  generateSignupVerifyToken() {
-    return uuid.v1();
-  }
 
   getRandomAvatar() {
     const min = 1;
