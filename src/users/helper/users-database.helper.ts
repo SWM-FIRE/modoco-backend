@@ -104,6 +104,8 @@ export class UsersDatabaseHelper {
         uid: true,
         nickname: true,
         avatar: true,
+        verified: true,
+        verify_token: true,
       },
     });
 
@@ -182,6 +184,17 @@ export class UsersDatabaseHelper {
     return this.prisma.user.findUnique({
       where: {
         googleId,
+      },
+    });
+  }
+
+  verifyUserSignup(uid) {
+    return this.prisma.user.update({
+      where: {
+        uid,
+      },
+      data: {
+        verified: true,
       },
     });
   }

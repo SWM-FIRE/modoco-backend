@@ -4,6 +4,7 @@ import { SendEmailCommand, SESClient } from '@aws-sdk/client-ses';
 @Injectable()
 export class EmailService {
   private sesClient: SESClient;
+
   constructor() {
     this.sesClient = new SESClient({
       region: 'ap-northeast-2',
@@ -17,9 +18,9 @@ export class EmailService {
    * @param {number} uid user id
    */
   public async sendVerificationMail(
+    uid: number,
     emailAddress: string,
     signupVerifyToken: string,
-    uid: number,
   ) {
     const BASE_URL = 'http://localhost:3333/api/v1'; // TODO: config
     //const BASE_URL = this.configService.get('BASE_URL');

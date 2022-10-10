@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
+import { EmailService } from 'src/email/email.service';
 import {
   CreateGithubUserDTO,
   CreateGoogleUserDTO,
@@ -16,6 +17,7 @@ export class UsersService {
   constructor(
     private readonly authService: AuthService,
     private readonly usersDatabaseHelper: UsersDatabaseHelper,
+    private readonly emailService: EmailService,
   ) {}
 
   private readonly logger = new Logger('UsersService');
@@ -31,6 +33,12 @@ export class UsersService {
         hash,
         verifyToken,
         dto.avatar,
+      );
+
+      await this.emailService.sendVerificationMail(
+        user.uid,
+        user.email,
+        verifyToken,
       );
 
       return this.authService.signToken(user.uid, user.email);
@@ -49,12 +57,20 @@ export class UsersService {
     try {
       const verifyToken = generateSignupVerifyToken();
 
-      return await this.usersDatabaseHelper.createKakaoUser(
+      const user = await this.usersDatabaseHelper.createKakaoUser(
         dto.nickname,
         dto?.email,
         verifyToken,
         dto.kakaoId,
       );
+
+      await this.emailService.sendVerificationMail(
+        user.uid,
+        user.email,
+        verifyToken,
+      );
+
+      return user;
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -70,12 +86,20 @@ export class UsersService {
     try {
       const verifyToken = generateSignupVerifyToken();
 
-      return await this.usersDatabaseHelper.createGithubUser(
+      const user = await this.usersDatabaseHelper.createGithubUser(
         dto.nickname,
         dto.email,
         verifyToken,
         dto.githubId,
       );
+
+      await this.emailService.sendVerificationMail(
+        user.uid,
+        user.email,
+        verifyToken,
+      );
+
+      return user;
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -91,12 +115,20 @@ export class UsersService {
     try {
       const verifyToken = generateSignupVerifyToken();
 
-      return await this.usersDatabaseHelper.createGoogleUser(
+      const user = await this.usersDatabaseHelper.createGoogleUser(
         dto.nickname,
         dto.email,
         verifyToken,
         dto.googleId,
       );
+
+      await this.emailService.sendVerificationMail(
+        user.uid,
+        user.email,
+        verifyToken,
+      );
+
+      return user;
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -105,6 +137,18 @@ export class UsersService {
         throw new ForbiddenException('User already exists');
       }
       throw error;
+    }
+  }
+
+  async checkSignupVerificationToken(uid: number, verifyToken: string) {
+    try {
+      const { verified, verify_token } =
+        await this.usersDatabaseHelper.getUserByUid(uid);
+      if (!verified && verify_token === verifyToken) {
+        await this.usersDatabaseHelper.verifyUserSignup(uid);
+      }
+    } catch (error) {
+      throw new ForbiddenException('Invalid verification token');
     }
   }
 
