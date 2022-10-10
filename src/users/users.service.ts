@@ -2,13 +2,7 @@ import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { EmailService } from 'src/email/email.service';
-import {
-  CreateGithubUserDTO,
-  CreateGoogleUserDTO,
-  CreateKakaoUserDTO,
-  CreateUserDTO,
-  UpdateUserDTO,
-} from './dto';
+import { CreateUserDTO, UpdateUserDTO } from './dto';
 import { generateSignupVerifyToken } from './helper/user.utils';
 import { UsersDatabaseHelper } from './helper/users-database.helper';
 
@@ -42,93 +36,6 @@ export class UsersService {
       );
 
       return this.authService.signToken(user.uid, user.email);
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        throw new ForbiddenException('User already exists');
-      }
-      throw error;
-    }
-  }
-
-  async createKakaoUser(dto: CreateKakaoUserDTO): Promise<User> {
-    try {
-      const verifyToken = generateSignupVerifyToken();
-
-      const user = await this.usersDatabaseHelper.createKakaoUser(
-        dto.nickname,
-        dto?.email,
-        verifyToken,
-        dto.kakaoId,
-      );
-
-      await this.emailService.sendVerificationMail(
-        user.uid,
-        user.email,
-        verifyToken,
-      );
-
-      return user;
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        throw new ForbiddenException('User already exists');
-      }
-      throw error;
-    }
-  }
-
-  async createGithubUser(dto: CreateGithubUserDTO): Promise<User> {
-    try {
-      const verifyToken = generateSignupVerifyToken();
-
-      const user = await this.usersDatabaseHelper.createGithubUser(
-        dto.nickname,
-        dto.email,
-        verifyToken,
-        dto.githubId,
-      );
-
-      await this.emailService.sendVerificationMail(
-        user.uid,
-        user.email,
-        verifyToken,
-      );
-
-      return user;
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        throw new ForbiddenException('User already exists');
-      }
-      throw error;
-    }
-  }
-
-  async createGoogleUser(dto: CreateGoogleUserDTO): Promise<User> {
-    try {
-      const verifyToken = generateSignupVerifyToken();
-
-      const user = await this.usersDatabaseHelper.createGoogleUser(
-        dto.nickname,
-        dto.email,
-        verifyToken,
-        dto.googleId,
-      );
-
-      await this.emailService.sendVerificationMail(
-        user.uid,
-        user.email,
-        verifyToken,
-      );
-
-      return user;
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&

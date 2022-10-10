@@ -1,10 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-kakao';
 import { CreateKakaoUserDTO } from 'src/users/dto';
 import { AuthService } from '../auth.service';
 import { UsersDatabaseHelper } from '../../users/helper/users-database.helper';
+import { generateSignupVerifyToken } from 'src/users/helper/user.utils';
+import { EmailService } from 'src/email/email.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
@@ -12,6 +15,7 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
     readonly configService: ConfigService,
     private readonly usersDatabaseHelper: UsersDatabaseHelper,
     private readonly authService: AuthService,
+    private readonly emailService: EmailService,
   ) {
     const KAKAO_CLIENT_ID = configService.get('KAKAO_CLIENT_ID');
     const KAKAO_CALLBACK_URL = configService.get('KAKAO_CALLBACK_URL');
@@ -37,10 +41,12 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
     if (!user) {
       try {
         // create user in modoco db
-        user = await this.usersDatabaseHelper.createKakaoUser(
-          createUserDTO.nickname,
-          createUserDTO.email,
-          createUserDTO.kakaoId,
+        user = await this.createKakaoUser(createUserDTO);
+        // send verification email
+        await this.emailService.sendVerificationMail(
+          user.uid,
+          user.email,
+          user.verify_token,
         );
       } catch (error) {
         done(error);
@@ -58,6 +64,29 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
       ...user,
       access_token,
     });
+  }
+
+  private async createKakaoUser(dto: CreateKakaoUserDTO) {
+    try {
+      const verifyToken = generateSignupVerifyToken();
+
+      const user = await this.usersDatabaseHelper.createKakaoUser(
+        dto.nickname,
+        dto?.email,
+        verifyToken,
+        dto.kakaoId,
+      );
+
+      return user;
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ForbiddenException('User already exists');
+      }
+      throw error;
+    }
   }
 }
 

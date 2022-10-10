@@ -57,6 +57,15 @@ export class UsersController {
     return this.usersService.findUserByUid(uid);
   }
 
+  // check signup verication on /:uid/verify/:verify-token
+  @Get(':uid/verify/:verifyToken')
+  async verifyUser(
+    @Param('uid', ParseIntPipe) uid: number,
+    @Param('verifyToken') verifyToken: string,
+  ) {
+    console.log('앙', uid, verifyToken);
+  }
+
   @UsersDocumentHelper(API_DOC_TYPE.UPDATE_USER)
   @ApiAuthDocument()
   @UseGuards(JwtGuard)

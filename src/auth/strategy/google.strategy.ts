@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-google-oauth20';
 import { CreateGoogleUserDTO } from 'src/users/dto';
 import { AuthService } from '../auth.service';
 import { UsersDatabaseHelper } from '../../users/helper/users-database.helper';
+import { generateSignupVerifyToken } from 'src/users/helper/user.utils';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -45,10 +47,12 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     if (!user) {
       try {
         // create user in modoco db
-        user = await this.usersDatabaseHelper.createGoogleUser(
-          createUserDTO.nickname,
-          createUserDTO.email,
-          createUserDTO.googleId,
+        user = await this.createGoogleUser(createUserDTO);
+        // send verification email
+        await this.emailService.sendVerificationMail(
+          user.uid,
+          user.email,
+          user.verify_token,
         );
       } catch (error) {
         done(error);
@@ -66,6 +70,29 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       ...user,
       access_token,
     });
+  }
+
+  private async createGoogleUser(dto: CreateGoogleUserDTO) {
+    try {
+      const verifyToken = generateSignupVerifyToken();
+
+      const user = await this.usersDatabaseHelper.createGoogleUser(
+        dto.nickname,
+        dto.email,
+        verifyToken,
+        dto.googleId,
+      );
+
+      return user;
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ForbiddenException('User already exists');
+      }
+      throw error;
+    }
   }
 }
 
