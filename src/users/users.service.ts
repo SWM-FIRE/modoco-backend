@@ -44,7 +44,6 @@ export class UsersService {
         // User already exists
         throw new ForbiddenException('Verification mail sent');
       }
-      throw error;
     }
   }
 
