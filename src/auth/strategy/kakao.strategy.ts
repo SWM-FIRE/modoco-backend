@@ -73,8 +73,8 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
       const user = await this.usersDatabaseHelper.createKakaoUser(
         dto.nickname,
         dto?.email,
-        verifyToken,
         dto.kakaoId,
+        verifyToken,
       );
 
       return user;

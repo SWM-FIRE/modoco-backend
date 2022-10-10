@@ -75,8 +75,8 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
       const user = await this.usersDatabaseHelper.createGithubUser(
         dto.nickname,
         dto.email,
-        verifyToken,
         dto.githubId,
+        verifyToken,
       );
 
       return user;

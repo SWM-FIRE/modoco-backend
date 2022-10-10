@@ -79,8 +79,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       const user = await this.usersDatabaseHelper.createGoogleUser(
         dto.nickname,
         dto.email,
-        verifyToken,
         dto.googleId,
+        verifyToken,
       );
 
       return user;
