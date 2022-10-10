@@ -5,6 +5,7 @@ export default () => ({
   BASE_URL: process.env.BASE_URL || 'http://localhost:3333/api/v1',
   NOTION_URL: `https://fortune-innocent-45c.notion.site/1-e022efdd1581461b994469a56af037f8`,
   API_VERSION: 'v1',
+  EMAIL_SOURCE: process.env.EMAIL_SOURCE || 'modocode.com',
   PORT: parseInt(process.env.PORT, 10) || 3000,
   STATIC_ASSETS_PATH: join(__dirname, '..', 'static'),
   CSP_POLICY: {

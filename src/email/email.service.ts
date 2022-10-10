@@ -85,6 +85,8 @@ export class EmailService {
    * @private
    */
   private createSendEmailCommand({ to, subject, html }) {
+    const EMAIL_SOURCE = this.configService.get('EMAIL_SOURCE');
+
     return new SendEmailCommand({
       Destination: {
         CcAddresses: [],
@@ -102,7 +104,7 @@ export class EmailService {
           Data: subject,
         },
       },
-      Source: 'no-reply@mail.modoing.net', // 보내는 사람의 이메일
+      Source: `no-reply@${EMAIL_SOURCE}`, // 보내는 사람의 이메일
       ReplyToAddresses: [],
     });
   }
