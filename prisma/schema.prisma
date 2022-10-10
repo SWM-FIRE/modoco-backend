@@ -19,6 +19,8 @@ model User {
   statusQuo String  @default("")
   avatar    Int     @default(1)
 
+  verified Boolean @default(false)
+
   githubId String? @unique
   googleId String? @unique
   kakaoId  String? @unique
