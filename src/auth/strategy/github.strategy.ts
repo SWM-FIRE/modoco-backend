@@ -5,14 +5,15 @@ import { Strategy } from 'passport-github2';
 import { CreateGithubUserDTO } from 'src/users/dto';
 import { AuthService } from '../auth.service';
 import { UsersDatabaseHelper } from '../../users/helper/users-database.helper';
-import { generateSignupVerifyToken } from 'src/users/helper/user.utils';
 import { Prisma } from '@prisma/client';
+import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
   constructor(
     readonly configService: ConfigService,
     private readonly usersDatabaseHelper: UsersDatabaseHelper,
+    private readonly emailService: EmailService,
     private readonly authService: AuthService,
   ) {
     const GITHUB_CLIENT_ID = configService.get('GITHUB_CLIENT_ID');
@@ -44,12 +45,8 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
       try {
         // create user in modoco db
         user = await this.createGithubUser(createUserDTO);
-        // send verification email
-        await this.emailService.sendVerificationMail(
-          user.uid,
-          user.email,
-          user.verify_token,
-        );
+        // send signup congratulation email
+        await this.emailService.sendSignupSucceedMail(user.email);
       } catch (error) {
         done(error);
       }
@@ -70,13 +67,10 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
 
   private async createGithubUser(dto: CreateGithubUserDTO) {
     try {
-      const verifyToken = generateSignupVerifyToken();
-
       const user = await this.usersDatabaseHelper.createGithubUser(
         dto.nickname,
         dto.email,
         dto.githubId,
-        verifyToken,
       );
 
       return user;
@@ -85,7 +79,8 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new ForbiddenException('User already exists');
+        // 이미 존재하는 이메일
+        throw new ForbiddenException('Verification email sent');
       }
       throw error;
     }

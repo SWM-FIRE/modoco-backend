@@ -5,14 +5,15 @@ import { Strategy } from 'passport-google-oauth20';
 import { CreateGoogleUserDTO } from 'src/users/dto';
 import { AuthService } from '../auth.service';
 import { UsersDatabaseHelper } from '../../users/helper/users-database.helper';
-import { generateSignupVerifyToken } from 'src/users/helper/user.utils';
 import { Prisma } from '@prisma/client';
+import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(
     readonly configService: ConfigService,
     readonly usersDatabaseHelper: UsersDatabaseHelper,
+    private readonly emailService: EmailService,
     private readonly authService: AuthService,
   ) {
     const GOOGLE_CLIENT_ID = configService.get('GOOGLE_CLIENT_ID');
@@ -48,13 +49,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       try {
         // create user in modoco db
         user = await this.createGoogleUser(createUserDTO);
-        // send verification email
-        await this.emailService.sendVerificationMail(
-          user.uid,
-          user.email,
-          user.verify_token,
-        );
+        // send signup congratulation email
+        await this.emailService.sendSignupSucceedMail(user.email);
       } catch (error) {
+        console.log(error);
         done(error);
       }
     }
@@ -74,13 +72,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 
   private async createGoogleUser(dto: CreateGoogleUserDTO) {
     try {
-      const verifyToken = generateSignupVerifyToken();
-
       const user = await this.usersDatabaseHelper.createGoogleUser(
         dto.nickname,
         dto.email,
         dto.googleId,
-        verifyToken,
       );
 
       return user;
@@ -89,7 +84,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new ForbiddenException('User already exists');
+        // 이미 존재하는 이메일
+        throw new ForbiddenException('Verification email sent');
       }
       throw error;
     }

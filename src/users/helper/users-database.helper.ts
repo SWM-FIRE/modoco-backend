@@ -35,7 +35,6 @@ export class UsersDatabaseHelper {
     nickname: string,
     email: string,
     kakaoId: string,
-    verifyToken: string,
     avatar?: number,
   ) {
     return this.prisma.user.create({
@@ -43,7 +42,7 @@ export class UsersDatabaseHelper {
         nickname,
         email,
         kakaoId,
-        verify_token: verifyToken,
+        verified: true,
         avatar: avatar ? avatar : this.usersHelper.getRandomAvatar(),
       },
     });
@@ -53,7 +52,6 @@ export class UsersDatabaseHelper {
     nickname: string,
     email: string,
     githubId: string,
-    verifyToken: string,
     avatar?: number,
   ) {
     return this.prisma.user.create({
@@ -61,7 +59,7 @@ export class UsersDatabaseHelper {
         nickname,
         email,
         githubId,
-        verify_token: verifyToken,
+        verified: true,
         avatar: avatar ? avatar : this.usersHelper.getRandomAvatar(),
       },
     });
@@ -71,7 +69,6 @@ export class UsersDatabaseHelper {
     nickname: string,
     email: string,
     googleId: string,
-    verifyToken: string,
     avatar?: number,
   ) {
     return this.prisma.user.create({
@@ -79,7 +76,7 @@ export class UsersDatabaseHelper {
         nickname,
         email,
         googleId,
-        verify_token: verifyToken,
+        verified: true,
         avatar: avatar ? avatar : this.usersHelper.getRandomAvatar(),
       },
     });

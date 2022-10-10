@@ -53,7 +53,9 @@ export class UsersService {
       const { verified, verify_token } =
         await this.usersDatabaseHelper.getUserByUid(uid);
       if (!verified && verify_token === verifyToken) {
-        await this.usersDatabaseHelper.verifyUserSignup(uid);
+        const user = await this.usersDatabaseHelper.verifyUserSignup(uid);
+        // send signup congratulation email
+        await this.emailService.sendSignupSucceedMail(user.email);
       }
     } catch (error) {
       throw new ForbiddenException('Invalid verification token');

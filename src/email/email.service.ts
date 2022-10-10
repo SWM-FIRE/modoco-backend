@@ -7,8 +7,9 @@ export class EmailService {
   private sesClient: SESClient;
 
   constructor(private readonly configService: ConfigService) {
+    const region = this.configService.get('AWS_REGION');
     this.sesClient = new SESClient({
-      region: 'ap-northeast-2',
+      region,
     });
   }
 
@@ -37,6 +38,35 @@ export class EmailService {
         <p>
           만약 버튼이 작동하지 않는다면 아래 링크로 접속해주세요. <br />
           <a href="${url}">${url}</a>
+        </p>
+        <p>감사합니다.</p>
+        <p> - 모도코 팀 드림 - </p>
+      `,
+    };
+
+    const command = this.createSendEmailCommand(mailOptions);
+    return await this.sendEmail(command);
+  }
+
+  /**
+   * @description send signup congratulation email
+   * @param {number} uid user id
+   * @param {string} emailAddress email address
+   * @param {string} signupVerifyToken signup verify token
+   */
+  public async sendSignupSucceedMail(emailAddress: string) {
+    const MODOCO_URL = this.configService.get('FRONTEND_URL');
+    const NOTION_URL = this.configService.get('NOTION_URL');
+
+    const mailOptions = {
+      to: emailAddress,
+      subject: '모도코 회원가입이 완료되었습니다.',
+      html: `
+        <h2><a href="${MODOCO_URL}">모도코</a> 회원가입을 축하드립니다.</h2>
+        <p>
+          저희는 여러 개발자들과 모각코를 하기 위해 디스코드 커뮤니티를 운영하고 있습니다.<br />
+          이용에 참고해주시길 바랍니다.<br />
+          <a href="${NOTION_URL}">[노션 안내 링크]</a>
         </p>
         <p>감사합니다.</p>
         <p> - 모도코 팀 드림 - </p>
@@ -106,38 +136,3 @@ export class EmailService {
     }
   }
 }
-
-// public async sendVerificationMail(
-//   emailAddress: string,
-//   signupVerifyToken: string,
-//   uid: number,
-// ) {
-//   const BASE_URL = 'http://localhost:3333/api/v1'; // TODO: config
-//   //const BASE_URL = this.configService.get('BASE_URL');
-//   const url = `${BASE_URL}/users/${uid}?token=${signupVerifyToken}`;
-//   const from = ''; // TODO: config
-//
-//   const mailOptions: EmailOptions = {
-//     from,
-//     to: emailAddress,
-//     subject: '모도코 가입 인증 메일입니다.',
-//     html: `
-//       <h2>가입 인증을 위해 가입 확인 버튼를 눌러주세요.</h2>
-//       <form action="${url}" method="POST">
-//         <button>가입 확인</button>
-//       </form>
-//       <p>
-//         만약 버튼이 작동하지 않는다면 아래 링크를 클릭해주세요. <br />
-//         <a href="${url}">${url}</a>
-//       </p>
-//       <p>감사합니다.</p>
-//       <p>모도코 팀 드림</p>
-//     `,
-//   };
-//
-//   return await this.sendEmail(mailOptions);
-// }
-//
-// private sendEmail(mailOptions: EmailOptions) {
-//   return this.transporter.sendMail(mailOptions);
-// }

@@ -5,7 +5,6 @@ import { Strategy } from 'passport-kakao';
 import { CreateKakaoUserDTO } from 'src/users/dto';
 import { AuthService } from '../auth.service';
 import { UsersDatabaseHelper } from '../../users/helper/users-database.helper';
-import { generateSignupVerifyToken } from 'src/users/helper/user.utils';
 import { EmailService } from 'src/email/email.service';
 import { Prisma } from '@prisma/client';
 
@@ -42,12 +41,8 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
       try {
         // create user in modoco db
         user = await this.createKakaoUser(createUserDTO);
-        // send verification email
-        await this.emailService.sendVerificationMail(
-          user.uid,
-          user.email,
-          user.verify_token,
-        );
+        // send signup congratulation email
+        await this.emailService.sendSignupSucceedMail(user.email);
       } catch (error) {
         done(error);
       }
@@ -68,13 +63,10 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
 
   private async createKakaoUser(dto: CreateKakaoUserDTO) {
     try {
-      const verifyToken = generateSignupVerifyToken();
-
       const user = await this.usersDatabaseHelper.createKakaoUser(
         dto.nickname,
         dto?.email,
         dto.kakaoId,
-        verifyToken,
       );
 
       return user;
@@ -83,7 +75,8 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new ForbiddenException('User already exists');
+        // 이미 존재하는 이메일
+        throw new ForbiddenException('Verification email sent');
       }
       throw error;
     }
