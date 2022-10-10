@@ -26,8 +26,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       },
     });
 
-    if (user) delete user.hash;
+    // email not verified
+    if (!user?.verified) {
+      return false;
+    }
 
+    // email verified
+    if (user) delete user.hash;
     return user;
   }
 }
