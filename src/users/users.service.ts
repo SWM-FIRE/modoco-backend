@@ -41,7 +41,8 @@ export class UsersService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new ForbiddenException('User already exists');
+        // User already exists
+        throw new ForbiddenException('Verification mail sent');
       }
       throw error;
     }

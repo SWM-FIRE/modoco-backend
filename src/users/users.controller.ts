@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   Post,
   Put,
+  Redirect,
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -58,12 +59,13 @@ export class UsersController {
   }
 
   // check signup verication on /:uid/verify/:verify-token
+  @Redirect('https://modocode.com')
   @Get(':uid/verify/:verifyToken')
   async verifyUser(
     @Param('uid', ParseIntPipe) uid: number,
     @Param('verifyToken') verifyToken: string,
   ) {
-    console.log('앙', uid, verifyToken);
+    return this.usersService.checkSignupVerificationToken(uid, verifyToken);
   }
 
   @UsersDocumentHelper(API_DOC_TYPE.UPDATE_USER)

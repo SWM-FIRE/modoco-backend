@@ -198,4 +198,33 @@ export class UsersDatabaseHelper {
       },
     });
   }
+
+  checkUserVerified(uid: number) {
+    return this.prisma.user.findUnique({
+      where: {
+        uid,
+      },
+      select: {
+        verified: true,
+      },
+    });
+  }
+
+  async checkUserExistsByEmail(email: string) {
+    const count = await this.prisma.user.count({
+      where: {
+        email,
+      },
+    });
+    return count > 0;
+  }
+
+  async checkUserExistsByUid(uid: number) {
+    const count = await this.prisma.user.count({
+      where: {
+        uid,
+      },
+    });
+    return count > 0;
+  }
 }

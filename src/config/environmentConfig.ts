@@ -2,6 +2,7 @@ import { join } from 'path';
 
 export default () => ({
   ENV: parseInt(process.env.PORT, 10) || 'development',
+  BASE_URL: process.env.BASE_URL || 'http://localhost:3333/api/v1',
   API_VERSION: 'v1',
   PORT: parseInt(process.env.PORT, 10) || 3000,
   STATIC_ASSETS_PATH: join(__dirname, '..', 'static'),

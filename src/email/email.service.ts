@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { SendEmailCommand, SESClient } from '@aws-sdk/client-ses';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class EmailService {
   private sesClient: SESClient;
 
-  constructor() {
+  constructor(private readonly configService: ConfigService) {
     this.sesClient = new SESClient({
       region: 'ap-northeast-2',
     });
@@ -13,25 +14,24 @@ export class EmailService {
 
   /**
    * @description send verification email
+   * @param {number} uid user id
    * @param {string} emailAddress email address
    * @param {string} signupVerifyToken signup verify token
-   * @param {number} uid user id
    */
   public async sendVerificationMail(
     uid: number,
     emailAddress: string,
     signupVerifyToken: string,
   ) {
-    const BASE_URL = 'http://localhost:3333/api/v1'; // TODO: config
-    //const BASE_URL = this.configService.get('BASE_URL');
-    const url = `${BASE_URL}/users/${uid}?token=${signupVerifyToken}`;
+    const BASE_URL = this.configService.get('BASE_URL');
+    const url = `${BASE_URL}/users/${uid}/verify/${signupVerifyToken}`;
 
     const mailOptions = {
       to: emailAddress,
       subject: '모도코 가입 인증 메일입니다.',
       html: `
         <h2>가입 인증을 위해 가입 확인 버튼를 눌러주세요.</h2>
-        <form action="${url}" method="POST">
+        <form action="${url}" method="GET">
           <button>가입 확인</button>
         </form>
         <p>
@@ -39,7 +39,7 @@ export class EmailService {
           <a href="${url}">${url}</a>
         </p>
         <p>감사합니다.</p>
-        <p>모도코 팀 드림</p>
+        <p> - 모도코 팀 드림 - </p>
       `,
     };
 
