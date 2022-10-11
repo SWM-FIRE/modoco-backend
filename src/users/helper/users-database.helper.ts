@@ -119,9 +119,13 @@ export class UsersDatabaseHelper {
         uid: user.uid,
       },
       data: {
-        email: dto.email ? dto.email : user.email,
-        nickname: dto.nickname ? dto.nickname : user.nickname,
-        avatar: dto.avatar ? dto.avatar : user.avatar,
+        nickname: this.getUpdatedData(dto.nickname, user.nickname),
+        email: this.getUpdatedData(dto.email, user.email),
+        status_quo: this.getUpdatedData(dto.status_quo, user.status_quo),
+        avatar: this.getUpdatedData(dto.avatar, user.avatar),
+        github_link: this.getUpdatedData(dto.github_link, user.github_link),
+        blog_link: this.getUpdatedData(dto.blog_link, user.blog_link),
+        groups: this.getUpdatedData(dto.groups, user.groups),
       },
     });
 
@@ -144,8 +148,17 @@ export class UsersDatabaseHelper {
     }
 
     delete updatedUser.hash;
+    delete updatedUser.verified;
+    delete updatedUser.verify_token;
+    delete updatedUser.kakaoId;
+    delete updatedUser.githubId;
+    delete updatedUser.googleId;
 
     return updatedUser;
+  }
+
+  private getUpdatedData(dtoField?: any, existingField?: any) {
+    return dtoField ? dtoField : existingField;
   }
 
   deleteUserByUid(uid: number, loginUserId: number) {

@@ -13,11 +13,16 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  nickname  String
-  email     String? @unique
-  hash      String?
-  statusQuo String  @default("")
-  avatar    Int     @default(1)
+  nickname   String
+  email      String? @unique
+  hash       String?
+  status_quo String  @default("")
+  avatar     Int     @default(1)
+
+  github_link String   @default("")
+  blog_link   String   @default("")
+  groups      String[] @default([])
+  badges      String[] @default([])
 
   verified     Boolean @default(false)
   verify_token String?

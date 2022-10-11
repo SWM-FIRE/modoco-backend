@@ -178,7 +178,7 @@ export class RoomGatewayService {
       moderatorSocket.emit(EVENT.EXCEPTION, 'You tried to kick unknown user');
       return;
     }
-    const userToKick = await this.usersService.findUserByUid(userUid);
+    const userToKick = await this.usersService.getAnoterUserByUid(userUid);
     //console.log(userToKick);
     if (!userToKick) {
       moderatorSocket.emit(EVENT.EXCEPTION, 'User not found');

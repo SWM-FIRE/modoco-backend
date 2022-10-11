@@ -42,12 +42,6 @@ function createUserDecorators() {
         },
       },
     }),
-    ApiForbiddenResponse({
-      description: 'Forbidden. User already exists.',
-    }),
-    ApiBadRequestResponse({
-      description: 'Bad request. Wrong syntax.',
-    }),
   );
 }
 
@@ -92,12 +86,21 @@ function getMeDecorators() {
       description: '로그인한 유저 정보 반환.',
       schema: {
         example: {
-          uid: 134,
-          createdAt: '2022-08-12T05:21:53.225Z',
-          updatedAt: '2022-08-16T01:10:12.925Z',
-          nickname: 'myNickname',
-          email: 'email@gmail.com',
-          avatar: 16,
+          uid: 1,
+          createdAt: '2022-09-21T16:50:15.079Z',
+          updatedAt: '2022-10-11T18:22:35.208Z',
+          nickname: 'u1',
+          email: 'myemail@gmail.com',
+          status_quo: 'I am a student',
+          avatar: 4,
+          github_link: 'http://github.com/mygithub',
+          blog_link: 'http://coding-groot.tistory.com',
+          groups: ['PythonLearner', 'SWM13'],
+          badges: ['PythonContest Top10', 'Bronze'],
+          verified: true,
+          githubId: null,
+          googleId: null,
+          kakaoId: null,
         },
       },
     }),
@@ -135,9 +138,17 @@ function updateUserDecorators() {
         '유저가 있는 경우, 유저 정보를 반환합니다. 없는 경우는 아무것도 반환하지 않습니다.',
       schema: {
         example: {
-          uid: 1123,
-          nickname: 'myNickname',
-          avatar: 16,
+          uid: 1,
+          createdAt: '2022-09-21T16:50:15.079Z',
+          updatedAt: '2022-10-11T18:22:35.208Z',
+          nickname: 'groot',
+          email: 'goodafter@coding.com',
+          status_quo: 'I am still hungry',
+          avatar: 4,
+          github_link: '',
+          blog_link: 'http://modocode.com',
+          groups: ['React', 'DevOps'],
+          badges: ['React Champion', 'TOP 10'],
         },
       },
     }),

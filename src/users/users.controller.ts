@@ -47,15 +47,15 @@ export class UsersController {
   @UseGuards(JwtGuard)
   @Get('me')
   async getMe(@GetUserDecorator() user: User) {
-    return user;
+    return this.usersService.getMyInformation(user);
   }
 
   @UsersDocumentHelper(API_DOC_TYPE.FIND_USER_BY_UID)
   @ApiAuthDocument()
   @UseGuards(JwtGuard)
   @Get(':uid')
-  async findUserByUid(@Param('uid', ParseIntPipe) uid: number) {
-    return this.usersService.findUserByUid(uid);
+  async getAnoterUserByUid(@Param('uid', ParseIntPipe) uid: number) {
+    return this.usersService.getAnoterUserByUid(uid);
   }
 
   // check signup verication on /:uid/verify/:verify-token

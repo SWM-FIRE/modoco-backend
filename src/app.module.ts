@@ -12,16 +12,16 @@ import { SessionModule } from './session/session.module';
 import { RecordsModule } from './records/records.module';
 import { FriendsModule } from './friends/friends.module';
 import { EmailService } from './email/email.service';
-import environmentConfig from './config/environmentConfig';
-import swaggerConfig from './config/swaggerConfig';
-import jwtConfig from './config/jwtConfig';
-import authConfig from './config/authConfig';
+import EnvironmentConfig from './config/environment-config';
+import SwaggerConfig from './config/swagger-config';
+import JwtConfig from './config/jwt-config';
+import AuthConfig from './config/auth-config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [environmentConfig, swaggerConfig, jwtConfig, authConfig],
+      load: [EnvironmentConfig, SwaggerConfig, JwtConfig, AuthConfig],
       cache: true,
     }),
     UsersModule,
