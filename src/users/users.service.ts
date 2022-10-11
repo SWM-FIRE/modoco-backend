@@ -73,14 +73,32 @@ export class UsersService {
     }
   }
 
+  async getMyInformation(user: User) {
+    try {
+      delete user.verify_token;
+      delete user.hash;
+
+      return user;
+    } catch (error) {
+      this.logger.error({
+        code: error.code,
+        message: error.message,
+      });
+    }
+  }
+
   /**
    * find user by uid
    * @param {number} uid user id
    * @returns user object
    */
-  async findUserByUid(uid: number) {
+  async getAnoterUserByUid(uid: number) {
     try {
-      return await this.usersDatabaseHelper.getUserByUid(uid);
+      const user = await this.usersDatabaseHelper.getUserByUid(uid);
+      delete user.verified;
+      delete user.verify_token;
+
+      return user;
     } catch (error) {
       this.logger.error({
         code: error.code,
@@ -99,7 +117,7 @@ export class UsersService {
       return await this.usersDatabaseHelper.updateUser(user, dto);
     } catch (error) {
       if (isNotFoundError(error)) {
-        this.logger.warn('[Update] User not found');
+        this.logger.debug('[Update] User not found');
       }
     }
   }

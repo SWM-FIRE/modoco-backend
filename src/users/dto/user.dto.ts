@@ -1,11 +1,13 @@
 import { ApiProperty, ApiTags } from '@nestjs/swagger';
 import {
+  ArrayUnique,
   IsArray,
   IsEmail,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
+  IsUrl,
   MaxLength,
 } from 'class-validator';
 
@@ -157,6 +159,7 @@ export class GetUserDTO {
 
   @ApiProperty({
     description: 'The github link of the user',
+    format: 'url',
     type: String,
   })
   @IsString()
@@ -165,6 +168,7 @@ export class GetUserDTO {
 
   @ApiProperty({
     description: 'The blog link of the user',
+    format: 'url',
     type: String,
   })
   @IsString()
@@ -225,6 +229,7 @@ export class UpdateUserDTO {
   @ApiProperty({
     description: 'The status quo of the user',
     required: false,
+    default: '내 상태 메시지를 입력해주세요.',
     type: String,
   })
   @IsString()
@@ -234,6 +239,7 @@ export class UpdateUserDTO {
   @ApiProperty({
     description: 'The avatar type of the user',
     required: false,
+    default: 1,
     type: Number,
   })
   @IsNumber()
@@ -241,31 +247,39 @@ export class UpdateUserDTO {
   avatar?: number;
 
   @ApiProperty({
-    description: 'The github link of the user',
+    description: 'The github link of the user. It must be a valid URL',
     required: false,
+    format: 'url',
+    default: 'https://shouldbe.url.com',
     type: String,
   })
   @IsString()
+  @IsUrl()
   @IsOptional()
   github_link?: string;
 
   @ApiProperty({
-    description: 'The blog link of the user',
+    description: 'The blog link of the user. It must be a valid URL',
     required: false,
+    format: 'url',
+    default: 'https://shouldbe.url.com',
     type: String,
   })
   @IsString()
+  @IsUrl()
   @IsOptional()
   blog_link?: string;
 
   @ApiProperty({
-    description: 'The group list of the user',
+    description:
+      'The group list of the user. Items shoud be unique, and max length is 100',
     required: false,
     type: [String],
   })
   @IsArray()
   @IsString({ each: true })
   @IsNotEmpty({ each: true })
+  @ArrayUnique()
   @MaxLength(100, { each: true, message: '최대 100자까지 입력 가능합니다.' })
   @IsOptional()
   groups?: string[];
