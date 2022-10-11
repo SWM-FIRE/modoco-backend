@@ -1,6 +1,10 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
-import { Prisma, User } from '@prisma/client';
+import { User } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
+import {
+  isAlreadyExistsError,
+  isNotFoundError,
+} from 'src/common/util/prisma-error.util';
 import { EmailService } from 'src/email/email.service';
 import { CreateUserDTO, UpdateUserDTO } from './dto';
 import { generateSignupVerifyToken } from './helper/user.utils';
@@ -37,11 +41,7 @@ export class UsersService {
 
       return this.authService.signToken(user.uid, user.email);
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        // User already exists
+      if (isAlreadyExistsError(error)) {
         throw new ForbiddenException('Verification mail sent');
       }
     }
@@ -51,6 +51,7 @@ export class UsersService {
     try {
       const { verified, verify_token } =
         await this.usersDatabaseHelper.getUserByUid(uid);
+
       if (!verified && verify_token === verifyToken) {
         const user = await this.usersDatabaseHelper.verifyUserSignup(uid);
         // send signup congratulation email
@@ -97,13 +98,9 @@ export class UsersService {
     try {
       return await this.usersDatabaseHelper.updateUser(user, dto);
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        this.logger.warn('User update failed: User not found');
+      if (isNotFoundError(error)) {
+        this.logger.warn('[Update] User not found');
       }
-      throw error;
     }
   }
 
@@ -116,13 +113,9 @@ export class UsersService {
     try {
       await this.usersDatabaseHelper.deleteUserByUid(uid, loginUserId);
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        this.logger.debug('User not found');
+      if (isNotFoundError(error)) {
+        this.logger.debug('[Delete] User not found');
       }
-      throw error;
     }
   }
 }
