@@ -231,6 +231,14 @@ export class RoomGatewayService {
 
     // kick user
     userToKickSocket.leave(payload.room);
+    // decrement room current count
+    const currentRoomMembersCount = await this.getCurrentRoomMembersCount(
+      payload.room,
+    );
+    await this.roomsService.leaveRoom(
+      parseInt(payload.room, 10),
+      currentRoomMembersCount,
+    );
   }
 
   /**
@@ -246,12 +254,11 @@ export class RoomGatewayService {
 
     client.leave(room);
 
-    // get all users who in currently in the room
-    const currentRoomMembers = await this.server.in(room).fetchSockets();
+    const currentRoomMembersCount = await this.getCurrentRoomMembersCount(room);
     // decrement room current count
     await this.roomsService.leaveRoom(
       parseInt(room, 10),
-      currentRoomMembers.length,
+      currentRoomMembersCount,
     );
 
     client.emit(EVENT.LEFT_ROOM, {
@@ -263,6 +270,16 @@ export class RoomGatewayService {
     });
 
     this.logger.debug(`Client leaved ${room}, sid: ${client.id})`);
+  }
+
+  /**
+   * get all users who in currently in the room
+   * @param {string} room room id in string
+   * @returns {Promise<Socket[]>} list of sockets
+   */
+  private async getCurrentRoomMembersCount(room: string) {
+    const roomMemberSockets = await this.server.in(room).fetchSockets();
+    return roomMemberSockets.length;
   }
 
   /**
@@ -357,7 +374,7 @@ export class RoomGatewayService {
     }
   }
 
-  async getMatchingSocketsBySid(room: string, sid: string) {
+  private async getMatchingSocketsBySid(room: string, sid: string) {
     const roomMembers = await this.server.in(room).fetchSockets();
     return roomMembers.filter((socket) => {
       return socket.id === sid;
