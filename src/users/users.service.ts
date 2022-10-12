@@ -38,12 +38,12 @@ export class UsersService {
         user.email,
         verifyToken,
       );
-
-      return this.authService.signToken(user.uid, user.email);
     } catch (error) {
       if (isAlreadyExistsError(error)) {
-        throw new ForbiddenException('Verification mail sent');
+        this.logger.debug('[Create] User already exists');
       }
+    } finally {
+      return "Email verification sent. Please check your email to verify your account. If you don't receive the email, please check your spam folder.";
     }
   }
 

@@ -1,10 +1,8 @@
 import { applyDecorators } from '@nestjs/common';
 import { API_DOC_TYPE } from '../constants/users-docs.enum';
 import {
-  ApiBadRequestResponse,
   ApiBody,
   ApiCreatedResponse,
-  ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
