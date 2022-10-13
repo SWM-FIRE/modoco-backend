@@ -163,6 +163,9 @@ export class UsersDatabaseHelper {
   }
 
   private getUpdatedData(dtoField?: any, existingField?: any) {
+    if (dtoField === '') {
+      return '';
+    }
     return dtoField ? dtoField : existingField;
   }
 

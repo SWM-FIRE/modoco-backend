@@ -7,7 +7,6 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  IsUrl,
   MaxLength,
 } from 'class-validator';
 
@@ -253,9 +252,8 @@ export class UpdateUserDTO {
     default: 'https://shouldbe.url.com',
     type: String,
   })
-  @IsString()
-  @IsUrl()
   @IsOptional()
+  @IsString()
   github_link?: string;
 
   @ApiProperty({
@@ -265,9 +263,8 @@ export class UpdateUserDTO {
     default: 'https://shouldbe.url.com',
     type: String,
   })
-  @IsString()
-  @IsUrl()
   @IsOptional()
+  @IsString()
   blog_link?: string;
 
   @ApiProperty({
