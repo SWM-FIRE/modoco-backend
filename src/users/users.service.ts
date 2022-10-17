@@ -42,13 +42,10 @@ export class UsersService {
     } catch (error) {
       // user record already exists
       if (isAlreadyExistsError(error)) {
-        console.log('이미 존재하는 유저입니다.');
         const existingUser = await this.usersDatabaseHelper.getUserByEmail(
           dto.email,
         );
         if (!existingUser.verified) {
-          console.log('인증되지 않은 유저입니다.');
-
           // send verification email again
           await this.emailService.sendVerificationMail(
             existingUser.uid,
