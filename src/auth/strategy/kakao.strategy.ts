@@ -42,7 +42,10 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
         // create user in modoco db
         user = await this.createKakaoUser(createUserDTO);
         // send signup congratulation email
-        await this.emailService.sendSignupSucceedMail(user.email);
+        await this.emailService.sendSignupSucceedMail(
+          user.nickname,
+          user.email,
+        );
       } catch (error) {
         done(error);
       }

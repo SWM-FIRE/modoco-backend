@@ -46,7 +46,10 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
         // create user in modoco db
         user = await this.createGithubUser(createUserDTO);
         // send signup congratulation email
-        await this.emailService.sendSignupSucceedMail(user.email);
+        await this.emailService.sendSignupSucceedMail(
+          user.nickname,
+          user.email,
+        );
       } catch (error) {
         done(error);
       }

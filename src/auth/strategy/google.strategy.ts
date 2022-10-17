@@ -50,7 +50,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         // create user in modoco db
         user = await this.createGoogleUser(createUserDTO);
         // send signup congratulation email
-        await this.emailService.sendSignupSucceedMail(user.email);
+        await this.emailService.sendSignupSucceedMail(
+          user.nickname,
+          user.email,
+        );
       } catch (error) {
         console.log(error);
         done(error);
