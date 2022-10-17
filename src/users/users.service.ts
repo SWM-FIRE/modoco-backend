@@ -40,8 +40,23 @@ export class UsersService {
         verifyToken,
       );
     } catch (error) {
+      // user record already exists
       if (isAlreadyExistsError(error)) {
-        this.logger.debug('[Create] User already exists');
+        console.log('이미 존재하는 유저입니다.');
+        const existingUser = await this.usersDatabaseHelper.getUserByEmail(
+          dto.email,
+        );
+        if (!existingUser.verified) {
+          console.log('인증되지 않은 유저입니다.');
+
+          // send verification email again
+          await this.emailService.sendVerificationMail(
+            existingUser.uid,
+            existingUser.nickname,
+            existingUser.email,
+            existingUser.verify_token,
+          );
+        }
       }
     } finally {
       return "Email verification sent. Please check your email to verify your account. If you don't receive the email, please check your spam folder.";

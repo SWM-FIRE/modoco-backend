@@ -118,6 +118,22 @@ export class UsersDatabaseHelper {
     return user;
   }
 
+  async getUserByEmail(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+      select: {
+        uid: true,
+        nickname: true,
+        email: true,
+        verified: true,
+        verify_token: true,
+      },
+    });
+    return user;
+  }
+
   async updateUser(user: User, dto: UpdateUserDTO) {
     let updatedUser = await this.prisma.user.update({
       where: {
