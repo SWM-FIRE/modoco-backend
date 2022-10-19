@@ -7,7 +7,10 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
+  Min,
+  MinLength,
 } from 'class-validator';
 
 @ApiTags('users')
@@ -17,6 +20,7 @@ export class CreateUserDTO {
     type: String,
   })
   @IsString()
+  @MaxLength(15)
   @IsNotEmpty()
   nickname: string;
 
@@ -26,13 +30,16 @@ export class CreateUserDTO {
   })
   @IsNumber()
   @IsNotEmpty()
+  @Max(30)
+  @Min(1)
   avatar: number;
 
   @ApiProperty({
-    description: 'The email of the user',
+    description: 'The email of the user. Max length is 60',
     type: String,
   })
   @IsNotEmpty()
+  @MaxLength(60)
   @IsEmail()
   email: string;
 
@@ -41,6 +48,8 @@ export class CreateUserDTO {
     type: String,
   })
   @IsNotEmpty()
+  @MaxLength(20)
+  @MinLength(8)
   @IsString()
   password: string;
 }
@@ -204,6 +213,7 @@ export class UpdateUserDTO {
     type: String,
   })
   @IsString()
+  @MaxLength(15)
   @IsOptional()
   nickname?: string;
 
@@ -213,6 +223,7 @@ export class UpdateUserDTO {
     type: String,
   })
   @IsEmail()
+  @MaxLength(60)
   @IsOptional()
   email?: string;
 
@@ -222,6 +233,8 @@ export class UpdateUserDTO {
     type: String,
   })
   @IsString()
+  @MaxLength(20)
+  @MinLength(8)
   @IsOptional()
   password?: string;
 
@@ -232,6 +245,7 @@ export class UpdateUserDTO {
     type: String,
   })
   @IsString()
+  @MaxLength(300)
   @IsOptional()
   status_quo?: string;
 
@@ -242,6 +256,8 @@ export class UpdateUserDTO {
     type: Number,
   })
   @IsNumber()
+  @Max(30)
+  @Min(1)
   @IsOptional()
   avatar?: number;
 
@@ -253,6 +269,7 @@ export class UpdateUserDTO {
     type: String,
   })
   @IsOptional()
+  @MaxLength(100)
   @IsString()
   github_link?: string;
 
@@ -264,6 +281,7 @@ export class UpdateUserDTO {
     type: String,
   })
   @IsOptional()
+  @MaxLength(100)
   @IsString()
   blog_link?: string;
 

@@ -6,6 +6,9 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  Max,
+  MaxLength,
+  Min,
 } from 'class-validator';
 
 @ApiTags('rooms')
@@ -23,6 +26,7 @@ export class CreateRoomDTO {
     description: 'The name of the room',
     type: String,
   })
+  @MaxLength(21)
   @IsString()
   @IsNotEmpty()
   title: string;
@@ -33,6 +37,7 @@ export class CreateRoomDTO {
     type: String,
   })
   @IsOptional()
+  @MaxLength(31)
   @IsString()
   details?: string;
 
@@ -43,6 +48,7 @@ export class CreateRoomDTO {
       type: 'string',
     },
   })
+  @MaxLength(15, { each: true, message: '최대 15자까지 입력 가능합니다.' })
   @IsArray()
   tags: string[];
 
@@ -52,6 +58,8 @@ export class CreateRoomDTO {
   })
   @IsNotEmpty()
   @IsNumber()
+  @Max(4)
+  @Min(2)
   total: number;
 
   @ApiProperty({
@@ -59,6 +67,7 @@ export class CreateRoomDTO {
     type: 'string',
   })
   @IsNotEmpty()
+  @MaxLength(30)
   @IsString()
   theme: string;
 }
