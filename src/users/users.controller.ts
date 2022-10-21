@@ -55,7 +55,7 @@ export class UsersController {
   @UseGuards(JwtGuard)
   @Get(':uid')
   async getAnoterUserByUid(@Param('uid', ParseIntPipe) uid: number) {
-    return this.usersService.getAnoterUserByUid(uid);
+    return this.usersService.getAnotherUserByUid(uid);
   }
 
   // check signup verication on /:uid/verify/:verify-token

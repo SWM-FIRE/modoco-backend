@@ -108,7 +108,7 @@ export class UsersService {
    * @param {number} uid user id
    * @returns user object
    */
-  async getAnoterUserByUid(uid: number) {
+  async getAnotherUserByUid(uid: number) {
     try {
       const user = await this.usersDatabaseHelper.getUserByUid(uid);
       delete user.verified;

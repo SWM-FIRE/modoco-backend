@@ -1,8 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-import { RoomsService } from 'src/rooms/rooms.service';
 import { RecordsService } from 'src/records/records.service';
-import { UsersService } from 'src/users/users.service';
 import {
   ChatMessagePayload,
   LeaveRoomPayload,
@@ -17,14 +15,14 @@ import {
 import { EVENT } from './constants/event.enum';
 import { User } from '@prisma/client';
 import { RoomsDatabaseHelper } from '../rooms/helper/rooms-database.helper';
+import { UsersDatabaseHelper } from '../users/helper/users-database.helper';
 
 @Injectable()
 export class RoomGatewayService {
   constructor(
-    private readonly roomsService: RoomsService,
-    private readonly usersService: UsersService,
     private readonly recordsService: RecordsService,
     private readonly roomsDatabaseHelper: RoomsDatabaseHelper,
+    private readonly usersDatabaseHelper: UsersDatabaseHelper,
   ) {}
 
   private server: Server;
@@ -183,7 +181,8 @@ export class RoomGatewayService {
       moderatorSocket.emit(EVENT.EXCEPTION, 'You tried to kick unknown user');
       return;
     }
-    const userToKick = await this.usersService.getAnoterUserByUid(userUid);
+    const userToKick = await this.usersDatabaseHelper.getUserByUid(userUid);
+    //getAnotherUserByUid(userUid);
     //console.log(userToKick);
     if (!userToKick) {
       moderatorSocket.emit(EVENT.EXCEPTION, 'User not found');
