@@ -7,6 +7,7 @@ import { UsersDatabaseHelper } from 'src/users/helper/users-database.helper';
 import { UsersHelper } from 'src/users/helper/users.helper';
 import { EmailService } from 'src/email/email.service';
 import { RoomsDatabaseHelper } from '../rooms/helper/rooms-database.helper';
+import { RoomGatewayHelper } from './helper/room-gateway.helper';
 
 @Module({
   imports: [AuthModule],
@@ -19,6 +20,7 @@ import { RoomsDatabaseHelper } from '../rooms/helper/rooms-database.helper';
     RoomsDatabaseHelper,
     UsersHelper,
     EmailService,
+    RoomGatewayHelper,
   ],
 })
 export class GatewayModule {}

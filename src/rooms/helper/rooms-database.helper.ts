@@ -5,6 +5,7 @@ import { UsersHelper } from '../../users/helper/users.helper';
 import { GetRoomDTO, getRoomSelector } from '../dto';
 import { User } from '@prisma/client';
 import { isNotFoundError } from '../../common/util/prisma-error.util';
+import { WsException } from '@nestjs/websockets';
 
 @Injectable()
 export class RoomsDatabaseHelper {
@@ -95,6 +96,27 @@ export class RoomsDatabaseHelper {
   }
 
   /**
+   *
+   */
+  async updateRoomInfoByDelta(
+    roomId: number,
+    existingRoomMembersLength: number,
+    delta: number,
+  ) {
+    const room: GetRoomDTO = await this.prisma.room.update({
+      where: { itemId: roomId },
+      data: { current: existingRoomMembersLength + delta },
+      select: getRoomSelector,
+    });
+
+    if (!room) {
+      throw new WsException('Room not found');
+    }
+
+    return room;
+  }
+
+  /**
    * update room in DB when user join room
    * @param {number} roomId roomId(=itemId in DB)
    * @param {number} existingRoomMembersLength length of existing room members
@@ -104,23 +126,17 @@ export class RoomsDatabaseHelper {
     roomId: number,
     existingRoomMembersLength: number,
   ): Promise<GetRoomDTO> {
-    try {
-      const room: GetRoomDTO = await this.prisma.room.update({
-        where: { itemId: roomId },
-        data: { current: existingRoomMembersLength + 1 },
-        select: getRoomSelector,
-      });
+    const room: GetRoomDTO = await this.prisma.room.update({
+      where: { itemId: roomId },
+      data: { current: existingRoomMembersLength + 1 },
+      select: getRoomSelector,
+    });
 
-      if (!room) {
-        //this.logger.warn('Room not found :: no data');
-      }
-
-      return room;
-    } catch (error) {
-      if (isNotFoundError(error)) {
-        //this.logger.debug('[JoinRoom] Room not found');
-      }
+    if (!room) {
+      throw new WsException('Room not found');
     }
+
+    return room;
   }
 
   /**

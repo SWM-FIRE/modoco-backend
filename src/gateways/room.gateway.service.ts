@@ -1,6 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { RecordsService } from 'src/records/records.service';
+import { RoomsDatabaseHelper } from '../rooms/helper/rooms-database.helper';
+import { UsersDatabaseHelper } from '../users/helper/users-database.helper';
+import { RoomGatewayHelper } from './helper/room-gateway.helper';
+import { WsException } from '@nestjs/websockets';
+import { isNotFoundError } from '../common/util/prisma-error.util';
+import {
+  getAllRoomUsers,
+  joinClientToRoom,
+  notifyNewUserJoined,
+} from './helper/socket.util';
+import { User } from '@prisma/client';
+import { EVENT } from './constants/event.enum';
 import {
   ChatMessagePayload,
   LeaveRoomPayload,
@@ -12,10 +24,6 @@ import {
   CandidatePayload,
   MediaStateChangePayload,
 } from './dto';
-import { EVENT } from './constants/event.enum';
-import { User } from '@prisma/client';
-import { RoomsDatabaseHelper } from '../rooms/helper/rooms-database.helper';
-import { UsersDatabaseHelper } from '../users/helper/users-database.helper';
 
 @Injectable()
 export class RoomGatewayService {
@@ -23,6 +31,7 @@ export class RoomGatewayService {
     private readonly recordsService: RecordsService,
     private readonly roomsDatabaseHelper: RoomsDatabaseHelper,
     private readonly usersDatabaseHelper: UsersDatabaseHelper,
+    private readonly roomGatewayHelper: RoomGatewayHelper,
   ) {}
 
   private server: Server;
@@ -35,7 +44,7 @@ export class RoomGatewayService {
    */
   onAfterInit(server: Server) {
     this.setServer(server);
-    this.logger.log('Initialized RoomGateway');
+    this.logger.log('[Init] Initialized RoomGateway');
   }
 
   /**
@@ -54,36 +63,10 @@ export class RoomGatewayService {
    * this cannot be done in the handleDisconnect(which is invoked after socket is emptied)
    */
   onConnection(client: Socket) {
-    this.logger.debug(`Client connected, sid: ${client.id}`);
+    this.logger.debug(`[Connection] Client sid: ${client.id}`);
 
-    // before leaving the room, notify all users in the room that the user has left
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    client.on('disconnecting', (reason) => {
-      //this.logger.debug('disconnecting', reason);
-      const roomsToLeave: Set<string> = this.server.adapter['sids'].get(
-        client.id,
-      );
-      if (roomsToLeave) {
-        // rooms excluding the room the user's id room
-        const rooms = [...roomsToLeave].filter((room) => room !== client.id);
-
-        rooms.forEach(async (room) => {
-          // get all users who in currently in the room
-          const currentRoomMembers = await this.server.in(room).fetchSockets();
-          // decrement room current count
-          // minus one because current user, who is leaving, is still in the room
-          await this.roomsDatabaseHelper.leaveRoom(
-            parseInt(room, 10),
-            currentRoomMembers.length - 1,
-          );
-
-          // emit a `leftRoom` event to all users in the room except the sender
-          client.to(room).emit(EVENT.LEFT_ROOM, {
-            sid: client.id,
-          });
-        });
-      }
-    });
+    // attach handler to disconnecting event
+    client.on('disconnecting', () => this.onDisconnecting(client));
   }
 
   /**
@@ -92,7 +75,7 @@ export class RoomGatewayService {
    * @param {Socket} client client socket
    */
   onDisconnect(client: Socket) {
-    this.logger.debug(`Client disconnected, sid: ${client.id}`);
+    this.logger.debug(`[Disconnect] Client sid: ${client.id}`);
   }
 
   /**
@@ -102,16 +85,49 @@ export class RoomGatewayService {
    * @param {JoinRoomPayload} payload
    */
   async onJoinRoom(client: Socket, { room, uid }: JoinRoomPayload) {
-    const hasJoined = client.rooms.has(room);
+    try {
+      // 1. validate payload
+      await this.validateJoinRoomPayload(client, room);
+      // 2. store the user in the room
+      client.data.uid = uid;
+      // 3. get all users who in currently in the room
+      const existingMembers = await getAllRoomUsers(this.server, room);
+      // 4. join client into the room
+      await joinClientToRoom(client, room, existingMembers);
+      // 5. notify that new user has joined, to all users in the room, except the sender(client)
+      await notifyNewUserJoined(client, room, uid);
+      // 6. update realtime data
+      await this.roomGatewayHelper.updateRoomInformationByDelta(
+        room,
+        existingMembers.length,
+        1,
+      );
+      // 7. log the event
+      this.logger.debug(`[JoinRoom #${room}] uid: ${uid}, sid: ${client.id}`);
+    } catch (error) {
+      if (error instanceof WsException) {
+        if (error.message === EVENT.ALREADY_JOINED) {
+          client.emit(EVENT.ALREADY_JOINED, room);
+          return;
+        }
+        if (error.message === EVENT.ROOM_FULL) {
+          client.emit(EVENT.ROOM_FULL, { room });
+          return;
+        }
+      } else if (isNotFoundError(error)) {
+        throw new WsException('Room not found');
+      }
 
-    // if already in room, do nothing
-    if (hasJoined) {
-      client.emit(EVENT.ALREADY_JOINED, room);
-      return;
+      throw error;
     }
+  }
 
-    // store the user in the room
-    client.data.uid = uid;
+  private async validateJoinRoomPayload(client: Socket, room: string) {
+    // check if client is already in the room
+    const hasJoined = client.rooms.has(room);
+    if (hasJoined) {
+      throw new WsException(EVENT.ALREADY_JOINED);
+    }
 
     // check if room exceeds max capacity
     const roomCapacity = await this.roomsDatabaseHelper.getRoomCapacity(
@@ -121,46 +137,10 @@ export class RoomGatewayService {
     if (this.server.adapter['rooms'].get(room) !== undefined) {
       roomCurrentCount = this.server.adapter['rooms'].get(room).size;
     }
+
     if (roomCurrentCount >= roomCapacity) {
-      client.emit(EVENT.ROOM_FULL, { room });
-      return;
+      throw new WsException(EVENT.ROOM_FULL);
     }
-
-    // get all users who in currently in the room
-    const roomMembers = await this.server.in(room).fetchSockets();
-    // extract data from each roomMember
-    const existingMembers = roomMembers.map((roomMember) => {
-      return {
-        sid: roomMember.id,
-        uid: roomMember.data.uid,
-      };
-    });
-
-    // join the room
-    client.join(room);
-    client.emit(EVENT.JOINED_ROOM, { room });
-
-    // emit a user joined event to all users in the room except the sender
-    client.to(room).emit(EVENT.NEW_USER, {
-      sid: client.id,
-      uid,
-    });
-
-    // emit to client who is currently in the room
-    client.emit(EVENT.EXISTING_ROOM_USERS, {
-      users: existingMembers,
-      current: { sid: client.id, uid },
-    });
-
-    // increment room current count
-    await this.roomsDatabaseHelper.joinRoom(
-      parseInt(room, 10),
-      roomMembers.length,
-    );
-
-    this.logger.debug(
-      `Client joined room(${room}), sid: ${client.id}), uid: ${uid}`,
-    );
   }
 
   async onKickUser(moderatorSocket: Socket, payload: KickUserPayload) {
@@ -273,7 +253,11 @@ export class RoomGatewayService {
       sid: client.id,
     });
 
-    this.logger.debug(`Client leaved ${room}, sid: ${client.id})`);
+    this.logger.debug(
+      `[LeaveRoom #${room}] Client uid: ${
+        client.data.uid ? client.data.uid : '?'
+      }, sid: ${client.id}`,
+    );
   }
 
   /**
@@ -374,7 +358,9 @@ export class RoomGatewayService {
     } else if (mediaType === EVENT.AUDIO_STATE_CHANGE) {
       this.server.to(payload.room).emit(EVENT.AUDIO_STATE_CHANGE, payload);
     } else {
-      this.logger.error(`Invalid media type onMediaStateChange: ${mediaType}`);
+      this.logger.error(
+        `[MediaStateChange] Invalid media type onMediaStateChange: ${mediaType}`,
+      );
     }
   }
 
@@ -383,5 +369,32 @@ export class RoomGatewayService {
     return roomMembers.filter((socket) => {
       return socket.id === sid;
     });
+  }
+
+  // before leaving the room, notify all users in the room that the user has left
+  private onDisconnecting(client) {
+    const roomsToLeave: Set<string> = this.server.adapter['sids'].get(
+      client.id,
+    );
+    if (roomsToLeave) {
+      // rooms excluding the room the user's id room
+      const rooms = [...roomsToLeave].filter((room) => room !== client.id);
+
+      rooms.forEach(async (room) => {
+        // get all users who in currently in the room
+        const currentRoomMembers = await this.server.in(room).fetchSockets();
+        // decrement room current count
+        // minus one because current user, who is leaving, is still in the room
+        await this.roomsDatabaseHelper.leaveRoom(
+          parseInt(room, 10),
+          currentRoomMembers.length - 1,
+        );
+
+        // emit a `leftRoom` event to all users in the room except the sender
+        client.to(room).emit(EVENT.LEFT_ROOM, {
+          sid: client.id,
+        });
+      });
+    }
   }
 }
