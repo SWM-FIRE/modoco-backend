@@ -55,7 +55,10 @@ export class RoomsController {
   @UseGuards(JwtGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
-  async removeRoomById(@Param('id', ParseIntPipe) id: number) {
-    return this.roomsService.removeRoomById(id);
+  async deleteRoomById(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUserDecorator() user: User,
+  ) {
+    return this.roomsService.deleteRoomById(user, id);
   }
 }

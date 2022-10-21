@@ -16,6 +16,7 @@ import {
 } from './dto';
 import { EVENT } from './constants/event.enum';
 import { User } from '@prisma/client';
+import { RoomsDatabaseHelper } from '../rooms/helper/rooms-database.helper';
 
 @Injectable()
 export class RoomGatewayService {
@@ -23,6 +24,7 @@ export class RoomGatewayService {
     private readonly roomsService: RoomsService,
     private readonly usersService: UsersService,
     private readonly recordsService: RecordsService,
+    private readonly roomsDatabaseHelper: RoomsDatabaseHelper,
   ) {}
 
   private server: Server;
@@ -72,7 +74,7 @@ export class RoomGatewayService {
           const currentRoomMembers = await this.server.in(room).fetchSockets();
           // decrement room current count
           // minus one because current user, who is leaving, is still in the room
-          await this.roomsService.leaveRoom(
+          await this.roomsDatabaseHelper.leaveRoom(
             parseInt(room, 10),
             currentRoomMembers.length - 1,
           );
@@ -114,7 +116,7 @@ export class RoomGatewayService {
     client.data.uid = uid;
 
     // check if room exceeds max capacity
-    const roomCapacity = await this.roomsService.getRoomCapacity(
+    const roomCapacity = await this.roomsDatabaseHelper.getRoomCapacity(
       parseInt(room),
     );
     let roomCurrentCount = 0;
@@ -153,7 +155,10 @@ export class RoomGatewayService {
     });
 
     // increment room current count
-    await this.roomsService.joinRoom(parseInt(room, 10), roomMembers.length);
+    await this.roomsDatabaseHelper.joinRoom(
+      parseInt(room, 10),
+      roomMembers.length,
+    );
 
     this.logger.debug(
       `Client joined room(${room}), sid: ${client.id}), uid: ${uid}`,
@@ -192,7 +197,7 @@ export class RoomGatewayService {
     }
 
     // check if moderator is the room owner
-    const isModerator = await this.roomsService.isRoomModerator(
+    const isModerator = await this.roomsDatabaseHelper.isRoomModerator(
       room,
       moderator,
     );
@@ -235,7 +240,7 @@ export class RoomGatewayService {
     const currentRoomMembersCount = await this.getCurrentRoomMembersCount(
       payload.room,
     );
-    await this.roomsService.leaveRoom(
+    await this.roomsDatabaseHelper.leaveRoom(
       parseInt(payload.room, 10),
       currentRoomMembersCount,
     );
@@ -256,7 +261,7 @@ export class RoomGatewayService {
 
     const currentRoomMembersCount = await this.getCurrentRoomMembersCount(room);
     // decrement room current count
-    await this.roomsService.leaveRoom(
+    await this.roomsDatabaseHelper.leaveRoom(
       parseInt(room, 10),
       currentRoomMembersCount,
     );

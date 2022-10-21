@@ -8,17 +8,19 @@ import { AuthModule } from '../auth/auth.module';
 import { UsersDatabaseHelper } from 'src/users/helper/users-database.helper';
 import { UsersHelper } from 'src/users/helper/users.helper';
 import { EmailService } from 'src/email/email.service';
+import { RoomsDatabaseHelper } from '../rooms/helper/rooms-database.helper';
 
 @Module({
   imports: [AuthModule],
   controllers: [],
   providers: [
-    RoomsService,
     RoomGateway,
     RoomGatewayService,
     RecordsService,
     UsersService,
     UsersDatabaseHelper,
+    RoomsService,
+    RoomsDatabaseHelper,
     UsersHelper,
     EmailService,
   ],
