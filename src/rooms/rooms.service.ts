@@ -49,19 +49,20 @@ export class RoomsService {
   }
 
   /**
-   * delete one room
+   * delete moderator's room
    * @param {user} user moderator uid
    * @param {number} roomId roomId(=itemId in DB)
    */
   async deleteRoomById(user: User, roomId: number) {
     try {
-      // check if user is moderator :TODO
-
-      await this.roomsDatabaseHelper.deleteRoomById(roomId);
+      if (await this.roomsDatabaseHelper.canDeleteRoom(roomId, user))
+        await this.roomsDatabaseHelper.deleteRoomById(roomId);
     } catch (error) {
       if (isNotFoundError(error)) {
         this.logger.debug('[Delete] Room not found');
+        return;
       }
+      throw error;
     }
   }
 }

@@ -198,8 +198,8 @@ export class RoomGatewayService {
 
     // check if moderator is the room owner
     const isModerator = await this.roomsDatabaseHelper.isRoomModerator(
-      room,
       moderator,
+      room,
     );
     if (!isModerator) {
       moderatorSocket.emit(

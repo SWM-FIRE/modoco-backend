@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthService } from '../../auth/auth.service';
 import { UsersHelper } from '../../users/helper/users.helper';
@@ -85,7 +85,7 @@ export class RoomsDatabaseHelper {
    * @param {User} user user
    * @returns {Promise<boolean>} true if user is moderator of the room
    */
-  async isRoomModerator(roomId: number, user: User) {
+  async isRoomModerator(user: User, roomId: number) {
     const roomModerator = await this.getRoomModerator(roomId);
     if (!roomModerator) {
       return false;
@@ -184,5 +184,19 @@ export class RoomsDatabaseHelper {
         //this.logger.debug('[RoomCapacity] Room not found');
       }
     }
+  }
+
+  async canDeleteRoom(roomId: number, user: User) {
+    const isModerator = await this.isRoomModerator(user, roomId);
+    if (!isModerator) {
+      throw new ForbiddenException('You are not moderator of this room');
+    }
+
+    const currentUser = await this.getRoomCapacity(roomId);
+    if (currentUser > 0) {
+      throw new ForbiddenException('Room is not empty');
+    }
+
+    return true;
   }
 }
