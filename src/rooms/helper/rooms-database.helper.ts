@@ -186,13 +186,35 @@ export class RoomsDatabaseHelper {
     }
   }
 
+  /**
+   * get room current members count
+   * @TODO : remove this function and use redis
+   * @param roomId
+   * @param user
+   */
+  async getRoomCurrentMembersCount(roomId: number): Promise<number> {
+    try {
+      const room = await this.prisma.room.findFirst({
+        where: { itemId: roomId },
+        select: {
+          current: true,
+        },
+      });
+      return room.current;
+    } catch (error) {
+      if (isNotFoundError(error)) {
+        //this.logger.debug('[RoomCurrentCount] Room not found');
+      }
+    }
+  }
+
   async canDeleteRoom(roomId: number, user: User) {
     const isModerator = await this.isRoomModerator(user, roomId);
     if (!isModerator) {
       throw new ForbiddenException('You are not moderator of this room');
     }
 
-    const currentUser = await this.getRoomCapacity(roomId);
+    const currentUser = await this.getRoomCurrentMembersCount(roomId);
     if (currentUser > 0) {
       throw new ForbiddenException('Room is not empty');
     }
