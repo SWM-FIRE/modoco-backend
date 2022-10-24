@@ -11,13 +11,7 @@ import { RoomGatewayService } from './room.gateway.service';
 import { Server, Socket } from 'socket.io';
 import { WsJwtGuard } from 'src/auth/guard/wsJwt.guard';
 import { Logger, UseGuards, UsePipes } from '@nestjs/common';
-import { EVENT } from './constants/event.enum';
 import { WebsocketValidationPipe } from './pipes/socket-validation.pipe';
-import {
-  JoinRoomPayload,
-  LeaveRoomPayload,
-  MediaStateChangePayload,
-} from './dto';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -56,7 +50,6 @@ export class PlaylistGateway
     payload: { room: string; playlistName: string },
   ) {
     await client.join(payload.room + payload.playlistName);
-    console.log('joined');
   }
 
   @SubscribeMessage('playlist:leave')
@@ -65,7 +58,6 @@ export class PlaylistGateway
     payload: { room: string; playlistName: string },
   ) {
     await client.leave(payload.room + payload.playlistName);
-    console.log('left');
   }
 
   @SubscribeMessage('playlist:sync')
