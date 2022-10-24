@@ -9,12 +9,14 @@ import { EmailService } from 'src/email/email.service';
 import { RoomsDatabaseHelper } from '../rooms/helper/rooms-database.helper';
 import { RoomGatewayHelper } from './helper/room-gateway.helper';
 import { RedisModule } from 'src/redis/redis.module';
+import { PlaylistGateway } from './playlist.gateway';
 
 @Module({
   imports: [AuthModule, RedisModule],
   controllers: [],
   providers: [
     RoomGateway,
+    PlaylistGateway,
     RoomGatewayService,
     RecordsService,
     UsersDatabaseHelper,
