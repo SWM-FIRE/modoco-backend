@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { RecordsService } from 'src/records/records.service';
 import { RoomsDatabaseHelper } from '../rooms/helper/rooms-database.helper';
@@ -24,6 +24,7 @@ import {
   CandidatePayload,
   MediaStateChangePayload,
 } from './dto';
+import { RedisClientType } from '@redis/client';
 
 @Injectable()
 export class RoomGatewayService {
@@ -32,6 +33,7 @@ export class RoomGatewayService {
     private readonly roomsDatabaseHelper: RoomsDatabaseHelper,
     private readonly usersDatabaseHelper: UsersDatabaseHelper,
     private readonly roomGatewayHelper: RoomGatewayHelper,
+    @Inject('REDIS_CLIENT') private readonly redisClient: RedisClientType,
   ) {}
 
   private server: Server;

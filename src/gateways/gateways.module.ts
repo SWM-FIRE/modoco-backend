@@ -8,9 +8,10 @@ import { UsersHelper } from 'src/users/helper/users.helper';
 import { EmailService } from 'src/email/email.service';
 import { RoomsDatabaseHelper } from '../rooms/helper/rooms-database.helper';
 import { RoomGatewayHelper } from './helper/room-gateway.helper';
+import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, RedisModule],
   controllers: [],
   providers: [
     RoomGateway,

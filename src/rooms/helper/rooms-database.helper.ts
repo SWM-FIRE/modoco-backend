@@ -1,7 +1,5 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { AuthService } from '../../auth/auth.service';
-import { UsersHelper } from '../../users/helper/users.helper';
 import { GetRoomDTO, getRoomSelector } from '../dto';
 import { User } from '@prisma/client';
 import { isNotFoundError } from '../../common/util/prisma-error.util';
@@ -9,11 +7,7 @@ import { WsException } from '@nestjs/websockets';
 
 @Injectable()
 export class RoomsDatabaseHelper {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly authService: AuthService,
-    private readonly usersHelper: UsersHelper,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async createRoom(
     moderatorUid: number,
@@ -117,29 +111,6 @@ export class RoomsDatabaseHelper {
   }
 
   /**
-   * update room in DB when user join room
-   * @param {number} roomId roomId(=itemId in DB)
-   * @param {number} existingRoomMembersLength length of existing room members
-   * @returns {Promise<GetRoomDTO>}
-   */
-  async joinRoom(
-    roomId: number,
-    existingRoomMembersLength: number,
-  ): Promise<GetRoomDTO> {
-    const room: GetRoomDTO = await this.prisma.room.update({
-      where: { itemId: roomId },
-      data: { current: existingRoomMembersLength + 1 },
-      select: getRoomSelector,
-    });
-
-    if (!room) {
-      throw new WsException('Room not found');
-    }
-
-    return room;
-  }
-
-  /**
    * update room in DB when user leave room
    * @param {number} roomId roomId(=itemId in DB)
    * @param {number} currentRoomMembersLength length of current room members
@@ -183,23 +154,17 @@ export class RoomsDatabaseHelper {
    * @returns {Promise<number>}
    */
   async getRoomCapacity(roomId: number): Promise<number> {
-    try {
-      if (roomId < 0) {
-        return 0;
-      }
-
-      const room = await this.prisma.room.findFirst({
-        where: { itemId: roomId },
-        select: {
-          total: true,
-        },
-      });
-      return room.total;
-    } catch (error) {
-      if (isNotFoundError(error)) {
-        //this.logger.debug('[RoomCapacity] Room not found');
-      }
+    if (roomId < 0) {
+      return 0;
     }
+
+    const room = await this.prisma.room.findFirst({
+      where: { itemId: roomId },
+      select: {
+        total: true,
+      },
+    });
+    return room.total;
   }
 
   /**
@@ -209,19 +174,13 @@ export class RoomsDatabaseHelper {
    * @param user
    */
   async getRoomCurrentMembersCount(roomId: number): Promise<number> {
-    try {
-      const room = await this.prisma.room.findFirst({
-        where: { itemId: roomId },
-        select: {
-          current: true,
-        },
-      });
-      return room.current;
-    } catch (error) {
-      if (isNotFoundError(error)) {
-        //this.logger.debug('[RoomCurrentCount] Room not found');
-      }
-    }
+    const room = await this.prisma.room.findFirst({
+      where: { itemId: roomId },
+      select: {
+        current: true,
+      },
+    });
+    return room.current;
   }
 
   async canDeleteRoom(roomId: number, user: User) {
