@@ -8,6 +8,9 @@ import { WsException } from '@nestjs/websockets';
 import { isNotFoundError } from '../common/util/prisma-error.util';
 import {
   getAllRoomUsers,
+  getExistingRoomMembersCount,
+  getMatchingSocketsBySid,
+  getSocketUser,
   joinClientToRoom,
   notifyNewUserJoined,
 } from './helper/socket.util';
@@ -25,6 +28,7 @@ import {
   MediaStateChangePayload,
 } from './dto';
 import { RedisClientType } from '@redis/client';
+import { KICK_USER_EXCEPTION } from './constants/validation-exceptions.enum';
 
 @Injectable()
 export class RoomGatewayService {
@@ -124,107 +128,141 @@ export class RoomGatewayService {
     }
   }
 
-  private async validateJoinRoomPayload(client: Socket, room: string) {
-    // check if client is already in the room
-    const hasJoined = client.rooms.has(room);
-    if (hasJoined) {
-      throw new WsException(EVENT.ALREADY_JOINED);
-    }
+  async onKickUser(moderatorSocket: Socket, payload: KickUserPayload) {
+    try {
+      // 1. get user info from socket
+      const moderator = getSocketUser(moderatorSocket);
 
-    // check if room exceeds max capacity
-    const roomCapacity = await this.roomsDatabaseHelper.getRoomCapacity(
-      parseInt(room),
-    );
-    let roomCurrentCount = 0;
-    if (this.server.adapter['rooms'].get(room) !== undefined) {
-      roomCurrentCount = this.server.adapter['rooms'].get(room).size;
-    }
+      // 2. validate and get user to kick
+      const { userToKick, userToKickSocket } =
+        await this.validateKickUserPayload(moderator, moderatorSocket, payload);
 
-    if (roomCurrentCount >= roomCapacity) {
-      throw new WsException(EVENT.ROOM_FULL);
+      // 3. emit a `kicked` event to all user in the room
+      this.server.to(payload.room).emit(EVENT.KICK_USER, {
+        kickUser: userToKick,
+      });
+
+      // 4. kick user
+      userToKickSocket.leave(payload.room);
+
+      // 5. decrement room current count
+      const currentRoomMembersCount = await getExistingRoomMembersCount(
+        this.server,
+        payload.room,
+      );
+      await this.roomsDatabaseHelper.leaveRoom(
+        parseInt(payload.room, 10),
+        currentRoomMembersCount,
+      );
+    } catch (error) {
+      if (error instanceof WsException) {
+        const message = error.message;
+        if (message === KICK_USER_EXCEPTION.INVALID_CREDENTIAL) {
+          moderatorSocket.emit(
+            EVENT.EXCEPTION,
+            KICK_USER_EXCEPTION.INVALID_CREDENTIAL,
+          );
+          return;
+        }
+        if (message === KICK_USER_EXCEPTION.USER_NOT_IN_ROOM) {
+          moderatorSocket.emit(
+            EVENT.EXCEPTION,
+            KICK_USER_EXCEPTION.USER_NOT_IN_ROOM,
+          );
+          return;
+        }
+        if (message === KICK_USER_EXCEPTION.NO_SESSION) {
+          moderatorSocket.emit(EVENT.EXCEPTION, KICK_USER_EXCEPTION.NO_SESSION);
+          return;
+        }
+        if (message === KICK_USER_EXCEPTION.INVALID_TARGET) {
+          moderatorSocket.emit(
+            EVENT.EXCEPTION,
+            KICK_USER_EXCEPTION.INVALID_TARGET,
+          );
+          return;
+        }
+        if (message === KICK_USER_EXCEPTION.INVALID_ROOM) {
+          moderatorSocket.emit(
+            EVENT.EXCEPTION,
+            KICK_USER_EXCEPTION.INVALID_ROOM,
+          );
+          return;
+        }
+        if (message === KICK_USER_EXCEPTION.NOT_MODERATOR) {
+          moderatorSocket.emit(
+            EVENT.EXCEPTION,
+            KICK_USER_EXCEPTION.NOT_MODERATOR,
+          );
+          return;
+        }
+        if (message === KICK_USER_EXCEPTION.IS_MODERATOR) {
+          moderatorSocket.emit(
+            EVENT.EXCEPTION,
+            KICK_USER_EXCEPTION.IS_MODERATOR,
+          );
+          return;
+        }
+      }
+      throw error;
     }
   }
 
-  async onKickUser(moderatorSocket: Socket, payload: KickUserPayload) {
-    const moderator = this.getSocketUser(moderatorSocket);
-    if (!moderator) {
-      return;
-    }
-
-    // check if moderator is in the room
+  private async validateKickUserPayload(
+    moderator: User,
+    moderatorSocket: Socket,
+    payload: KickUserPayload,
+  ) {
+    // 1. check if moderator is in the room
     const hasModeratorJoined = moderatorSocket.rooms.has(payload.room);
     if (!hasModeratorJoined) {
-      moderatorSocket.emit(EVENT.EXCEPTION, 'You are not in the room');
-      return;
+      throw new WsException(KICK_USER_EXCEPTION.USER_NOT_IN_ROOM);
     }
 
+    // 2. check if user to be kicked has socket.io session
     const userUid = payload.userToKick.uid;
     if (isNaN(userUid)) {
-      moderatorSocket.emit(EVENT.EXCEPTION, 'You tried to kick unknown user');
-      return;
-    }
-    const userToKick = await this.usersDatabaseHelper.getUserByUid(userUid);
-    //getAnotherUserByUid(userUid);
-    //console.log(userToKick);
-    if (!userToKick) {
-      moderatorSocket.emit(EVENT.EXCEPTION, 'User not found');
-      return;
+      throw new WsException(KICK_USER_EXCEPTION.NO_SESSION);
     }
 
+    // 3. check if user to be kicked exists
+    const userToKick = await this.usersDatabaseHelper.getUserByUid(userUid);
+    if (!userToKick) {
+      throw new WsException(KICK_USER_EXCEPTION.INVALID_TARGET);
+    }
+
+    // 4. check room is valid
     const room = parseInt(payload.room);
     if (isNaN(room)) {
-      moderatorSocket.emit(EVENT.EXCEPTION, 'Invalid room');
-      return;
+      throw new WsException(KICK_USER_EXCEPTION.INVALID_ROOM);
     }
 
-    // check if moderator is the room owner
+    // 5. check if moderator is the room owner
     const isModerator = await this.roomsDatabaseHelper.isRoomModerator(
       moderator,
       room,
     );
     if (!isModerator) {
-      moderatorSocket.emit(
-        EVENT.EXCEPTION,
-        'You are not the moderator of the room',
-      );
-      return;
+      throw new WsException(KICK_USER_EXCEPTION.NOT_MODERATOR);
     }
 
-    // check if user to be kicked is in the room
-    const targetSockets = await this.getMatchingSocketsBySid(
+    // 6. check if user to be kicked is in the room
+    const userToKickSocket = await getMatchingSocketsBySid(
+      this.server,
       payload.room,
       payload.userToKick.sid,
     );
-    if (targetSockets.length === 0) {
-      moderatorSocket.emit(EVENT.EXCEPTION, 'User is not in the room');
-      return;
-    }
-    const userToKickSocket = targetSockets[0];
 
-    // check if user to be kicked is the room owner
+    // 7. check if user to be kicked is the room owner
     if (
       userUid === moderator.uid ||
       userToKickSocket.id === moderatorSocket.id
     ) {
-      moderatorSocket.emit(EVENT.EXCEPTION, 'You cannot kick yourself');
-      return;
+      throw new WsException(KICK_USER_EXCEPTION.IS_MODERATOR);
     }
 
-    // emit a `kicked` event to all user in the room
-    this.server.to(payload.room).emit(EVENT.KICK_USER, {
-      kickUser: userToKick,
-    });
-
-    // kick user
-    userToKickSocket.leave(payload.room);
-    // decrement room current count
-    const currentRoomMembersCount = await this.getCurrentRoomMembersCount(
-      payload.room,
-    );
-    await this.roomsDatabaseHelper.leaveRoom(
-      parseInt(payload.room, 10),
-      currentRoomMembersCount,
-    );
+    // return user to kick
+    return { userToKick, userToKickSocket };
   }
 
   /**
@@ -240,7 +278,10 @@ export class RoomGatewayService {
 
     client.leave(room);
 
-    const currentRoomMembersCount = await this.getCurrentRoomMembersCount(room);
+    const currentRoomMembersCount = await getExistingRoomMembersCount(
+      this.server,
+      room,
+    );
     // decrement room current count
     await this.roomsDatabaseHelper.leaveRoom(
       parseInt(room, 10),
@@ -260,16 +301,6 @@ export class RoomGatewayService {
         client.data.uid ? client.data.uid : '?'
       }, sid: ${client.id}`,
     );
-  }
-
-  /**
-   * get all users who in currently in the room
-   * @param {string} room room id in string
-   * @returns {Promise<Socket[]>} list of sockets
-   */
-  private async getCurrentRoomMembersCount(room: string) {
-    const roomMemberSockets = await this.server.in(room).fetchSockets();
-    return roomMemberSockets.length;
   }
 
   /**
@@ -331,15 +362,8 @@ export class RoomGatewayService {
    * @param {RecordPayload} payload Record event Payload
    */
   async onRecordTime(client: Socket, payload: RecordPayload) {
-    const user = this.getSocketUser(client);
+    const user = getSocketUser(client);
     await this.recordsService.recordTime(user, payload);
-  }
-
-  /**
-   * get user data using jwt token authentication
-   */
-  getSocketUser(client: Socket): User {
-    return client.handshake['user'];
   }
 
   /**
@@ -366,13 +390,6 @@ export class RoomGatewayService {
     }
   }
 
-  private async getMatchingSocketsBySid(room: string, sid: string) {
-    const roomMembers = await this.server.in(room).fetchSockets();
-    return roomMembers.filter((socket) => {
-      return socket.id === sid;
-    });
-  }
-
   // before leaving the room, notify all users in the room that the user has left
   private onDisconnecting(client) {
     const roomsToLeave: Set<string> = this.server.adapter['sids'].get(
@@ -397,6 +414,27 @@ export class RoomGatewayService {
           sid: client.id,
         });
       });
+    }
+  }
+
+  private async validateJoinRoomPayload(client: Socket, room: string) {
+    // check if client is already in the room
+    const hasJoined = client.rooms.has(room);
+    if (hasJoined) {
+      throw new WsException(EVENT.ALREADY_JOINED);
+    }
+
+    // check if room exceeds max capacity
+    const roomCapacity = await this.roomsDatabaseHelper.getRoomCapacity(
+      parseInt(room),
+    );
+    let roomCurrentCount = 0;
+    if (this.server.adapter['rooms'].get(room) !== undefined) {
+      roomCurrentCount = this.server.adapter['rooms'].get(room).size;
+    }
+
+    if (roomCurrentCount >= roomCapacity) {
+      throw new WsException(EVENT.ROOM_FULL);
     }
   }
 }

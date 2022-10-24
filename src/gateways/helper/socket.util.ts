@@ -1,9 +1,24 @@
+import { WsException } from '@nestjs/websockets';
+import { User } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { EVENT } from '../constants/event.enum';
 
 // get all users sockets in target room
 const getAllRoomSockets = (server: Server, room: string) => {
   return server.in(room).fetchSockets();
+};
+
+/**
+ * get all users who in currently in the room
+ * @param {string} room room id in string
+ * @returns {Promise<Socket[]>} list of sockets
+ */
+export const getExistingRoomMembersCount = async (
+  server: Server,
+  room: string,
+) => {
+  const roomSockets = await getAllRoomSockets(server, room);
+  return roomSockets.length;
 };
 
 // get all user data of sockets in target room
@@ -17,6 +32,23 @@ export const getAllRoomUsers = async (server: Server, room: string) => {
       uid: roomMember.data.uid,
     };
   });
+};
+
+export const getMatchingSocketsBySid = async (
+  server: Server,
+  room: string,
+  sid: string,
+) => {
+  const roomMembers = await server.in(room).fetchSockets();
+  const targetSockets = roomMembers.filter((socket) => {
+    return socket.id === sid;
+  });
+
+  if (targetSockets.length === 0) {
+    throw new WsException('No matching user found in the room');
+  }
+
+  return targetSockets[0];
 };
 
 /**
@@ -56,4 +88,16 @@ export const notifyNewUserJoined = async (
     sid: client.id,
     uid,
   });
+};
+
+/**
+ * get user data using jwt token authentication
+ */
+export const getSocketUser: (client: Socket) => User = (client: Socket) => {
+  const user = client.handshake['user'];
+  if (!user) {
+    throw new WsException('Invalid socket credentials');
+  }
+
+  return user;
 };
