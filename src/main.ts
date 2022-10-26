@@ -7,6 +7,7 @@ import { NewrelicInterceptor } from './interceptors/newrelic.interceptor';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import { SwaggerModule } from '@nestjs/swagger';
+import { AuthService } from './auth/auth.service';
 
 /**
  * bootstrap server
@@ -17,12 +18,13 @@ async function bootstrap() {
 
   // get config service
   const configService = app.get(ConfigService);
+  const authService = app.get(AuthService);
 
   // pre init server
   preInitServer(app, configService);
 
   // connect to redis
-  const redisIoAdapter = await connectRedis(app, configService);
+  const redisIoAdapter = await connectRedis(app, configService, authService);
 
   // init server
   return await initServer(app, redisIoAdapter, configService);
@@ -78,8 +80,9 @@ function preInitServer(
 async function connectRedis(
   app: NestExpressApplication,
   configService: ConfigService,
+  authService: AuthService,
 ): Promise<RedisIoAdapter> {
-  const redisIoAdapter = new RedisIoAdapter(app, configService);
+  const redisIoAdapter = new RedisIoAdapter(app, configService, authService);
   await redisIoAdapter.connectToRedis();
 
   return redisIoAdapter;

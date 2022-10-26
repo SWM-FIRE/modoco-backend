@@ -92,6 +92,23 @@ export class UsersDatabaseHelper {
     });
   }
 
+  async getUserNicknameByUid(uid: number) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        uid,
+      },
+      select: {
+        nickname: true,
+      },
+    });
+
+    if (!user) {
+      throw new ForbiddenException('Invalid Credentials');
+    }
+
+    return user.nickname;
+  }
+
   async getUserByUid(uid: number) {
     const user = await this.prisma.user.findUnique({
       where: {

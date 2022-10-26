@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon from 'argon2';
@@ -14,6 +13,11 @@ export class AuthService {
 
   generateHash(password: string) {
     return argon.hash(password);
+  }
+
+  async verifyToken(token: string) {
+    const JWT_SECRET = this.configService.get('JWT_SECRET');
+    return this.jwt.verify(token, { secret: JWT_SECRET });
   }
 
   async signToken(
