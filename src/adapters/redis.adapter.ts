@@ -4,11 +4,13 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import { ConfigService } from '@nestjs/config';
 import { createClient } from 'redis';
 import { INestApplicationContext, Logger } from '@nestjs/common';
+import { AuthService } from 'src/auth/auth.service';
 
 export class RedisIoAdapter extends IoAdapter {
   constructor(
     appOrHttpServer: INestApplicationContext,
-    private configService: ConfigService,
+    private readonly configService: ConfigService,
+    private readonly authService: AuthService,
   ) {
     super(appOrHttpServer);
   }
@@ -41,6 +43,19 @@ export class RedisIoAdapter extends IoAdapter {
    * @returns {Promise<Server>}
    */
   createIOServer(port: number, options?: ServerOptions): any {
+    options.allowRequest = async (request, allowFunction) => {
+      try {
+        const token = request['_query'].token;
+        const jwtPayload = await this.authService.verifyToken(token);
+        if (jwtPayload) {
+          return allowFunction(null, true);
+        }
+        return allowFunction('Unauthorized', false);
+      } catch {
+        return allowFunction('Unauthorized', false);
+      }
+    };
+
     const server = super.createIOServer(port, options);
     server.adapter(this.adapterConstructor);
 

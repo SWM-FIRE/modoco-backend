@@ -10,6 +10,9 @@ import { RoomsDatabaseHelper } from '../rooms/helper/rooms-database.helper';
 import { RoomGatewayHelper } from './helper/room-gateway.helper';
 import { RedisModule } from 'src/redis/redis.module';
 import { PlaylistGateway } from './playlist.gateway';
+import { RedisSessionStore } from './class/redis-session.store';
+import { RedisMessageStore } from './class/redis-message.store';
+import { FriendsDatabaseHelper } from 'src/friends/helper/friends-database.helper';
 
 @Module({
   imports: [AuthModule, RedisModule],
@@ -24,6 +27,9 @@ import { PlaylistGateway } from './playlist.gateway';
     UsersHelper,
     EmailService,
     RoomGatewayHelper,
+    RedisSessionStore,
+    RedisMessageStore,
+    FriendsDatabaseHelper,
   ],
 })
 export class GatewayModule {}

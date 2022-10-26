@@ -42,6 +42,7 @@ export const EVENT = {
   RECORD_TIME: 'recordTime',
   VIDEO_STATE_CHANGE: 'videoStateChange',
   AUDIO_STATE_CHANGE: 'audioStateChange',
+  DIRECT_MESSAGE: 'directMessage',
   EXCEPTION: 'exception',
 } as const;
 

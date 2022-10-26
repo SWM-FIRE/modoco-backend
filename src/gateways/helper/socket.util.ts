@@ -1,6 +1,6 @@
 import { WsException } from '@nestjs/websockets';
 import { User } from '@prisma/client';
-import { Server, Socket } from 'socket.io';
+import { Server, Socket, RemoteSocket } from 'socket.io';
 import { EVENT } from '../constants/event.enum';
 
 // get all users sockets in target room
@@ -73,6 +73,13 @@ export const joinClientToRoom = async (
   });
 };
 
+export const kickUserFromRoom = (
+  client: RemoteSocket<any, any>,
+  room: string,
+) => {
+  client.leave(room);
+};
+
 /**
  * notify all users in room that a new user has joined except the user itself
  * @param {Socket} client socket.io client
@@ -90,6 +97,34 @@ export const notifyNewUserJoined = async (
   });
 };
 
+/**
+ * notify all users in room that a user will be kicked
+ * @param server socket.io server
+ * @param room room id string
+ * @param kickUser user id to be kicked
+ */
+export const notifyKickUser = async (
+  server: Server,
+  room: string,
+  kickUser: UserToKick,
+) => {
+  server.to(room).emit(EVENT.KICK_USER, {
+    kickUser,
+  });
+};
+
+type UserToKick = {
+  uid: number;
+  nickname: string;
+  avatar: number;
+  email: string;
+  status_quo: string;
+  github_link: string;
+  blog_link: string;
+  groups: string[];
+  verified: boolean;
+  verify_token: string;
+};
 /**
  * get user data using jwt token authentication
  */

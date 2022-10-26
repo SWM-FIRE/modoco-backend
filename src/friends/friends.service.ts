@@ -1,10 +1,17 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
+import {
+  isAlreadyExistsError,
+  isNotFoundError,
+} from 'src/common/util/prisma-error.util';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UsersDatabaseHelper } from 'src/users/helper/users-database.helper';
 import { ROLE } from './constants/role.enum';
 import { STATUS } from './constants/status.enum';
 import { TYPES } from './constants/types.enum';
+import { validateAddFriendParams } from './helper/friend.util';
+import { FriendsDatabaseHelper } from './helper/friends-database.helper';
 import {
   FriendshipDTO,
   FriendshipQueryParams,
@@ -15,7 +22,11 @@ import {
 @ApiTags('friendships')
 @Injectable()
 export class FriendsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly friendsDatabaseHelper: FriendsDatabaseHelper,
+    private readonly userDatabaseHelper: UsersDatabaseHelper,
+  ) {}
 
   private readonly logger = new Logger('FriendsService');
 
@@ -26,43 +37,26 @@ export class FriendsService {
    * @returns {Promise<FriendshipResult>} friendship
    */
   async addFriend(userUid: number, friendUid: number) {
-    if (userUid === friendUid) {
-      throw new ForbiddenException('Invalid friendship creation request');
-    }
     try {
-      // user 존재 여부 체크
-      const isUser = await this.prisma.user.count({
-        where: {
-          uid: friendUid,
-        },
-      });
-      if (isUser === 0) {
-        throw new ForbiddenException('Friend does not exist');
-      }
+      // 1. check params
+      await validateAddFriendParams(
+        userUid,
+        friendUid,
+        this.userDatabaseHelper,
+      );
 
-      // 이미 친구가 유저에게 보낸 friendship이 있는지 체크
-      const hasFriendToUserFriendship =
-        await this.checkFriendToUserFriendshipExists(userUid, friendUid);
+      // 2. 이미 친구가 유저에게 보낸 friendship이 있는지 체크
+      await this.friendsDatabaseHelper.checkIfFriendshipExists(
+        userUid,
+        friendUid,
+      );
 
-      if (hasFriendToUserFriendship) {
-        throw new ForbiddenException('Already has friendship relation');
-      }
-
-      const friendship = await this.prisma.friendship.create({
-        data: {
-          friendFrom: userUid,
-          friendTo: friendUid,
-        },
-      });
-
-      return friendship;
+      // 3. create friendship
+      return this.friendsDatabaseHelper.createFriendship(userUid, friendUid);
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2002') {
-          throw new ForbiddenException('Friend request already sent');
-        }
+      if (isAlreadyExistsError(error)) {
+        throw new ForbiddenException('Friend request already sent');
       }
-      throw error;
     }
   }
 
@@ -89,10 +83,7 @@ export class FriendsService {
         },
       });
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
+      if (isNotFoundError(error)) {
         throw new ForbiddenException('Pending friendship not found');
       }
       throw new ForbiddenException('Invalid friendship accept request');
@@ -232,56 +223,21 @@ export class FriendsService {
   }
 
   /**
-   * return accepted friend request
-   * @param {FriendshipStatus} status status
+   * return ACCEPTED or PENDING friend request
+   * @param {FriendshipStatus} status ACCEPTED or PENDING
    * @param {User} user user
-   * @returns {Promise<FriendshipResult[]>} accepted friends
+   * @returns {Promise<FriendshipResult[]>} fienships filtered by status
    */
   private async getFriendshipsByStatus(
     userUid: number,
     status: FriendshipStatus,
   ) {
-    const acceptedFriends: FriendshipResult[] =
-      await this.prisma.friendship.findMany({
-        where: {
-          AND: [
-            {
-              OR: [
-                {
-                  friendFrom: userUid,
-                },
-                {
-                  friendTo: userUid,
-                },
-              ],
-            },
-            {
-              status,
-            },
-          ],
-        },
-        select: {
-          status: true,
-          friendship_friendFromTousers: {
-            select: {
-              uid: true,
-              nickname: true,
-              email: true,
-              avatar: true,
-            },
-          },
-          friendship_friendToTousers: {
-            select: {
-              uid: true,
-              nickname: true,
-              email: true,
-              avatar: true,
-            },
-          },
-        },
-      });
+    const friendships = await this.friendsDatabaseHelper.getFriendshipsByStatus(
+      userUid,
+      status,
+    );
 
-    return this.formatResults(acceptedFriends, userUid);
+    return this.formatResults(friendships, userUid);
   }
 
   /**
@@ -415,25 +371,6 @@ export class FriendsService {
     }
 
     return result;
-  }
-
-  /**
-   * check if friend to user friendship exists
-   * @param {number} userUid user uid
-   * @param {number} friendUid friend uid
-   */
-  private async checkFriendToUserFriendshipExists(
-    userUid: number,
-    friendUid: number,
-  ) {
-    const friendshipCount = await this.prisma.friendship.count({
-      where: {
-        friendFrom: friendUid,
-        friendTo: userUid,
-      },
-    });
-
-    return friendshipCount > 0;
   }
 
   /**

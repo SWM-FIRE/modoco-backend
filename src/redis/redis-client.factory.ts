@@ -5,10 +5,7 @@ import { createClient } from 'redis';
 export const redisClientFactory = {
   provide: 'REDIS_CLIENT',
   useFactory: async (configService: ConfigService) => {
-    const HOST = configService.get('REDIS').HOST;
-    console.log('REDIS HOST FOR CLIENT', HOST);
-
-    const redisClient = await getClient(HOST);
+    const redisClient = await getClient(configService.get('REDIS').HOST);
     return redisClient;
   },
   inject: [ConfigService],

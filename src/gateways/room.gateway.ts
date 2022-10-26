@@ -23,6 +23,7 @@ import {
   MediaStateChangePayload,
   KickUserPayload,
 } from './dto';
+import { DirectMessagePayload } from './dto/direct-message.dto';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -107,5 +108,10 @@ export class RoomGateway
       client,
       payload,
     );
+  }
+
+  @SubscribeMessage(EVENT.DIRECT_MESSAGE)
+  onDirectMessage(client: Socket, payload: DirectMessagePayload) {
+    this.roomGatewayService.onDirectMessage(client, payload);
   }
 }

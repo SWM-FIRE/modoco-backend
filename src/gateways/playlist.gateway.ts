@@ -41,7 +41,7 @@ export class PlaylistGateway
 
   // OnGatewayDisconnect
   handleDisconnect(client: Socket) {
-    this.logger.log('[Disconnection] : ' + client.id);
+    this.logger.log('[Disconnect] : ' + client.id);
   }
 
   @SubscribeMessage('playlist:join')

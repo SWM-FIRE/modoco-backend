@@ -90,14 +90,17 @@ export class RoomsDatabaseHelper {
   }
 
   /**
-   *
+   * update room in DB
+   * @param roomId roomId(=itemId in DB)
+   * @param existingRoomMembersLength length of existing room members
+   * @param delta delta of room members
    */
   async updateRoomInfoByDelta(
     roomId: number,
     existingRoomMembersLength: number,
     delta: number,
   ) {
-    const room: GetRoomDTO = await this.prisma.room.update({
+    let room: GetRoomDTO = await this.prisma.room.update({
       where: { itemId: roomId },
       data: { current: existingRoomMembersLength + delta },
       select: getRoomSelector,
@@ -107,45 +110,16 @@ export class RoomsDatabaseHelper {
       throw new WsException('Room not found');
     }
 
-    return room;
-  }
-
-  /**
-   * update room in DB when user leave room
-   * @param {number} roomId roomId(=itemId in DB)
-   * @param {number} currentRoomMembersLength length of current room members
-   * @returns {Promise<GetRoomDTO>}
-   */
-  async leaveRoom(
-    roomId: number,
-    currentRoomMembersLength: number,
-  ): Promise<GetRoomDTO> {
-    try {
-      let room = await this.prisma.room.update({
+    // prevent negative room current value
+    if (room.current < 0) {
+      room = await this.prisma.room.update({
         where: { itemId: roomId },
-        data: { current: currentRoomMembersLength },
+        data: { current: 0 },
         select: getRoomSelector,
       });
-
-      if (!room) {
-        //this.logger.warn('Room not found :: no data');
-      }
-
-      if (room.current < 0) {
-        //this.logger.warn('[ASSERT] Tried to set room current value to minus');
-        room = await this.prisma.room.update({
-          where: { itemId: roomId },
-          data: { current: 0 },
-          select: getRoomSelector,
-        });
-      }
-
-      return room;
-    } catch (error) {
-      if (isNotFoundError(error)) {
-        //this.logger.debug('[LeaveRoom] Room not found');
-      }
     }
+
+    return room;
   }
 
   /**

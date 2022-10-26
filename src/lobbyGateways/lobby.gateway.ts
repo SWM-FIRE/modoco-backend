@@ -19,7 +19,6 @@ export class LobbyGateway {
 
   handleConnection(client: Socket) {
     this.logger.debug(`LobbyGateway client connected ${client.id}`);
-    // console.log('LobbyGateway client connected', client);
 
     client.on('disconnecting', (reason) => {
       const lobby = 'lobby';
