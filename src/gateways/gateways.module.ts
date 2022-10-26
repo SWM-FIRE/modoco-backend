@@ -12,6 +12,7 @@ import { RedisModule } from 'src/redis/redis.module';
 import { PlaylistGateway } from './playlist.gateway';
 import { RedisSessionStore } from './class/redis-session.store';
 import { RedisMessageStore } from './class/redis-message.store';
+import { FriendsDatabaseHelper } from 'src/friends/helper/friends-database.helper';
 
 @Module({
   imports: [AuthModule, RedisModule],
@@ -28,6 +29,7 @@ import { RedisMessageStore } from './class/redis-message.store';
     RoomGatewayHelper,
     RedisSessionStore,
     RedisMessageStore,
+    FriendsDatabaseHelper,
   ],
 })
 export class GatewayModule {}

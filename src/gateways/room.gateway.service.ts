@@ -35,6 +35,7 @@ import { DirectMessagePayload } from './dto/direct-message.dto';
 import { AuthService } from 'src/auth/auth.service';
 import { ConnectionType, RedisSessionStore } from './class/redis-session.store';
 import { RedisMessageStore } from './class/redis-message.store';
+import { FriendsDatabaseHelper } from 'src/friends/helper/friends-database.helper';
 
 @Injectable()
 export class RoomGatewayService {
@@ -46,6 +47,7 @@ export class RoomGatewayService {
     private readonly authService: AuthService,
     private readonly redisSessionStore: RedisSessionStore,
     private readonly redisMessageStore: RedisMessageStore,
+    private readonly friendDatabaseHelper: FriendsDatabaseHelper,
     @Inject('REDIS_CLIENT') private readonly redisClient: RedisClientType,
   ) {}
 
@@ -81,22 +83,70 @@ export class RoomGatewayService {
     const { sub } = await this.authService.verifyToken(
       client.handshake.query.token as string,
     );
-    client.data.uid = sub;
+    const uid = sub as number;
+    client.data.uid = uid;
     client.data.nickname = await this.usersDatabaseHelper.getUserNicknameByUid(
-      sub,
+      uid,
     );
 
     // Enable socket session
-    await this.createRedisSession(sub, client.data.nickname);
+    await this.createRedisSession(uid, client.data.nickname);
+
+    // join uid room
+    client.join(uid.toString());
+
+    // fetch message
+    const messages = await this.redisMessageStore.findMessagesForUser(uid);
+    const messageDict = new Map<string, any[]>();
+    messages.forEach((message) => {
+      const { from, to } = message;
+      const key = uid.toString() === from ? to : from;
+      if (!messageDict.has(key)) {
+        messageDict.set(key, []);
+      }
+      messageDict.get(key).push(message);
+    });
+
+    // find all friends of the user
+    const friendlist = await this.friendDatabaseHelper.getAcceptedFriendships(
+      uid,
+    );
+
+    // send friends status and messages they have sent
+    const friendStatusList = [];
+    for (const friend of friendlist) {
+      const friendData =
+        friend.friendship_friendFromTousers.uid === uid
+          ? friend.friendship_friendToTousers
+          : friend.friendship_friendFromTousers;
+      const friendSession = await this.redisSessionStore.findSession(
+        friendData.uid,
+      );
+
+      friendStatusList.push({
+        friend: friendData,
+        connection: friendSession.connection,
+        messages: messageDict.get(friendData.uid.toString()) || [],
+      });
+    }
+    client.emit('syncFriendlist', friendStatusList);
+
+    // notify existing user - that new user is connected
+    // TODO: notify only to the friends of the user who is connected
+    client.broadcast.emit('userConnected', {
+      uid,
+      nickname: client.data.nickname,
+      connection: ConnectionType.ONLINE,
+    });
 
     // log the new connection
-    this.logger.debug(`[Connection] Client uid: ${sub}, sid: ${client.id}`);
+    this.logger.debug(`[Connection] Client uid: ${uid}, sid: ${client.id}`);
 
     // attach handler to disconnecting event
     client.on('disconnecting', () => this.onDisconnecting(client));
   }
 
-  private async createRedisSession(uid: string, nickname?: string) {
+  private async createRedisSession(uid: number, nickname?: string) {
     const session = await this.redisSessionStore.findSession(uid);
 
     // no session found, create a new one
@@ -104,19 +154,19 @@ export class RoomGatewayService {
       return this.redisSessionStore.saveSession(uid, {
         uid,
         nickname,
-        connected: ConnectionType.ONLINE,
+        connection: ConnectionType.ONLINE,
       });
     }
 
     // session found, update the session
     return this.redisSessionStore.saveSession(uid, {
-      connected: ConnectionType.ONLINE,
+      connection: ConnectionType.ONLINE,
     });
   }
 
-  private async disableRedisSession(uid: string) {
+  private async disableRedisSession(uid: number) {
     return this.redisSessionStore.saveSession(uid, {
-      connected: ConnectionType.OFFLINE,
+      connection: ConnectionType.OFFLINE,
     });
   }
 
@@ -368,11 +418,18 @@ export class RoomGatewayService {
       .emit(EVENT.CHAT_MESSAGE, messagePayload);
   }
 
-  onDirectMessage(client: Socket, messagePayload: DirectMessagePayload) {
-    this.server.to(messagePayload.to).emit(EVENT.DIRECT_MESSAGE, {
-      sender: client.data.uid,
-      ...messagePayload,
-    });
+  async onDirectMessage(client: Socket, messagePayload: DirectMessagePayload) {
+    const from = getSocketUser(client).uid.toString();
+
+    this.server
+      .to(messagePayload.to)
+      .to(from)
+      .emit(EVENT.DIRECT_MESSAGE, {
+        sender: client.data.uid,
+        ...messagePayload,
+      });
+
+    await this.redisMessageStore.saveMessage({ from, ...messagePayload });
   }
 
   /**
@@ -456,7 +513,9 @@ export class RoomGatewayService {
     );
     if (roomsToLeave) {
       // rooms excluding the room the user's id room
-      const rooms = [...roomsToLeave].filter((room) => room !== client.id);
+      const rooms = [...roomsToLeave].filter(
+        (room) => room !== client.id && room !== client.data.uid.toString(),
+      );
 
       rooms.forEach(async (room) => {
         // get all users who in currently in the room

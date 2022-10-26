@@ -24,8 +24,6 @@ export class WsJwtStrategy extends PassportStrategy(Strategy, 'wsJwt') {
       },
     });
 
-    //console.log({ type: 'wsJwtStrategy', user });
-
     if (!user) return false; // no user found
     if (!user.verified) throw new ForbiddenException('Not verified'); // user not verified
 

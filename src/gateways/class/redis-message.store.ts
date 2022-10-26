@@ -10,7 +10,13 @@ export class RedisMessageStore implements MessageStore {
     @Inject('REDIS_CLIENT') private readonly redisClient: RedisClientType,
   ) {}
 
-  saveMessage(message) {
+  saveMessage(message: {
+    from: string;
+    to: string;
+    type?: string;
+    message: string;
+    createdAt: string;
+  }) {
     const value = JSON.stringify(message);
     this.redisClient
       .multi()
@@ -21,7 +27,11 @@ export class RedisMessageStore implements MessageStore {
       .exec();
   }
 
-  findMessagesForUser(uid) {
+  findMessagesForUser(
+    uid: number,
+  ): Promise<
+    { from: string; to: string; message: string; createdAt: string }[]
+  > {
     return this.redisClient.lRange(`messages:${uid}`, 0, -1).then((results) => {
       return results.map((result) => JSON.parse(result));
     });

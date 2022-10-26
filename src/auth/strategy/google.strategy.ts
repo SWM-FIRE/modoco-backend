@@ -55,7 +55,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
           user.email,
         );
       } catch (error) {
-        console.log(error);
         done(error);
       }
     }
