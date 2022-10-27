@@ -15,7 +15,7 @@ export class RedisSessionStore implements SessionStore {
     @Inject('REDIS_CLIENT') private readonly redisClient: RedisClientType,
   ) {}
 
-  findSession(id) {
+  findSession(id): Promise<Payload | undefined> {
     return this.redisClient.hGetAll(`session:${id}`).then(this.mapSession);
   }
 

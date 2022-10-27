@@ -80,67 +80,76 @@ export class RoomGatewayService {
    * this cannot be done in the handleDisconnect(which is invoked after socket is emptied)
    */
   async onConnection(client: Socket) {
-    const { sub } = await this.authService.verifyToken(
-      client.handshake.query.token as string,
-    );
-    const uid = sub as number;
-    client.data.uid = uid;
-    client.data.nickname = await this.usersDatabaseHelper.getUserNicknameByUid(
-      uid,
-    );
+    try {
+      // pull authentification data
+      const { sub } = await this.authService.verifyToken(
+        client.handshake.query.token as string,
+      );
+      const uid = sub as number;
 
-    // Enable socket session
-    await this.createRedisSession(uid, client.data.nickname);
+      // attach user data
+      client.data.uid = uid;
+      client.data.nickname =
+        await this.usersDatabaseHelper.getUserNicknameByUid(uid);
 
-    // join uid room
-    client.join(uid.toString());
+      // Enable socket session
+      await this.createRedisSession(uid, client.data.nickname);
 
-    // fetch message
-    const messages = await this.redisMessageStore.findMessagesForUser(uid);
-    const messageDict = new Map<string, any[]>();
-    messages.forEach((message) => {
-      const { from, to } = message;
-      const key = uid.toString() === from ? to : from;
-      if (!messageDict.has(key)) {
-        messageDict.set(key, []);
-      }
-      messageDict.get(key).push(message);
-    });
+      // join uid room
+      client.join(uid.toString());
 
-    // find all friends of the user
-    const friendlist = await this.friendDatabaseHelper.getAcceptedFriendships(
-      uid,
-    );
+      // fetch message
+      const messages = await this.redisMessageStore.findMessagesForUser(uid);
+      const messageDict = new Map<string, any[]>();
+      messages.forEach((message) => {
+        const { from, to } = message;
+        const key = uid.toString() === from ? to : from;
+        if (!messageDict.has(key)) {
+          messageDict.set(key, []);
+        }
+        messageDict.get(key).push(message);
+      });
 
-    // send friends status and messages they have sent
-    const friendStatusList = [];
-    for (const friend of friendlist) {
-      const friendData =
-        friend.friendship_friendFromTousers.uid === uid
-          ? friend.friendship_friendToTousers
-          : friend.friendship_friendFromTousers;
-      const friendSession = await this.redisSessionStore.findSession(
-        friendData.uid,
+      // find all friends of the user
+      const friendlist = await this.friendDatabaseHelper.getAcceptedFriendships(
+        uid,
       );
 
-      friendStatusList.push({
-        friend: friendData,
-        connection: friendSession.connection,
-        messages: messageDict.get(friendData.uid.toString()) || [],
+      // send friends status and messages they have sent
+      const friendStatusList = [];
+      for (const friend of friendlist) {
+        const friendData =
+          friend.friendship_friendFromTousers.uid === uid
+            ? friend.friendship_friendToTousers
+            : friend.friendship_friendFromTousers;
+        const friendSession = await this.redisSessionStore.findSession(
+          friendData.uid,
+        );
+
+        friendStatusList.push({
+          friend: friendData,
+          connection:
+            friendSession === undefined
+              ? ConnectionType.OFFLINE
+              : friendSession.connection,
+          messages: messageDict.get(friendData.uid.toString()) || [],
+        });
+      }
+      client.emit('friend:sync-all', friendStatusList);
+
+      // notify existing user - that new user is connected
+      // TODO: notify only to the friends of the user who is connected
+      client.broadcast.emit('friend:connection', {
+        uid,
+        nickname: client.data.nickname,
+        connection: ConnectionType.ONLINE,
       });
+
+      // log the new connection
+      this.logger.log(`[Connection] Client uid: ${uid}, sid: ${client.id}`);
+    } catch (error) {
+      this.logger.error(error);
     }
-    client.emit('syncFriendlist', friendStatusList);
-
-    // notify existing user - that new user is connected
-    // TODO: notify only to the friends of the user who is connected
-    client.broadcast.emit('userConnected', {
-      uid,
-      nickname: client.data.nickname,
-      connection: ConnectionType.ONLINE,
-    });
-
-    // log the new connection
-    this.logger.debug(`[Connection] Client uid: ${uid}, sid: ${client.id}`);
 
     // attach handler to disconnecting event
     client.on('disconnecting', () => this.onDisconnecting(client));
@@ -176,12 +185,19 @@ export class RoomGatewayService {
    * @param {Socket} client client socket
    */
   onDisconnect(client: Socket) {
-    this.logger.debug(
+    this.logger.log(
       `[Disconnect] Client uid: ${client.data.uid},sid: ${client.id}`,
     );
 
     // !TODO Disable socket session
     this.disableRedisSession(client.data.uid);
+
+    // notify existing user - that new user is disconnected
+    client.broadcast.emit('friend:disconnection', {
+      uid: client.data.uid,
+      nickname: client.data.nickname,
+      connection: ConnectionType.OFFLINE,
+    });
   }
 
   /**
@@ -207,7 +223,7 @@ export class RoomGatewayService {
         1,
       );
       // 6. log the event
-      this.logger.debug(`[JoinRoom #${room}] uid: ${uid}, sid: ${client.id}`);
+      this.logger.log(`[JoinRoom #${room}] uid: ${uid}, sid: ${client.id}`);
       // 7. Create Session
     } catch (error) {
       if (error instanceof WsException) {
@@ -252,7 +268,7 @@ export class RoomGatewayService {
         0,
       );
       // 6. log the event
-      this.logger.debug(
+      this.logger.log(
         `[KickUser Room #${payload.room}] User(${moderator.uid}) kicks ${userToKick.uid}`,
       );
     } catch (error) {
@@ -398,7 +414,7 @@ export class RoomGatewayService {
       sid: client.id,
     });
 
-    this.logger.debug(
+    this.logger.log(
       `[LeaveRoom #${room}] Client uid: ${
         client.data.uid ? client.data.uid : '?'
       }, sid: ${client.id}`,
