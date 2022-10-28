@@ -100,10 +100,11 @@ export class RoomGatewayService {
 
       // fetch message
       const messages = await this.redisMessageStore.findMessagesForUser(uid);
-      const messageDict = new Map<string, any[]>();
+      const messageDict = new Map<number, any[]>();
+
       messages.forEach((message) => {
         const { from, to } = message;
-        const key = uid.toString() === from ? to : from;
+        const key = uid === from ? to : from;
         if (!messageDict.has(key)) {
           messageDict.set(key, []);
         }
@@ -132,7 +133,7 @@ export class RoomGatewayService {
             friendSession === undefined
               ? ConnectionType.OFFLINE
               : friendSession.connection,
-          messages: messageDict.get(friendData.uid.toString()) || [],
+          messages: messageDict.get(friendData.uid) || [],
         });
       }
       client.emit('friend:sync-all', friendStatusList);
@@ -210,20 +211,26 @@ export class RoomGatewayService {
     try {
       // 1. validate payload
       await this.validateJoinRoomPayload(client, room);
+
       // 2. get all users who in currently in the room
       const existingMembers = await getAllRoomUsers(this.server, room);
+
       // 3. join client into the room
       await joinClientToRoom(client, room, existingMembers);
+
       // 4. notify that new user has joined, to all users in the room, except the sender(client)
       await notifyNewUserJoined(client, room, uid);
+
       // 5. update realtime data
       await this.roomGatewayHelper.updateRoomInformationByDelta(
         room,
         existingMembers.length,
         1,
       );
+
       // 6. log the event
       this.logger.log(`[JoinRoom #${room}] uid: ${uid}, sid: ${client.id}`);
+
       // 7. Create Session
     } catch (error) {
       if (error instanceof WsException) {
@@ -247,16 +254,20 @@ export class RoomGatewayService {
     try {
       // 1. get user info from socket
       const moderator = getSocketUser(moderatorSocket);
+
       // 2. validate and get user to kick
       const { userToKick, userToKickSocket } = await this.getUserToKick(
         moderator,
         moderatorSocket,
         payload,
       );
+
       // 3. notify user to kick
       notifyKickUser(this.server, payload.room, userToKick);
+
       // 4. kick user from room
       await kickUserFromRoom(userToKickSocket, payload.room);
+
       // 5. decrement room current count
       const count = await getExistingRoomMembersCount(
         this.server,
@@ -267,6 +278,7 @@ export class RoomGatewayService {
         count,
         0,
       );
+
       // 6. log the event
       this.logger.log(
         `[KickUser Room #${payload.room}] User(${moderator.uid}) kicks ${userToKick.uid}`,
@@ -435,13 +447,13 @@ export class RoomGatewayService {
   }
 
   async onDirectMessage(client: Socket, messagePayload: DirectMessagePayload) {
-    const from = getSocketUser(client).uid.toString();
+    const from = getSocketUser(client).uid;
 
     this.server
-      .to(messagePayload.to)
-      .to(from)
+      .to(messagePayload.to.toString())
+      .to(from.toString())
       .emit(EVENT.DIRECT_MESSAGE, {
-        sender: client.data.uid,
+        from,
         ...messagePayload,
       });
 
@@ -456,7 +468,7 @@ export class RoomGatewayService {
    * @param {CallOfferPayload} payload call-user event payload
    */
   onCallUser(client: Socket, payload: CallOfferPayload) {
-    client.to(payload.to).emit(EVENT.CALL_MADE, {
+    client.to(payload.to.toString()).emit(EVENT.CALL_MADE, {
       sid: client.id,
       offer: payload.offer,
     });
@@ -470,7 +482,7 @@ export class RoomGatewayService {
    * @param {AnswerOfferPayload} payload make-answer event payload
    */
   onMakeAnswer(client: Socket, payload: AnswerOfferPayload) {
-    client.to(payload.to).emit(EVENT.ANSWER_MADE, {
+    client.to(payload.to.toString()).emit(EVENT.ANSWER_MADE, {
       sid: client.id,
       answer: payload.answer,
     });
@@ -482,7 +494,7 @@ export class RoomGatewayService {
    * @param {CandidatePayload} payload ice-candidate event payload
    */
   onIceCandidate(client: Socket, payload: CandidatePayload) {
-    client.to(payload.to).emit(EVENT.ICE_CANDIDATE, {
+    client.to(payload.to.toString()).emit(EVENT.ICE_CANDIDATE, {
       sid: client.id,
       candidate: payload.candidate,
     });
