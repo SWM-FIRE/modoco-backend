@@ -43,3 +43,6 @@ lerna-debug.log*
 # ignore mongodb database files
 /dockers/mongodb/mongodb
 /dockers/mongodb/mongodb/**
+
+# ignore newrelic token
+/src/newrelic.ts
