@@ -1,11 +1,11 @@
 import { ApiTags } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber } from 'class-validator';
 
 @ApiTags('socket')
 export class CallOfferPayload {
-  @IsString()
+  @IsNumber()
   @IsNotEmpty()
-  to: string;
+  to: number;
 
   @IsNotEmpty()
   offer: RTCSessionDescriptionInit;
@@ -13,9 +13,9 @@ export class CallOfferPayload {
 
 @ApiTags('socket')
 export class AnswerOfferPayload {
-  @IsString()
+  @IsNumber()
   @IsNotEmpty()
-  to: string;
+  to: number;
 
   @IsNotEmpty()
   answer: RTCSessionDescriptionInit;

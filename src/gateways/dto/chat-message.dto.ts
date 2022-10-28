@@ -14,7 +14,7 @@ export class ChatMessagePayload {
 
   @IsNumber()
   @IsNotEmpty()
-  sender: number;
+  from: number;
 
   @IsString()
   @IsNotEmpty()

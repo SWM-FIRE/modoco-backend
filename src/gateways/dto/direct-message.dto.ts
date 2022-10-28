@@ -1,11 +1,11 @@
 import { ApiTags } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 @ApiTags('socket')
 export class DirectMessagePayload {
   @IsNotEmpty()
-  @IsString()
-  to: string; // uid
+  @IsNumber()
+  to: number; // uid
 
   @IsOptional()
   type?: string; // message, code, img, file, ...
