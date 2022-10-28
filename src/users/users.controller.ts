@@ -58,7 +58,7 @@ export class UsersController {
     return this.usersService.getAnotherUserByUid(uid);
   }
 
-  // check signup verication on /:uid/verify/:verify-token
+  @UsersDocumentHelper(API_DOC_TYPE.VERIFY_USER_EMAIL)
   @Redirect('https://modocode.com')
   @Get(':uid/verify/:verifyToken')
   async verifyUser(

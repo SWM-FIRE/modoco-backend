@@ -6,11 +6,10 @@ export default () => ({
 });
 
 const API_VERSION = 'api/v1';
-// USER CONFIG
 const SWAGGER_OPTIONS = new DocumentBuilder()
   .setTitle('모도코 API')
   .setDescription('Documentation for Modoco API')
-  .setVersion('0.0.2')
+  .setVersion('1.0.0')
   .setContact('Juhyeong Ko', 'https://modocode.com', 'dury.ko@gmail.com')
   .addTag('users', 'Users API')
   .addTag('rooms', 'Rooms API')

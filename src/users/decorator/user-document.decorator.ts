@@ -22,6 +22,8 @@ export function UsersDocumentHelper(docType: API_DOC_TYPE) {
       return updateUserDecorators();
     case API_DOC_TYPE.DELETE_USER_BY_UID:
       return deleteUserByUidDecorators();
+    case API_DOC_TYPE.VERIFY_USER_EMAIL:
+      return verifyUserEmailDecorators();
   }
 }
 
@@ -175,6 +177,15 @@ function deleteUserByUidDecorators() {
       schema: {
         example: '',
       },
+    }),
+  );
+}
+
+function verifyUserEmailDecorators() {
+  return applyDecorators(
+    ApiOperation({
+      summary: '유저 이메일 인증',
+      description: '가입 후 이메일 인증을 위한 URL.',
     }),
   );
 }

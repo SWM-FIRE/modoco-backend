@@ -65,14 +65,6 @@ export class RoomGatewayService {
   }
 
   /**
-   * set server instance
-   * @param {Server} server server instance
-   */
-  setServer(server: Server) {
-    this.server = server;
-  }
-
-  /**
    * [COMMON]
    * onConnection - on connection
    * @param {Socket} client client socket
@@ -81,27 +73,27 @@ export class RoomGatewayService {
    */
   async onConnection(client: Socket) {
     try {
-      // pull authentification data
+      // 1. pull authentification data
       const { sub } = await this.authService.verifyToken(
         client.handshake.query.token as string,
       );
       const uid = sub as number;
 
-      // attach user data
+      // 2. attach user data
       client.data.uid = uid;
       client.data.nickname =
         await this.usersDatabaseHelper.getUserNicknameByUid(uid);
 
-      // Enable socket session
+      // 3. enable socket session (if not exist, create one)
       await this.createRedisSession(uid, client.data.nickname);
 
-      // join uid room
+      // 4. join uid room for direct message
       client.join(uid.toString());
 
-      // fetch message
+      // 5. fetch message history
+      // should be moved to a separate event
       const messages = await this.redisMessageStore.findMessagesForUser(uid);
       const messageDict = new Map<number, any[]>();
-
       messages.forEach((message) => {
         const { from, to } = message;
         const key = uid === from ? to : from;
@@ -111,12 +103,12 @@ export class RoomGatewayService {
         messageDict.get(key).push(message);
       });
 
-      // find all friends of the user
+      // 7. find all friends of the user
       const friendlist = await this.friendDatabaseHelper.getAcceptedFriendships(
         uid,
       );
 
-      // send friends status and messages they have sent
+      // 8. send friends status and messages they have sent
       const friendStatusList = [];
       for (const friend of friendlist) {
         const friendData =
@@ -138,7 +130,7 @@ export class RoomGatewayService {
       }
       client.emit('friend:sync-all', friendStatusList);
 
-      // notify existing user - that new user is connected
+      // 9. notify existing user - that new user is connected
       // TODO: notify only to the friends of the user who is connected
       client.broadcast.emit('friend:connection', {
         uid,
@@ -146,38 +138,14 @@ export class RoomGatewayService {
         connection: ConnectionType.ONLINE,
       });
 
-      // log the new connection
+      // 10. log the new connection
       this.logger.log(`[Connection] Client uid: ${uid}, sid: ${client.id}`);
     } catch (error) {
       this.logger.error(error);
     }
 
-    // attach handler to disconnecting event
+    // 11. attach handler to disconnecting event
     client.on('disconnecting', () => this.onDisconnecting(client));
-  }
-
-  private async createRedisSession(uid: number, nickname?: string) {
-    const session = await this.redisSessionStore.findSession(uid);
-
-    // no session found, create a new one
-    if (!session) {
-      return this.redisSessionStore.saveSession(uid, {
-        uid,
-        nickname,
-        connection: ConnectionType.ONLINE,
-      });
-    }
-
-    // session found, update the session
-    return this.redisSessionStore.saveSession(uid, {
-      connection: ConnectionType.ONLINE,
-    });
-  }
-
-  private async disableRedisSession(uid: number) {
-    return this.redisSessionStore.saveSession(uid, {
-      connection: ConnectionType.OFFLINE,
-    });
   }
 
   /**
@@ -186,14 +154,15 @@ export class RoomGatewayService {
    * @param {Socket} client client socket
    */
   onDisconnect(client: Socket) {
+    // 1. log the disconnection
     this.logger.log(
       `[Disconnect] Client uid: ${client.data.uid},sid: ${client.id}`,
     );
 
-    // !TODO Disable socket session
+    // 2. disable socket session
     this.disableRedisSession(client.data.uid);
 
-    // notify existing user - that new user is disconnected
+    // 3. notify existing user to update their friend list
     client.broadcast.emit('friend:disconnection', {
       uid: client.data.uid,
       nickname: client.data.nickname,
@@ -230,8 +199,6 @@ export class RoomGatewayService {
 
       // 6. log the event
       this.logger.log(`[JoinRoom #${room}] uid: ${uid}, sid: ${client.id}`);
-
-      // 7. Create Session
     } catch (error) {
       if (error instanceof WsException) {
         if (error.message === EVENT.ALREADY_JOINED) {
@@ -390,7 +357,7 @@ export class RoomGatewayService {
       throw new WsException(KICK_USER_EXCEPTION.IS_MODERATOR);
     }
 
-    // return user to kick
+    // 8. return user to kick
     return { userToKick, userToKickSocket };
   }
 
@@ -405,27 +372,29 @@ export class RoomGatewayService {
   async onLeaveRoom(client: Socket, payload: LeaveRoomPayload) {
     const room = payload.room;
 
+    // 1. remove user from room
     client.leave(room);
 
+    // 2. decrement room current count
     const currentRoomMembersCount = await getExistingRoomMembersCount(
       this.server,
       room,
     );
-    // decrement room current count
     await this.roomsDatabaseHelper.updateRoomInfoByDelta(
       parseInt(room, 10),
       currentRoomMembersCount,
       0,
     );
 
+    // 3. notify to user who is leaving & other users in the room
     client.emit(EVENT.LEFT_ROOM, {
       sid: client.id,
     });
-
     client.to(room).emit(EVENT.LEFT_ROOM, {
       sid: client.id,
     });
 
+    // 4. log the event
     this.logger.log(
       `[LeaveRoom #${room}] Client uid: ${
         client.data.uid ? client.data.uid : '?'
@@ -447,8 +416,8 @@ export class RoomGatewayService {
   }
 
   async onDirectMessage(client: Socket, messagePayload: DirectMessagePayload) {
+    // 1. send direct message to target user & sender(`from`)
     const from = getSocketUser(client).uid;
-
     this.server
       .to(messagePayload.to.toString())
       .to(from.toString())
@@ -457,6 +426,7 @@ export class RoomGatewayService {
         ...messagePayload,
       });
 
+    // 2. save direct message to database
     await this.redisMessageStore.saveMessage({ from, ...messagePayload });
   }
 
@@ -501,18 +471,8 @@ export class RoomGatewayService {
   }
 
   /**
-   * record the duration of a user in a room
-   * @param {Socket} client client socket
-   * @param {RecordPayload} payload Record event Payload
-   */
-  async onRecordTime(client: Socket, payload: RecordPayload) {
-    const user = getSocketUser(client);
-    await this.recordsService.recordTime(user, payload);
-  }
-
-  /**
    * on media(video or audio) state change
-   * @param {EVENT} mediaType
+   * @param {EVENT} mediaType media type
    * @param {Socket} client client socket
    * @param {RecordPayload} payload Media state change event Payload
    */
@@ -534,44 +494,78 @@ export class RoomGatewayService {
     }
   }
 
-  // before leaving the room, notify all users in the room that the user has left
-  private onDisconnecting(client) {
+  /**
+   * record the duration of a user in a room
+   * @warning this function has many bugs
+   * @param {Socket} client client socket
+   * @param {RecordPayload} payload Record event Payload
+   */
+  async onRecordTime(client: Socket, payload: RecordPayload) {
+    const user = getSocketUser(client);
+    await this.recordsService.recordTime(user, payload);
+  }
+
+  /**
+   * set server instance
+   * @param {Server} server server instance
+   * @private
+   */
+  private setServer(server: Server) {
+    this.server = server;
+  }
+
+  /**
+   * called when a user disconnects.
+   * before leaving the room, notify all users in the room that the user has left
+   * @param {Socket} client client socket which is about to leave the room
+   * @private
+   */
+  private onDisconnecting(client: Socket) {
+    // 1. get all rooms the user is in
     const roomsToLeave: Set<string> = this.server.adapter['sids'].get(
       client.id,
     );
-    if (roomsToLeave) {
-      // rooms excluding the room the user's id room
-      const rooms = [...roomsToLeave].filter(
-        (room) => room !== client.id && room !== client.data.uid.toString(),
+    if (!roomsToLeave) {
+      return;
+    }
+
+    // 2. get rooms excluding the room, which the user's id is the same as the room id
+    const rooms = [...roomsToLeave].filter(
+      (room) => room !== client.id && room !== client.data.uid.toString(),
+    );
+
+    // 3. notify to all user that this user is leaving the room
+    rooms.forEach(async (room) => {
+      // 3-1. get all users who in currently in the room
+      const currentRoomMembers = await this.server.in(room).fetchSockets();
+      // 3-2. decrement room current count
+      // NOTE: minus one because current user, who is leaving, is still in the room
+      await this.roomsDatabaseHelper.updateRoomInfoByDelta(
+        parseInt(room, 10),
+        currentRoomMembers.length,
+        -1,
       );
 
-      rooms.forEach(async (room) => {
-        // get all users who in currently in the room
-        const currentRoomMembers = await this.server.in(room).fetchSockets();
-        // decrement room current count
-        // minus one because current user, who is leaving, is still in the room
-        await this.roomsDatabaseHelper.updateRoomInfoByDelta(
-          parseInt(room, 10),
-          currentRoomMembers.length,
-          -1,
-        );
-
-        // emit a `leftRoom` event to all users in the room except the sender
-        client.to(room).emit(EVENT.LEFT_ROOM, {
-          sid: client.id,
-        });
+      // 3-3. emit a `leftRoom` event to all users in the room except the sender
+      client.to(room).emit(EVENT.LEFT_ROOM, {
+        sid: client.id,
       });
-    }
+    });
   }
 
+  /**
+   * validate join room payload
+   * @param {Socket} client client socket
+   * @param {string} room room id
+   */
   private async validateJoinRoomPayload(client: Socket, room: string) {
-    // check if client is already in the room
+    // 1. check if client is already in the room
     const hasJoined = client.rooms.has(room);
     if (hasJoined) {
       throw new WsException(EVENT.ALREADY_JOINED);
     }
 
-    // check if room exceeds max capacity
+    // 2. check if room exceeds max capacity
     const roomCapacity = await this.roomsDatabaseHelper.getRoomCapacity(
       parseInt(room),
     );
@@ -579,9 +573,44 @@ export class RoomGatewayService {
     if (this.server.adapter['rooms'].get(room) !== undefined) {
       roomCurrentCount = this.server.adapter['rooms'].get(room).size;
     }
-
     if (roomCurrentCount >= roomCapacity) {
       throw new WsException(EVENT.ROOM_FULL);
     }
+  }
+
+  /**
+   * [REDIS]
+   * create a user session in the redis store
+   * @param {number} uid user id
+   * @param {string} nickname nickname
+   */
+  private async createRedisSession(uid: number, nickname?: string) {
+    // 1. find user in the redis store
+    const session = await this.redisSessionStore.findSession(uid);
+
+    // 2. if no session found, create a new one
+    if (!session) {
+      return this.redisSessionStore.saveSession(uid, {
+        uid,
+        nickname,
+        connection: ConnectionType.ONLINE,
+      });
+    }
+
+    // 3. session found, update the session
+    return this.redisSessionStore.saveSession(uid, {
+      connection: ConnectionType.ONLINE,
+    });
+  }
+
+  /**
+   * [REDIS]
+   * disable a user session in the redis store
+   * @param {number} uid user id
+   */
+  private async disableRedisSession(uid: number) {
+    return this.redisSessionStore.saveSession(uid, {
+      connection: ConnectionType.OFFLINE,
+    });
   }
 }
