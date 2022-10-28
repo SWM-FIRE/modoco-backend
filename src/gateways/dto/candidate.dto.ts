@@ -1,11 +1,11 @@
 import { ApiTags } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 @ApiTags('socket')
 export class CandidatePayload {
-  @IsNumber()
+  @IsString()
   @IsNotEmpty()
-  to: number;
+  to: string;
 
   @IsNotEmpty()
   candidate: RTCIceCandidateInit;
