@@ -7,11 +7,11 @@ import * as argon from 'argon2';
 export class AuthService {
   constructor(private jwt: JwtService, private configService: ConfigService) {}
 
-  passwordMatch(password: string, hash: string): Promise<boolean> {
+  static passwordMatch(password: string, hash: string): Promise<boolean> {
     return argon.verify(hash, password);
   }
 
-  generateHash(password: string) {
+  static generateHash(password: string) {
     return argon.hash(password);
   }
 

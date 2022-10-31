@@ -2,7 +2,6 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GetRoomDTO, getRoomSelector } from '../dto';
 import { User } from '@prisma/client';
-import { isNotFoundError } from '../../common/util/prisma-error.util';
 import { WsException } from '@nestjs/websockets';
 
 @Injectable()
@@ -16,6 +15,8 @@ export class RoomsDatabaseHelper {
     tags: string[],
     total: number,
     theme: string,
+    isPublic: boolean,
+    hash?: string,
   ) {
     const room = await this.prisma.room.create({
       data: {
@@ -27,6 +28,8 @@ export class RoomsDatabaseHelper {
         tags,
         total,
         theme,
+        isPublic: isPublic !== undefined ? isPublic : true,
+        hash: hash ? hash : null,
       },
       include: { moderator: true },
     });
@@ -38,6 +41,7 @@ export class RoomsDatabaseHelper {
     delete room.moderator.updatedAt;
     delete room.moderator.hash;
     delete room.moderator.email;
+    delete room.hash;
 
     return room;
   }
@@ -139,6 +143,27 @@ export class RoomsDatabaseHelper {
       },
     });
     return room.total;
+  }
+
+  /**
+   * get room data
+   * @param {number} roomId roomId(=itemId in DB)
+   */
+  async getRoomData(roomId: number) {
+    const room = await this.prisma.room.findFirst({
+      where: { itemId: roomId },
+      select: {
+        total: true,
+        isPublic: true,
+        hash: true,
+      },
+    });
+
+    if (!room) {
+      return null;
+    }
+
+    return { isPublic: room.isPublic, hash: room.hash, total: room.total };
   }
 
   /**

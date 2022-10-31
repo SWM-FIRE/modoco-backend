@@ -1,6 +1,7 @@
 import { ApiProperty, ApiTags } from '@nestjs/swagger';
 import {
   IsArray,
+  IsBoolean,
   IsNotEmpty,
   IsNumber,
   IsObject,
@@ -9,6 +10,8 @@ import {
   Max,
   MaxLength,
   Min,
+  MinLength,
+  ValidateIf,
 } from 'class-validator';
 
 @ApiTags('rooms')
@@ -30,6 +33,24 @@ export class CreateRoomDTO {
   @IsString()
   @IsNotEmpty()
   title: string;
+
+  @ApiProperty({
+    description: 'Whether it is public or private',
+    type: Boolean,
+  })
+  @IsBoolean()
+  @IsNotEmpty()
+  isPublic: boolean;
+
+  @ApiProperty({
+    description: 'Password of the room. Should be exactly 4 characters.',
+    type: Moderator,
+  })
+  @ValidateIf((o) => o.isPublic === false) // if isPublic is false, password is required
+  @MinLength(4)
+  @MaxLength(4)
+  @IsNotEmpty()
+  password?: string;
 
   @ApiProperty({
     description: 'The description of the room',
@@ -85,6 +106,14 @@ export class GetRoomDTO {
     uid: number;
     avatar: number;
   };
+
+  @ApiProperty({
+    description: 'Whether it is public or private',
+    type: Boolean,
+  })
+  @IsBoolean()
+  @IsNotEmpty()
+  isPublic: boolean;
 
   @ApiProperty({
     description: 'The name of the room',
@@ -152,4 +181,5 @@ export const getRoomSelector = {
   current: true,
   total: true,
   theme: true,
+  isPublic: true,
 };

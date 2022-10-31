@@ -4,13 +4,11 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from '@prisma/client';
 import { RoomsDatabaseHelper } from './helper/rooms-database.helper';
 import { isNotFoundError } from '../common/util/prisma-error.util';
+import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class RoomsService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly roomsDatabaseHelper: RoomsDatabaseHelper,
-  ) {}
+  constructor(private readonly roomsDatabaseHelper: RoomsDatabaseHelper) {}
 
   private logger = new Logger('RoomsService');
 
@@ -20,7 +18,9 @@ export class RoomsService {
    * @param {CreateRoomDTO} dto create room dto
    * @returns {Promise<CreateRoomDTO>}
    */
-  createRoom(user: User, dto: CreateRoomDTO) {
+  async createRoom(user: User, dto: CreateRoomDTO) {
+    const hash = await AuthService.generateHash(dto.password);
+
     return this.roomsDatabaseHelper.createRoom(
       user.uid,
       dto.title,
@@ -28,6 +28,8 @@ export class RoomsService {
       dto.tags,
       dto.total,
       dto.theme,
+      dto.isPublic,
+      hash,
     );
   }
 

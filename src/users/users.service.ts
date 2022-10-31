@@ -22,7 +22,7 @@ export class UsersService {
 
   async createUser(dto: CreateUserDTO) {
     try {
-      const hash = await this.authService.generateHash(dto.password);
+      const hash = await AuthService.generateHash(dto.password);
       const verifyToken = generateSignupVerifyToken();
 
       const user = await this.usersDatabaseHelper.createUser(
