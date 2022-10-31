@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CreateRoomDTO } from './dto';
-import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from '@prisma/client';
 import { RoomsDatabaseHelper } from './helper/rooms-database.helper';
 import { isNotFoundError } from '../common/util/prisma-error.util';
@@ -19,7 +18,9 @@ export class RoomsService {
    * @returns {Promise<CreateRoomDTO>}
    */
   async createRoom(user: User, dto: CreateRoomDTO) {
-    const hash = await AuthService.generateHash(dto.password);
+    const hash = dto.password
+      ? await AuthService.generateHash(dto.password)
+      : null;
 
     return this.roomsDatabaseHelper.createRoom(
       user.uid,
