@@ -2,7 +2,6 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GetRoomDTO, getRoomSelector } from '../dto';
 import { User } from '@prisma/client';
-import { isNotFoundError } from '../../common/util/prisma-error.util';
 import { WsException } from '@nestjs/websockets';
 
 @Injectable()
@@ -16,6 +15,7 @@ export class RoomsDatabaseHelper {
     tags: string[],
     total: number,
     theme: string,
+    isPublic: boolean,
   ) {
     const room = await this.prisma.room.create({
       data: {
@@ -27,6 +27,7 @@ export class RoomsDatabaseHelper {
         tags,
         total,
         theme,
+        isPublic: isPublic !== undefined ? isPublic : true,
       },
       include: { moderator: true },
     });
@@ -38,6 +39,7 @@ export class RoomsDatabaseHelper {
     delete room.moderator.updatedAt;
     delete room.moderator.hash;
     delete room.moderator.email;
+    delete room.hash;
 
     return room;
   }

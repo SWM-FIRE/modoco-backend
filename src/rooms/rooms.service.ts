@@ -28,6 +28,7 @@ export class RoomsService {
       dto.tags,
       dto.total,
       dto.theme,
+      dto.isPublic,
     );
   }
 
