@@ -51,6 +51,9 @@ model Room {
   current Int      @default(0)
   theme   String
 
+  isPublic Boolean @default(true)
+  hash     String?
+
   moderatorId Int
   moderator   User @relation(fields: [moderatorId], references: [uid], onDelete: SetNull)
 
