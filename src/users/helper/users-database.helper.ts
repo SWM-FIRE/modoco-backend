@@ -169,7 +169,7 @@ export class UsersDatabaseHelper {
 
     // if password is provided update hash
     if (dto.password) {
-      const hash = await this.authService.generateHash(dto.password);
+      const hash = await AuthService.generateHash(dto.password);
 
       updatedUser = await this.prisma.user.update({
         where: {

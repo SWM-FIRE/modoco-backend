@@ -16,6 +16,7 @@ export class RoomsDatabaseHelper {
     total: number,
     theme: string,
     isPublic: boolean,
+    hash?: string,
   ) {
     const room = await this.prisma.room.create({
       data: {
@@ -28,6 +29,7 @@ export class RoomsDatabaseHelper {
         total,
         theme,
         isPublic: isPublic !== undefined ? isPublic : true,
+        hash: hash ? hash : null,
       },
       include: { moderator: true },
     });
@@ -141,6 +143,23 @@ export class RoomsDatabaseHelper {
       },
     });
     return room.total;
+  }
+
+  /**
+   * get room data
+   * @param {number} roomId roomId(=itemId in DB)
+   */
+  async getRoomData(roomId: number) {
+    const room = await this.prisma.room.findFirst({
+      where: { itemId: roomId },
+      select: {
+        total: true,
+        isPublic: true,
+        hash: true,
+      },
+    });
+
+    return { isPublic: room.isPublic, hash: room.hash, total: room.total };
   }
 
   /**

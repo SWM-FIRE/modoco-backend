@@ -1,5 +1,12 @@
 import { ApiTags } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 @ApiTags('socket')
 export class JoinRoomPayload {
@@ -10,4 +17,10 @@ export class JoinRoomPayload {
   @IsNumber()
   @IsNotEmpty()
   uid: number;
+
+  @IsString()
+  @MinLength(4)
+  @MaxLength(4)
+  @IsOptional()
+  password?: string;
 }

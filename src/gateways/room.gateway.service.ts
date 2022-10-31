@@ -176,10 +176,10 @@ export class RoomGatewayService {
    * @param {Socket} client client socket
    * @param {JoinRoomPayload} payload
    */
-  async onJoinRoom(client: Socket, { room, uid }: JoinRoomPayload) {
+  async onJoinRoom(client: Socket, { room, uid, password }: JoinRoomPayload) {
     try {
       // 1. validate payload
-      await this.validateJoinRoomPayload(client, room);
+      await this.validateJoinRoomPayload(client, room, password);
 
       // 2. get all users who in currently in the room
       const existingMembers = await getAllRoomUsers(this.server, room);
@@ -558,23 +558,35 @@ export class RoomGatewayService {
    * @param {Socket} client client socket
    * @param {string} room room id
    */
-  private async validateJoinRoomPayload(client: Socket, room: string) {
+  private async validateJoinRoomPayload(
+    client: Socket,
+    room: string,
+    password?: string,
+  ) {
     // 1. check if client is already in the room
     const hasJoined = client.rooms.has(room);
     if (hasJoined) {
       throw new WsException(EVENT.ALREADY_JOINED);
     }
 
+    // 2. get room data from db
+    const { isPublic, hash, total } =
+      await this.roomsDatabaseHelper.getRoomData(parseInt(room, 10));
+
     // 2. check if room exceeds max capacity
-    const roomCapacity = await this.roomsDatabaseHelper.getRoomCapacity(
-      parseInt(room),
-    );
     let roomCurrentCount = 0;
     if (this.server.adapter['rooms'].get(room) !== undefined) {
       roomCurrentCount = this.server.adapter['rooms'].get(room).size;
     }
-    if (roomCurrentCount >= roomCapacity) {
+    if (roomCurrentCount >= total) {
       throw new WsException(EVENT.ROOM_FULL);
+    }
+
+    // 3. check password if room is private
+    if (isPublic) return;
+    const isValid = await AuthService.passwordMatch(password, hash);
+    if (!isValid) {
+      throw new WsException('Invalid password');
     }
   }
 

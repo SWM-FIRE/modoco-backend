@@ -20,7 +20,7 @@ export class SessionService {
       throw new ForbiddenException('Credential incorrect');
     }
 
-    const passwordMatches = await this.authService.passwordMatch(
+    const passwordMatches = await AuthService.passwordMatch(
       dto.password,
       user.hash,
     );
