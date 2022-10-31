@@ -44,7 +44,9 @@ export class CreateRoomDTO {
 
   @ApiProperty({
     description: 'Password of the room. Should be exactly 4 characters.',
-    type: Moderator,
+    type: String,
+    maxLength: 4,
+    minLength: 4,
   })
   @ValidateIf((o) => o.isPublic === false) // if isPublic is false, password is required
   @MinLength(4)
