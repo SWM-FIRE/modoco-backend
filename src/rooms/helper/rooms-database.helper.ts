@@ -159,6 +159,10 @@ export class RoomsDatabaseHelper {
       },
     });
 
+    if (!room) {
+      return null;
+    }
+
     return { isPublic: room.isPublic, hash: room.hash, total: room.total };
   }
 

@@ -210,7 +210,7 @@ export class RoomGatewayService {
           return;
         }
       } else if (isNotFoundError(error)) {
-        throw new WsException('Room not found');
+        throw new WsException({ status: 'NO_ROOM', message: 'Room not found' });
       }
 
       throw error;
@@ -570,8 +570,13 @@ export class RoomGatewayService {
     }
 
     // 2. get room data from db
-    const { isPublic, hash, total } =
-      await this.roomsDatabaseHelper.getRoomData(parseInt(room, 10));
+    const roomData = await this.roomsDatabaseHelper.getRoomData(
+      parseInt(room, 10),
+    );
+    if (!roomData) {
+      throw new WsException({ status: 'NO_ROOM', message: 'Room not found' });
+    }
+    const { isPublic, hash, total } = roomData;
 
     // 2. check if room exceeds max capacity
     let roomCurrentCount = 0;
@@ -584,9 +589,19 @@ export class RoomGatewayService {
 
     // 3. check password if room is private
     if (isPublic) return;
+    if (!password) {
+      throw new WsException({
+        status: 'INVALID_PASSWORD',
+        message: 'Password is required for this room',
+      });
+    }
+
     const isValid = await AuthService.passwordMatch(password, hash);
     if (!isValid) {
-      throw new WsException('Invalid password');
+      throw new WsException({
+        status: 'INVALID_PASSWORD',
+        message: 'Invalid password',
+      });
     }
   }
 
