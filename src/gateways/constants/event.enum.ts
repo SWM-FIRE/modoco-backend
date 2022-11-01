@@ -24,6 +24,7 @@
  * @property {string} EXCEPTION - exception event
  */
 export const EVENT = {
+  CAN_JOIN_ROOM: 'canJoinRoom',
   JOIN_ROOM: 'joinRoom',
   ALREADY_JOINED: 'alreadyJoined',
   ROOM_FULL: 'roomFull',

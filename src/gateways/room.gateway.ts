@@ -22,6 +22,7 @@ import {
   CandidatePayload,
   MediaStateChangePayload,
   KickUserPayload,
+  CanJoinRoomPayload,
 } from './dto';
 import { DirectMessagePayload } from './dto/direct-message.dto';
 
@@ -50,6 +51,11 @@ export class RoomGateway
   // OnGatewayDisconnect
   handleDisconnect(client: Socket) {
     this.roomGatewayService.onDisconnect(client);
+  }
+
+  @SubscribeMessage(EVENT.CAN_JOIN_ROOM)
+  async onCanJoinRoom(client: Socket, payload: CanJoinRoomPayload) {
+    await this.roomGatewayService.onCanJoinRoom(client, payload);
   }
 
   @SubscribeMessage(EVENT.JOIN_ROOM)

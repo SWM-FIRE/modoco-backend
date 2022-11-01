@@ -28,6 +28,7 @@ import {
   RecordPayload,
   CandidatePayload,
   MediaStateChangePayload,
+  CanJoinRoomPayload,
 } from './dto';
 import { RedisClientType } from '@redis/client';
 import { KICK_USER_EXCEPTION } from './constants/validation-exceptions.enum';
@@ -171,10 +172,36 @@ export class RoomGatewayService {
   }
 
   /**
+   * validateRoom - validate room password
+   * joinRoom 이전에 비밀번호를 체크할 수 있어야 하기 때문에 만든 이벤트
+   * @param {Socket} client client socket
+   * @param {CanJoinRoomPayload} payload can join room payload
+   */
+  async onCanJoinRoom(client: Socket, payload: CanJoinRoomPayload) {
+    try {
+      await this.validateJoinRoomPayload(
+        client,
+        payload.room,
+        payload.password,
+      );
+
+      client.emit(EVENT.CAN_JOIN_ROOM, {
+        room: payload.room,
+        canJoinRoom: true,
+      });
+    } catch {
+      client.emit(EVENT.CAN_JOIN_ROOM, {
+        room: payload.room,
+        canJoinRoom: false,
+      });
+    }
+  }
+
+  /**
    * [WEBRTC][CHAT]
    * joinRoom - join a room
    * @param {Socket} client client socket
-   * @param {JoinRoomPayload} payload
+   * @param {JoinRoomPayload} payload join room payload
    */
   async onJoinRoom(client: Socket, { room, uid, password }: JoinRoomPayload) {
     try {

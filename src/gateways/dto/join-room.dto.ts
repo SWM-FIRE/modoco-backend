@@ -9,6 +9,19 @@ import {
 } from 'class-validator';
 
 @ApiTags('socket')
+export class CanJoinRoomPayload {
+  @IsString()
+  @IsNotEmpty()
+  room: string;
+
+  @IsString()
+  @MinLength(4)
+  @MaxLength(4)
+  @IsOptional()
+  password?: string;
+}
+
+@ApiTags('socket')
 export class JoinRoomPayload {
   @IsString()
   @IsNotEmpty()
