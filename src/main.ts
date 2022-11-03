@@ -123,6 +123,9 @@ async function initServer(
     .setGlobalPrefix(`/api/${API_VERSION}`)
     .listen(PORT);
 
+  // starts listening for shutdown hooks
+  app.enableShutdownHooks();
+
   return PORT;
 }
 

@@ -7,6 +7,8 @@ export default () => ({
   API_VERSION: 'v1',
   EMAIL_SOURCE: process.env.EMAIL_SOURCE || 'modocode.com',
   PORT: parseInt(process.env.PORT, 10) || 3000,
+  HEALTH_CHECK_INTERVAL:
+    parseInt(process.env.HEALTH_CHECK_INTERVAL, 10) || 15000,
   STATIC_ASSETS_PATH: join(__dirname, '..', 'static'),
   CSP_POLICY: {
     defaultSrc: [`'self'`],
