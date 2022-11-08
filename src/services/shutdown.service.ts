@@ -72,10 +72,9 @@ export class ShutdownService implements OnModuleDestroy {
   }
 
   private getMetadataToken() {
-    this.logger.debug('Get metadata token');
     const request = this.http.put(this.AWS_METADATA_TOKEN_URL, null, {
       headers: {
-        'X-aws-ec2-metadata-token-ttl-seconds': 21600,
+        'X-aws-ec2-metadata-token-ttl-seconds': 10,
       },
     });
 
@@ -83,7 +82,6 @@ export class ShutdownService implements OnModuleDestroy {
   }
 
   private getAutoScalingLifeCycleState(token: string) {
-    this.logger.debug('Get scaling lifecycle state');
     const request = this.http.get(this.AWS_AUTOSCALING_STATE_URL, {
       headers: {
         'X-aws-ec2-metadata-token': token,
