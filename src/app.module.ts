@@ -17,7 +17,6 @@ import SwaggerConfig from './config/swagger-config';
 import JwtConfig from './config/jwt-config';
 import AuthConfig from './config/auth-config';
 import { ScheduleModule } from '@nestjs/schedule';
-import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
