@@ -16,6 +16,8 @@ import EnvironmentConfig from './config/environment-config';
 import SwaggerConfig from './config/swagger-config';
 import JwtConfig from './config/jwt-config';
 import AuthConfig from './config/auth-config';
+import { ScheduleModule } from '@nestjs/schedule';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -24,6 +26,7 @@ import AuthConfig from './config/auth-config';
       load: [EnvironmentConfig, SwaggerConfig, JwtConfig, AuthConfig],
       cache: true,
     }),
+    ScheduleModule.forRoot(),
     UsersModule,
     RoomsModule,
     GatewayModule,

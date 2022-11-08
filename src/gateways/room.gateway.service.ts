@@ -1,10 +1,4 @@
-import {
-  BeforeApplicationShutdown,
-  Inject,
-  Injectable,
-  Logger,
-  ShutdownSignal,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { RecordsService } from 'src/records/records.service';
 import { RoomsDatabaseHelper } from '../rooms/helper/rooms-database.helper';
@@ -36,18 +30,19 @@ import {
   MediaStateChangePayload,
   CanJoinRoomPayload,
 } from './dto';
-import { RedisClientType } from '@redis/client';
 import { KICK_USER_EXCEPTION } from './constants/validation-exceptions.enum';
 import { DirectMessagePayload } from './dto/direct-message.dto';
 import { AuthService } from 'src/auth/auth.service';
 import { ConnectionType, RedisSessionStore } from './class/redis-session.store';
 import { RedisMessageStore } from './class/redis-message.store';
 import { FriendsDatabaseHelper } from 'src/friends/helper/friends-database.helper';
-import { AppService } from 'src/app.service';
-import { ConfigService } from '@nestjs/config';
+import { ShutdownService } from 'src/services/shutdown.service';
 
 @Injectable()
-export class RoomGatewayService implements BeforeApplicationShutdown {
+export class RoomGatewayService {
+  private server: Server;
+  private logger: Logger = new Logger('RoomGateway');
+
   constructor(
     private readonly recordsService: RecordsService,
     private readonly roomsDatabaseHelper: RoomsDatabaseHelper,
@@ -57,56 +52,8 @@ export class RoomGatewayService implements BeforeApplicationShutdown {
     private readonly redisSessionStore: RedisSessionStore,
     private readonly redisMessageStore: RedisMessageStore,
     private readonly friendDatabaseHelper: FriendsDatabaseHelper,
-    private readonly configService: ConfigService,
-    @Inject('REDIS_CLIENT') private readonly redisClient: RedisClientType,
+    private readonly shutdownService: ShutdownService,
   ) {}
-
-  private server: Server;
-  private logger: Logger = new Logger('RoomGateway');
-  private sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-  async beforeApplicationShutdown(signal: string) {
-    const HEALTH_CHECK_INTERVAL = this.configService.get(
-      'HEALTH_CHECK_INTERVAL',
-    );
-
-    if (ShutdownSignal.SIGINT === signal) {
-      // 1. wait until health check fail
-      AppService.active = false;
-      await this.waitUntilHealthCheckFail(HEALTH_CHECK_INTERVAL * 2 + 2000);
-
-      // 2. send shutdown event to client
-      this.broadcastServerShutdown();
-
-      // 3. wait until all clients disconnect
-      await this.waitUntilClientDisconnection(5000);
-
-      // 4. exit
-      this.exitProcess();
-    }
-  }
-
-  private async waitUntilHealthCheckFail(seconds: number) {
-    this.logger.log(`Waiting to health check to fail for ${seconds} ms`);
-    await this.sleep(seconds);
-  }
-
-  private broadcastServerShutdown() {
-    this.server.local.emit(EVENT.EXCEPTION, {
-      status: 'SERVER_SHUTDOWN',
-      message: 'Server is shutting down. Please try again later.',
-    });
-  }
-
-  private async waitUntilClientDisconnection(seconds: number) {
-    this.logger.log(`Waiting client disconnection for ${seconds} ms`);
-    return this.sleep(seconds);
-  }
-
-  private exitProcess() {
-    this.logger.log(`Exit process`);
-    process.exit(0);
-  }
 
   /**
    * onInit - on init
@@ -115,6 +62,13 @@ export class RoomGatewayService implements BeforeApplicationShutdown {
    */
   onAfterInit(server: Server) {
     this.setServer(server);
+    this.shutdownService.subscribeToShutdownWebsocket(() => {
+      this.server.local.emit(EVENT.EXCEPTION, {
+        status: 'SERVER_SHUTDOWN',
+        message: 'Server is shutting down. Please try again later.',
+      });
+    });
+
     this.logger.log('[Init] Initialized RoomGateway');
   }
 
@@ -658,7 +612,7 @@ export class RoomGatewayService implements BeforeApplicationShutdown {
     }
     const { isPublic, hash, total } = roomData;
 
-    // 2. check if room exceeds max capacity
+    // 3. check if room exceeds max capacity
     let roomCurrentCount = 0;
     if (this.server.adapter['rooms'].get(room) !== undefined) {
       roomCurrentCount = this.server.adapter['rooms'].get(room).size;
@@ -667,7 +621,7 @@ export class RoomGatewayService implements BeforeApplicationShutdown {
       throw new WsException(EVENT.ROOM_FULL);
     }
 
-    // 3. check password if room is private
+    // 4. check password if room is private
     if (isPublic) return;
     if (!password) {
       throw new WsException({

@@ -13,9 +13,11 @@ import { PlaylistGateway } from './playlist.gateway';
 import { RedisSessionStore } from './class/redis-session.store';
 import { RedisMessageStore } from './class/redis-message.store';
 import { FriendsDatabaseHelper } from 'src/friends/helper/friends-database.helper';
+import { ShutdownService } from 'src/services/shutdown.service';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [AuthModule, RedisModule],
+  imports: [AuthModule, RedisModule, HttpModule],
   controllers: [],
   providers: [
     RoomGateway,
@@ -30,6 +32,7 @@ import { FriendsDatabaseHelper } from 'src/friends/helper/friends-database.helpe
     RedisSessionStore,
     RedisMessageStore,
     FriendsDatabaseHelper,
+    ShutdownService,
   ],
 })
 export class GatewayModule {}

@@ -1,9 +1,11 @@
 import { join } from 'path';
 
 export default () => ({
-  ENV: parseInt(process.env.PORT, 10) || 'development',
+  ENV: process.env.ENV || 'development',
   BASE_URL: process.env.BASE_URL || 'http://localhost:3333/api/v1',
   NOTION_URL: `https://fortune-innocent-45c.notion.site/1-e022efdd1581461b994469a56af037f8`,
+  AWS_METADATA_TOKEN_URL: `http://169.254.169.254/latest/api/token`, // IMDSv2
+  AWS_AUTOSCALING_STATE_URL: `http://169.254.169.254/latest/meta-data/autoscaling/target-lifecycle-state`,
   API_VERSION: 'v1',
   EMAIL_SOURCE: process.env.EMAIL_SOURCE || 'modocode.com',
   PORT: parseInt(process.env.PORT, 10) || 3000,

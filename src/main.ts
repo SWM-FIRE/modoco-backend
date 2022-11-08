@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import { SwaggerModule } from '@nestjs/swagger';
 import { AuthService } from './auth/auth.service';
+import { ShutdownService } from './services/shutdown.service';
 
 /**
  * bootstrap server
@@ -125,6 +126,9 @@ async function initServer(
 
   // starts listening for shutdown hooks
   app.enableShutdownHooks();
+
+  // subscribe to shutdown hook
+  app.get(ShutdownService).subscribeToShutdownApp(() => app.close());
 
   return PORT;
 }
