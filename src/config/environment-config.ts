@@ -7,7 +7,6 @@ export default () => ({
   AWS_REGION: 'ap-northeast-2',
   AWS_METADATA_TOKEN_URL: `http://169.254.169.254/latest/api/token`, // IMDSv2
   AWS_INSTANCE_ID_URL: `http://169.254.169.254/latest/meta-data/instance-id`,
-  AWS_AUTOSCALING_STATE_URL: `http://169.254.169.254/latest/meta-data/autoscaling/target-lifecycle-state`,
   API_VERSION: 'v1',
   EMAIL_SOURCE: process.env.EMAIL_SOURCE || 'modocode.com',
   PORT: parseInt(process.env.PORT, 10) || 3000,
