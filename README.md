@@ -26,6 +26,9 @@ Docker와 관련된 파일은 `/dockers`에 있습니다.
 # ENV (Defaults to development)
 ENV="production"
 
+# BASE URL of this Server
+BASE_URL="https://api.modocode.com/api/v1"
+
 # Sever Port (Defaults to 3000)
 PORT=3333
 
@@ -54,6 +57,14 @@ GOOGLE_CLIENT_SECRET=
 
 # OAuth redirect url to frontend
 AUTH_FRONTEND_URL=
+
+# Logging - for no coloring
+NO_COLOR=true
+
+# IAM for AWS SDK
+# this IAM should have permission of `AmazonSES`, `Auto Scaling`, `EC2 Auto Scaling`
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
 ```
 
 ## Installation
