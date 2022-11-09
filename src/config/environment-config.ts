@@ -4,7 +4,9 @@ export default () => ({
   ENV: process.env.ENV || 'development',
   BASE_URL: process.env.BASE_URL || 'http://localhost:3333/api/v1',
   NOTION_URL: `https://fortune-innocent-45c.notion.site/1-e022efdd1581461b994469a56af037f8`,
+  AWS_REGION: 'ap-northeast-2',
   AWS_METADATA_TOKEN_URL: `http://169.254.169.254/latest/api/token`, // IMDSv2
+  AWS_INSTANCE_ID_URL: `http://169.254.169.254/latest/meta-data/instance-id`,
   AWS_AUTOSCALING_STATE_URL: `http://169.254.169.254/latest/meta-data/autoscaling/target-lifecycle-state`,
   API_VERSION: 'v1',
   EMAIL_SOURCE: process.env.EMAIL_SOURCE || 'modocode.com',
@@ -27,7 +29,6 @@ export default () => ({
     'http://localhost:3000',
     'https://localhost:3000',
   ],
-  AWS_REGION: 'ap-northeast-2',
   DATABASE: {
     HOST:
       process.env.DATABASE_URL || 'postgres://soma13:myPasswd@localhost:5432',

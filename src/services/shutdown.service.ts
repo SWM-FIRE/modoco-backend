@@ -1,12 +1,17 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { lastValueFrom, Subject } from 'rxjs';
+import { lastValueFrom, map, Subject } from 'rxjs';
 import { AppService } from '../app.service';
 
 @Injectable()
-export class ShutdownService implements OnModuleDestroy {
+export class ShutdownService implements OnModuleInit, OnModuleDestroy {
   private readonly HEALTH_CHECK_INTERVAL: number = this.configService.get(
     'HEALTH_CHECK_INTERVAL',
   );
@@ -16,27 +21,35 @@ export class ShutdownService implements OnModuleDestroy {
   private readonly AWS_AUTOSCALING_STATE_URL: string = this.configService.get(
     'AWS_AUTOSCALING_STATE_URL',
   );
+  private readonly AWS_INSTANCE_ID_URL: string = this.configService.get(
+    'AWS_INSTANCE_ID_URL',
+  );
+  private readonly AWS_REGION: string = this.configService.get('AWS_REGION');
   private readonly ENV: string = this.configService.get('ENV');
   private shutdownAppListener$: Subject<void> = new Subject();
   private shutdownWebsocketListener$: Subject<void> = new Subject();
   private logger = new Logger('ShutdownService');
+  private instanceId: string;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly http: HttpService,
   ) {}
 
+  async onModuleInit() {
+    const token = await this.getMetadataToken();
+    this.instanceId = await this.getInstanceId(token);
+    this.logger.log(`Instance ID :: ${this.instanceId}`);
+  }
+
   @Cron(CronExpression.EVERY_10_SECONDS)
   async handleCron() {
     if (!AppService.active) return;
 
     if (this.ENV === ENV.PROD) {
-      const token = await this.getMetadataToken();
-      const state = await this.getAutoScalingLifeCycleState(token.data);
-      this.logger.log(`Auto Scaling State :: ${state.data}`);
-      if (state.data === LIFECYCLE_STATE.TERMINATING_WAIT) {
-        this.shutdown();
-      }
+      // if (state === LIFECYCLE_STATE.TERMINATING_WAIT) {
+      //   this.shutdown();
+      // }
     } else {
       // ENV.DEV, ENV.TEST
       this.logger.debug('Called every 10 seconds');
@@ -72,22 +85,26 @@ export class ShutdownService implements OnModuleDestroy {
     process.exit(0);
   }
 
-  private getMetadataToken() {
-    const request = this.http.put(this.AWS_METADATA_TOKEN_URL, null, {
-      headers: {
-        'X-aws-ec2-metadata-token-ttl-seconds': 10,
-      },
-    });
+  private getMetadataToken(): Promise<string> {
+    const request = this.http
+      .put(this.AWS_METADATA_TOKEN_URL, null, {
+        headers: {
+          'X-aws-ec2-metadata-token-ttl-seconds': 10,
+        },
+      })
+      .pipe(map((res) => res.data));
 
     return lastValueFrom(request);
   }
 
-  private getAutoScalingLifeCycleState(token: string) {
-    const request = this.http.get(this.AWS_AUTOSCALING_STATE_URL, {
-      headers: {
-        'X-aws-ec2-metadata-token': token,
-      },
-    });
+  private getInstanceId(token: string): Promise<string> {
+    const request = this.http
+      .get(this.AWS_INSTANCE_ID_URL, {
+        headers: {
+          'X-aws-ec2-metadata-token': token,
+        },
+      })
+      .pipe(map((res) => res.data));
 
     return lastValueFrom(request);
   }
