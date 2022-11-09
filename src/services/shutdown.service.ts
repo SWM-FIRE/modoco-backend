@@ -1,3 +1,8 @@
+import {
+  AutoScalingClient,
+  CompleteLifecycleActionCommand,
+  DescribeAutoScalingInstancesCommand,
+} from '@aws-sdk/client-auto-scaling';
 import { HttpService } from '@nestjs/axios';
 import {
   Injectable,
@@ -18,9 +23,6 @@ export class ShutdownService implements OnModuleInit, OnModuleDestroy {
   private readonly AWS_METADATA_TOKEN_URL: string = this.configService.get(
     'AWS_METADATA_TOKEN_URL',
   );
-  private readonly AWS_AUTOSCALING_STATE_URL: string = this.configService.get(
-    'AWS_AUTOSCALING_STATE_URL',
-  );
   private readonly AWS_INSTANCE_ID_URL: string = this.configService.get(
     'AWS_INSTANCE_ID_URL',
   );
@@ -30,34 +32,44 @@ export class ShutdownService implements OnModuleInit, OnModuleDestroy {
   private shutdownWebsocketListener$: Subject<void> = new Subject();
   private logger = new Logger('ShutdownService');
   private instanceId: string;
+  private autoScalingGroupName: string;
+  private client: AutoScalingClient;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly http: HttpService,
-  ) {}
+  ) {
+    this.client = new AutoScalingClient({ region: this.AWS_REGION });
+  }
 
   async onModuleInit() {
-    const token = await this.getMetadataToken();
-    this.instanceId = await this.getInstanceId(token);
-    this.logger.log(`Instance ID :: ${this.instanceId}`);
+    if (this.ENV === ENV.PROD) {
+      const token = await this.getMetadataToken();
+      this.instanceId = await this.getInstanceId(token);
+      this.logger.log(`Instance ID :: ${this.instanceId} Started`);
+      this.autoScalingGroupName = await this.getInstanceAutoScalingGroupName();
+    } else {
+      // this.logger.debug('Local Environment');
+    }
   }
 
   @Cron(CronExpression.EVERY_10_SECONDS)
-  async handleCron() {
+  async checkLifecycleState() {
     if (!AppService.active) return;
 
     if (this.ENV === ENV.PROD) {
-      // if (state === LIFECYCLE_STATE.TERMINATING_WAIT) {
-      //   this.shutdown();
-      // }
+      const state = await this.getInstanceLifecycleState();
+      if (state === LIFECYCLE_STATE.TERMINATING_WAIT) {
+        this.shutdown();
+      }
     } else {
       // ENV.DEV, ENV.TEST
-      this.logger.debug('Called every 10 seconds');
+      //this.logger.debug('Called every 10 seconds');
     }
   }
 
   onModuleDestroy() {
-    this.logger.log('Executing On Destroy Hook');
+    this.logger.log(`Instance ID :: ${this.instanceId} Shutdown`);
   }
 
   subscribeToShutdownApp(shutdownFn: () => void): void {
@@ -79,8 +91,11 @@ export class ShutdownService implements OnModuleInit, OnModuleDestroy {
     // 3. wait until all clients to disconnect
     await this.waitUntilClientDisconnection(5000);
 
+    // 4. send continue event AWS Auto Scaling Lifecycle Hook
+    await this.continueInstanceTerminatingState();
+
     // 4. shutdown nestjs app
-    this.logger.warn('Shutdown app');
+    this.logger.warn('Terminating hook job all done. Bye Bye~');
     this.shutdownAppListener$.next();
     process.exit(0);
   }
@@ -109,13 +124,47 @@ export class ShutdownService implements OnModuleInit, OnModuleDestroy {
     return lastValueFrom(request);
   }
 
+  private async getInstanceLifecycleState() {
+    const response = await this.getInstanceDescription();
+
+    return response.AutoScalingInstances[0]?.LifecycleState;
+  }
+
+  private async getInstanceAutoScalingGroupName() {
+    const response = await this.getInstanceDescription();
+
+    return response.AutoScalingInstances[0]?.AutoScalingGroupName;
+  }
+
+  private getInstanceDescription() {
+    return this.client.send(
+      new DescribeAutoScalingInstancesCommand({
+        InstanceIds: [this.instanceId],
+        MaxRecords: 1,
+      }),
+    );
+  }
+
+  private continueInstanceTerminatingState() {
+    this.logger.log('Continue instance terminating state');
+
+    return this.client.send(
+      new CompleteLifecycleActionCommand({
+        AutoScalingGroupName: this.autoScalingGroupName,
+        InstanceId: this.instanceId,
+        LifecycleActionResult: LIFECYCLE_ACTION_RESULT.CONTINUE,
+        LifecycleHookName: this.autoScalingGroupName,
+      }),
+    );
+  }
+
   private async waitUntilHealthCheckFail(seconds: number) {
-    this.logger.warn(`Wait health check to fail :: ${seconds} ms`);
+    this.logger.log(`Wait health check to fail :: ${seconds} ms`);
     await this.sleep(seconds);
   }
 
   private async waitUntilClientDisconnection(seconds: number) {
-    this.logger.warn(`Wait client disconnection :: ${seconds} ms`);
+    this.logger.log(`Wait client disconnection :: ${seconds} ms`);
     return this.sleep(seconds);
   }
 
@@ -134,4 +183,9 @@ const enum LIFECYCLE_STATE {
   IN_SERVICE = 'InService',
   TERMINATING_WAIT = 'Terminating:Wait',
   TERMINATUNG_PROCEED = 'Terminating:Proceed',
+}
+
+const enum LIFECYCLE_ACTION_RESULT {
+  CONTINUE = 'CONTINUE',
+  ABANDON = 'ABANDON',
 }

@@ -40,6 +40,7 @@
     "test:e2e": "dotenv -e .test.env -- jest --watch --no-cache --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@aws-sdk/client-auto-scaling": "^3.205.0",
     "@aws-sdk/client-ses": "^3.186.0",
     "@nestjs/axios": "^1.0.0",
     "@nestjs/common": "^9.1.3",
