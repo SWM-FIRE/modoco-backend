@@ -33,7 +33,7 @@ export class ShutdownService implements OnModuleDestroy {
     if (this.ENV === ENV.PROD) {
       const token = await this.getMetadataToken();
       const state = await this.getAutoScalingLifeCycleState(token.data);
-      //this.logger.log(`Auto Scaling State :: ${state.data}`);
+      this.logger.log(`Auto Scaling State :: ${state.data}`);
       if (state.data === LIFECYCLE_STATE.TERMINATING_WAIT) {
         this.shutdown();
       }
