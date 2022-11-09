@@ -46,8 +46,10 @@ export class ShutdownService implements OnModuleInit, OnModuleDestroy {
     if (this.ENV === ENV.PROD) {
       const token = await this.getMetadataToken();
       this.instanceId = await this.getInstanceId(token);
-      this.logger.log(`Instance ID :: ${this.instanceId} Started`);
       this.autoScalingGroupName = await this.getInstanceAutoScalingGroupName();
+      this.logger.warn(
+        `Instance ID :: ${this.instanceId} Started, AutoSacaleGroup :: ${this.autoScalingGroupName}`,
+      );
     } else {
       // this.logger.debug('Local Environment');
     }
@@ -91,7 +93,7 @@ export class ShutdownService implements OnModuleInit, OnModuleDestroy {
     // 3. wait until all clients to disconnect
     await this.waitUntilClientDisconnection(5000);
 
-    // 4. send continue event AWS Auto Scaling Lifecycle Hook
+    // 4. send continue event to AWS Auto Scaling Lifecycle Hook
     await this.continueInstanceTerminatingState();
 
     // 4. shutdown nestjs app
@@ -145,8 +147,11 @@ export class ShutdownService implements OnModuleInit, OnModuleDestroy {
     );
   }
 
-  private continueInstanceTerminatingState() {
-    this.logger.log('Continue instance terminating state');
+  private async continueInstanceTerminatingState() {
+    this.autoScalingGroupName = await this.getInstanceAutoScalingGroupName();
+    this.logger.warn(
+      `Continue instance terminating state on ${this.instanceId} :: ${this.autoScalingGroupName}`,
+    );
 
     return this.client.send(
       new CompleteLifecycleActionCommand({
