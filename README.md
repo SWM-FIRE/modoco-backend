@@ -1,20 +1,24 @@
 # Modoco Backend
 
+Modoco Backend Server
+ - `Socket.IO Server` with Redis Adapter
+ - `HTTP API Server` documented with Swagger
+ 
+Issue is tracked with JIRA
+
 ## API Documentation
 
 [모도코 API 문서](https://api.modocode.com/docs)
 
 ## (Required) Project settings
 
-먼저 .env를 아래의 양식을 참고해서 만듭니다.
+먼저 `.env`파일을 아래의 양식을 참고해서 만듭니다. 프로젝트 루트 디렉터리 아래에 넣어야 합니다.
 
 별도로 서버를 띄우지 않더라도 간편하게 Docker로 띄워서 바로 modoco-backend를 실행할 수 있도록 스크립트를 구성해두었습니다.
 
 Docker와 관련된 파일은 `/dockers`에 있습니다.
 
-만약 따로 서버를 운영하시는 경우 아래의 .env 양식을 참고해서 주소와 비밀번호를 세팅하시면 됩니다.
-
-저장소에 있는 .env 파일은 예시이기 때문에 그대로 사용하시면 제대로 작동하지 않습니다.
+만약 따로 서버를 운영하시는 경우 아래의 `.env` 양식을 참고해서 주소와 비밀번호를 세팅하시면 됩니다.
 
 상세한 설정 값에 관해서는 `/src/config/` 아래에 있는 파일들을 참고해주세요.
 
@@ -86,7 +90,7 @@ $ yarn ci
 $ yarn docker:dev:up && yarn prisma:dev:deploy
 ```
 
-### 3. Run nestjs
+### 3. Run NestJS app
 
 ```bash
 # run app
@@ -124,7 +128,7 @@ $ yarn redis:rm
 
 ## Testing
 
-Docker Engine is needed.
+`docker`, `docker-compose` is needed.
 It automatically creates test db container using docker when e2e test is ran.
 
 ```bash
