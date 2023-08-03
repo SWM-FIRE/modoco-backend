@@ -9,13 +9,17 @@ import helmet from 'helmet';
 import { SwaggerModule } from '@nestjs/swagger';
 import { AuthService } from './auth/auth.service';
 import { ShutdownService } from './services/shutdown.service';
+import { readFileSync } from 'fs';
 
 /**
  * bootstrap server
  */
 async function bootstrap() {
   // create express application
-  const app = await createServer();
+  const app = await createServer({
+    key: readFileSync('./secrets/key.pem'),
+    cert: readFileSync('./secrets/cert.pem'),
+  });
 
   // get config service
   const configService = app.get(ConfigService);
@@ -35,8 +39,10 @@ async function bootstrap() {
  * Create nestExpressApplication application
  * @returns {Promise<NestExpressApplication>} NestExpressApplication app
  */
-async function createServer(): Promise<NestExpressApplication> {
-  return await NestFactory.create<NestExpressApplication>(AppModule);
+async function createServer(httpsOptions): Promise<NestExpressApplication> {
+  return await NestFactory.create<NestExpressApplication>(AppModule, {
+    httpsOptions,
+  });
 }
 
 /**
