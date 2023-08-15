@@ -4,4 +4,4 @@ REPOSITORY=/home/ubuntu/modoco-backend
 
 cd $REPOSITORY
 
-yarn pm2:stop:app
+yarn pm2:stop
