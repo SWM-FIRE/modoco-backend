@@ -1,0 +1,40 @@
+name: Deploy using AWS Code Deploy
+
+on:
+  push:
+    branches: ["master", "dev-https"]
+
+# These permissions are needed to interact with GitHub's OIDC Token endpoint.
+permissions:
+      id-token: write
+      contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: yarn
+
+      - name: Clean Install Dependencies
+        run: yarn ci
+
+      - name: Build
+        run: yarn build
+        env:
+          ENV: production
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: S3 Bucket
+        run: |
+          aws s3 ls
