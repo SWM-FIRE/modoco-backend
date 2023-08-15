@@ -35,6 +35,13 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: S3 Bucket
+      - name: Get Newrelic Liscense
         run: |
-          aws s3 ls
+          aws s3 cp s3://backend-liscense/newrelic.ts ./src/
+      
+      - name: Compress artifact
+        run: zip -r ./$GITHUB_SHA.zip . -x "node_modules/*" "dist/*" "package.json" "yarn.lock" ".ebextensions/*"
+        shell: bash
+
+      - name: Upload artifact
+        run: aws s3 cp --region ${{ secrets.AWS_REGION }} ./$GITHUB_SHA.zip s3://${{ secrets.BUCKET_NAME }}/${{ secrets.PROJECT_NAME }}/$GITHUB_SHA.zip
