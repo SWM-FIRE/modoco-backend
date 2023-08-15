@@ -5,11 +5,11 @@ import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NewrelicInterceptor } from './interceptors/newrelic.interceptor';
 import { ConfigService } from '@nestjs/config';
-import helmet from 'helmet';
 import { SwaggerModule } from '@nestjs/swagger';
 import { AuthService } from './auth/auth.service';
 import { ShutdownService } from './services/shutdown.service';
 import { readFileSync } from 'fs';
+import helmet from 'helmet';
 
 /**
  * bootstrap server
@@ -17,8 +17,9 @@ import { readFileSync } from 'fs';
 async function bootstrap() {
   // create express application
   const app = await createServer({
-    key: readFileSync('./secrets/key.pem'),
-    cert: readFileSync('./secrets/cert.pem'),
+    key: readFileSync(process.env.KEY_PATH),
+    cert: readFileSync(process.env.CERT_PATH),
+    ca: process.env.CA_PATH ? readFileSync(process.env.CA_PATH) : null,
   });
 
   // get config service

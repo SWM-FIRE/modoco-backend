@@ -2,12 +2,13 @@ name: Deploy using AWS Code Deploy
 
 on:
   push:
-    branches: ["master", "dev-https"]
+    branches: ['master', 'dev-https']
+  workflow_dispatch:
 
 # These permissions are needed to interact with GitHub's OIDC Token endpoint.
 permissions:
-      id-token: write
-      contents: read
+  id-token: write
+  contents: read
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -21,27 +22,34 @@ jobs:
           node-version-file: '.nvmrc'
           cache: yarn
 
-      - name: Clean Install Dependencies
-        run: yarn ci
-
-      - name: Build
-        run: yarn build
-        env:
-          ENV: production
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Get Newrelic Liscense
+      - name: Clean Install Dependencies
+        run: yarn ci
+
+      - name: Get Credentials
         run: |
-          aws s3 cp s3://backend-liscense/newrelic.ts ./src/
-      
+          aws s3 cp s3://{{ secrets.NEWRELIC_LICENSE }} ./src/
+          aws s3 cp s3://{{ secrets.SERVER_SECRETS }} .
+
+      - name: Build
+        run: yarn build
+        env:
+          ENV: production
+
       - name: Compress artifact
-        run: zip -r ./$GITHUB_SHA.zip . -x "node_modules/*" ".test.env" "src/*" "test/*" "README.md" "*.git*" "dockers/*"
+        run: |
+          zip -r ./$GITHUB_SHA.zip . -x "node_modules/*" ".test.env" "src/*" "test/*" "README.md" "*.git*" "dockers/*" && rm -rf src/*
         shell: bash
 
       - name: Upload artifact
-        run: aws s3 cp --region ${{ secrets.AWS_REGION }} ./$GITHUB_SHA.zip s3://${{ secrets.BUCKET_NAME }}/${{ secrets.PROJECT_NAME }}/$GITHUB_SHA.zip
+        run: |
+          aws s3 cp --region ${{ secrets.AWS_REGION }} ./$GITHUB_SHA.zip s3://${{ secrets.BUCKET_NAME }}/${{ secrets.PROJECT_NAME }}/$GITHUB_SHA.zip
+
+      - name: Deploy
+        run: |
+          aws deploy create-deployment --application-name ${{ AWS_CODEDEPLOY_APPLICATION_NAME }} --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name ${{ AWS_CODEDEPLOY_DEPLOYMENT_GROUP_NAME }} --s3-location bucket=${{ BUCKET_NAME }},bundleType=zip,key=${{ PROJECT_NAME }}/$GITHUB_SHA.zip
