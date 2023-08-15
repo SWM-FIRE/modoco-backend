@@ -2,7 +2,7 @@ name: Deploy using AWS Code Deploy
 
 on:
   push:
-    branches: ['master', 'dev-https']
+    branches: ['main']
   workflow_dispatch:
 
 # These permissions are needed to interact with GitHub's OIDC Token endpoint.
