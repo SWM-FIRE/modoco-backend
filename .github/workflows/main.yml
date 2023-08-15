@@ -1,0 +1,55 @@
+name: Deploy using AWS Code Deploy
+
+on:
+  push:
+    branches: ['main']
+  workflow_dispatch:
+
+# These permissions are needed to interact with GitHub's OIDC Token endpoint.
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: yarn
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Clean Install Dependencies
+        run: yarn ci
+
+      - name: Get Credentials
+        run: |
+          aws s3 cp --region ${{ secrets.AWS_REGION }} s3://${{ secrets.SERVER_SECRETS }} .
+          aws s3 cp --region ${{ secrets.AWS_REGION }} s3://${{ secrets.NEWRELIC_LICENSE }} ./src/
+
+      - name: Build
+        run: yarn build
+        env:
+          ENV: production
+
+      - name: Compress artifact
+        run: |
+          zip -r ./$GITHUB_SHA.zip . -x "node_modules/*" ".test.env" "src/*" "test/*" "README.md" "*.git*" "dockers/*" && rm -rf src/*
+        shell: bash
+
+      - name: Upload artifact
+        run: |
+          aws s3 cp --region ${{ secrets.AWS_REGION }} ./$GITHUB_SHA.zip s3://${{ secrets.BUCKET_NAME }}/${{ secrets.PROJECT_NAME }}/$GITHUB_SHA.zip
+
+      - name: Deploy
+        run: |
+          aws deploy create-deployment --application-name ${{ secrets.AWS_CODEDEPLOY_APPLICATION_NAME }} --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name ${{ secrets.AWS_CODEDEPLOY_DEPLOYMENT_GROUP_NAME }} --s3-location bucket=${{ secrets.BUCKET_NAME }},bundleType=zip,key=${{ secrets.PROJECT_NAME }}/$GITHUB_SHA.zip

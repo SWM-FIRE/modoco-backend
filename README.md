@@ -1,9 +1,10 @@
 # Modoco Backend
 
 Modoco Backend Server
- - `Socket.IO Server` with Redis Adapter
- - `HTTP API Server` documented with Swagger
- 
+
+- `Socket.IO Server` with Redis Adapter
+- `HTTP API Server` documented with Swagger
+
 Issue is tracked with JIRA
 
 ## API Documentation
@@ -11,6 +12,13 @@ Issue is tracked with JIRA
 [모도코 API 문서](https://api.modocode.com/docs)
 
 ## (Required) Project settings
+
+### certificate
+
+`/secrets`에 private key와 certificate 파일(`key.pem`, `cert.pem`)을 넣어줍니다.
+필요 없으면 `main.ts`의 createServer 함수를 수정해주세요.
+
+### .env
 
 먼저 `.env`파일을 아래의 양식을 참고해서 만듭니다. 프로젝트 루트 디렉터리 아래에 넣어야 합니다.
 
@@ -194,6 +202,7 @@ yarn prisma generate
 ```
 
 ### Sponsor
+
 </details>
 
 <p align="center"><i>This Project is Sponsored by <b>Software Maestro</b></i></p>

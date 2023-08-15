@@ -5,17 +5,22 @@ import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NewrelicInterceptor } from './interceptors/newrelic.interceptor';
 import { ConfigService } from '@nestjs/config';
-import helmet from 'helmet';
 import { SwaggerModule } from '@nestjs/swagger';
 import { AuthService } from './auth/auth.service';
 import { ShutdownService } from './services/shutdown.service';
+import { readFileSync } from 'fs';
+import helmet from 'helmet';
 
 /**
  * bootstrap server
  */
 async function bootstrap() {
   // create express application
-  const app = await createServer();
+  const app = await createServer({
+    key: readFileSync(process.env.KEY_PATH),
+    cert: readFileSync(process.env.CERT_PATH),
+    ca: process.env.CA_PATH ? readFileSync(process.env.CA_PATH) : null,
+  });
 
   // get config service
   const configService = app.get(ConfigService);
@@ -35,8 +40,10 @@ async function bootstrap() {
  * Create nestExpressApplication application
  * @returns {Promise<NestExpressApplication>} NestExpressApplication app
  */
-async function createServer(): Promise<NestExpressApplication> {
-  return await NestFactory.create<NestExpressApplication>(AppModule);
+async function createServer(httpsOptions): Promise<NestExpressApplication> {
+  return await NestFactory.create<NestExpressApplication>(AppModule, {
+    httpsOptions,
+  });
 }
 
 /**
