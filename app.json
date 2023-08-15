@@ -6,8 +6,7 @@
       "instances": 1,
       "exec_mode": "cluster",
       "env": {
-        "ENV": "production",
-        "PORT": 443
+        "ENV": "production"
       }
     }
   ]

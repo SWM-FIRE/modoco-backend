@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sudo yarn pm2:stop:app
+yarn pm2:stop:app

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sudo yarn pm2:start:app
+yarn pm2:start:app
