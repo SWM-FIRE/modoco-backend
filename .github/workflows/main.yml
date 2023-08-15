@@ -40,7 +40,7 @@ jobs:
           aws s3 cp s3://backend-liscense/newrelic.ts ./src/
       
       - name: Compress artifact
-        run: zip -r ./$GITHUB_SHA.zip . -x "node_modules/*" "dist/*" "package.json" "yarn.lock" ".ebextensions/*"
+        run: zip -r ./$GITHUB_SHA.zip . -x "node_modules/*" ".test.env" "src/*" "test/*" "README.md" "*.git*" "dockers/*"
         shell: bash
 
       - name: Upload artifact
