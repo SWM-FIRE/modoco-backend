@@ -184,4 +184,5 @@ export const getRoomSelector = {
   total: true,
   theme: true,
   isPublic: true,
+  createdAt: true,
 };
