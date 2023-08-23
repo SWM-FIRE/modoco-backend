@@ -25,6 +25,7 @@ export default () => ({
     /https:\/\/.+\.do65qrifiozf1\.amplifyapp\.com$/,
     'http://localhost:3000',
     'https://localhost:3000',
+    'https://localhost:3333',
   ],
   DATABASE: {
     HOST:

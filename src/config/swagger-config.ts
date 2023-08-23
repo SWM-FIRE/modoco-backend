@@ -28,5 +28,5 @@ const SWAGGER_OPTIONS = new DocumentBuilder()
     'access_token',
   )
   .addServer('https://api.modocode.com/' + API_VERSION, 'Production Server')
-  .addServer('http://localhost:3333/' + API_VERSION, 'Localhost Server')
+  .addServer('https://localhost:3333/' + API_VERSION, 'Localhost Server')
   .build();
