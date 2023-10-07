@@ -22,13 +22,13 @@ import {
 @ApiTags('friendships')
 @Injectable()
 export class FriendsService {
+  private readonly logger = new Logger('FriendsService');
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly friendsDatabaseHelper: FriendsDatabaseHelper,
     private readonly userDatabaseHelper: UsersDatabaseHelper,
   ) {}
-
-  private readonly logger = new Logger('FriendsService');
 
   /**
    * add friend
@@ -56,6 +56,8 @@ export class FriendsService {
     } catch (error) {
       if (isAlreadyExistsError(error)) {
         throw new ForbiddenException('Friend request already sent');
+      } else {
+        this.logger.error('[Add Friend] Error adding friend', error.stack);
       }
     }
   }
@@ -86,6 +88,11 @@ export class FriendsService {
       if (isNotFoundError(error)) {
         throw new ForbiddenException('Pending friendship not found');
       }
+
+      this.logger.error(
+        '[Accept Friend Request] Error accepting friend',
+        error.stack,
+      );
       throw new ForbiddenException('Invalid friendship accept request');
     }
   }
@@ -175,6 +182,10 @@ export class FriendsService {
       // no query param
       return this.getAllFriendship(userUid);
     } catch (error) {
+      this.logger.error(
+        '[Get Friendship] Error getting friendship',
+        error.stack,
+      );
       // prisma catch not found error
       throw new ForbiddenException('Friendship error');
     }
@@ -286,6 +297,11 @@ export class FriendsService {
       // prisma catch not found error
       if (error instanceof Prisma.NotFoundError) {
         return null;
+      } else {
+        this.logger.error(
+          '[Get Friendship] Error getting friendship',
+          error.stack,
+        );
       }
     }
   }

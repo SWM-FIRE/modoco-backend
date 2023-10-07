@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-kakao';
@@ -10,6 +10,8 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
+  private logger: Logger = new Logger('KakaoStrategy');
+
   constructor(
     readonly configService: ConfigService,
     private readonly usersDatabaseHelper: UsersDatabaseHelper,
@@ -47,6 +49,7 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
           user.email,
         );
       } catch (error) {
+        this.logger.error('[KakaoStrategy] Error creating user', error.stack);
         done(error);
       }
     }

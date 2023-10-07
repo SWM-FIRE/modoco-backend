@@ -1,13 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { SendEmailCommand, SESClient } from '@aws-sdk/client-ses';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class EmailService {
   private sesClient: SESClient;
+  private logger = new Logger('EmailService');
 
   constructor(private readonly configService: ConfigService) {
     const region = this.configService.get('AWS_REGION');
+    this.logger = new Logger('EmailService');
     this.sesClient = new SESClient({
       region,
     });
@@ -35,9 +37,9 @@ export class EmailService {
       text: `
       모도코(modocode.com)의 가입 인증을 위해 아래 링크로 접속해주세요.
       인증 주소: ${url}
-      
+
       감사합니다.
-      
+
       - 모도코 팀 드림 -`,
     };
 
@@ -61,13 +63,13 @@ export class EmailService {
       html: this.getSignupHTML(userNickname, MODOCO_URL, NOTION_URL),
       text: `
       모도코 회원가입을 축하드립니다.
-      
+
       저희는 여러 개발자들과 모각코를 하기 위해 디스코드 커뮤니티를 운영하고 있습니다.
       이용에 참고해주시길 바랍니다.
       노션 안내 링크 : ${NOTION_URL}
-      
+
       감사합니다.
-      
+
       - 모도코 팀 드림 -`,
     };
 
@@ -137,7 +139,7 @@ export class EmailService {
     try {
       await this.sesClient.send(command);
     } catch (error) {
-      console.error(error);
+      this.logger.error('[EmailService] Error sending email', error.stack);
     }
   }
 
@@ -281,7 +283,7 @@ export class EmailService {
         </div>
     </body>
     </html>
-    
+
     `;
   }
 

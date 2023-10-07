@@ -149,7 +149,7 @@ export class RoomGatewayService {
       // 10. log the new connection
       this.logger.log(`[Connection] Client uid: ${uid}, sid: ${client.id}`);
     } catch (error) {
-      this.logger.error(error);
+      this.logger.error('[Connection] Error on connection', error.stack);
     }
 
     // 11. attach handler to disconnecting event
