@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-google-oauth20';
@@ -10,6 +10,8 @@ import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
+  private logger: Logger = new Logger('GoogleStrategy');
+
   constructor(
     readonly configService: ConfigService,
     readonly usersDatabaseHelper: UsersDatabaseHelper,
@@ -55,6 +57,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
           user.email,
         );
       } catch (error) {
+        this.logger.error('[GoogleStrategy] Error creating user', error.stack);
         done(error);
       }
     }

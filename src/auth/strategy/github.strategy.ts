@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-github2';
@@ -10,6 +10,8 @@ import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
+  private logger: Logger = new Logger('GithubStrategy');
+
   constructor(
     readonly configService: ConfigService,
     private readonly usersDatabaseHelper: UsersDatabaseHelper,
@@ -51,6 +53,7 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
           user.email,
         );
       } catch (error) {
+        this.logger.error('[GithubStrategy] Error creating user', error.stack);
         done(error);
       }
     }

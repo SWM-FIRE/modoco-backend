@@ -64,8 +64,10 @@ export class RoomsService {
       if (isNotFoundError(error)) {
         this.logger.debug('[Delete] Room not found');
         return;
+      } else {
+        this.logger.error('[Delete] Error deleting room by id', error.stack);
+        throw error;
       }
-      throw error;
     }
   }
 }

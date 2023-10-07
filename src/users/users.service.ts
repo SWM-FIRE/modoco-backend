@@ -12,13 +12,13 @@ import { UsersDatabaseHelper } from './helper/users-database.helper';
 
 @Injectable()
 export class UsersService {
+  private logger = new Logger('UsersService');
+
   constructor(
     private readonly authService: AuthService,
     private readonly usersDatabaseHelper: UsersDatabaseHelper,
     private readonly emailService: EmailService,
   ) {}
-
-  private readonly logger = new Logger('UsersService');
 
   async createUser(dto: CreateUserDTO) {
     try {
@@ -54,6 +54,9 @@ export class UsersService {
             existingUser.verify_token,
           );
         }
+        this.logger.debug('[Create] User already exists');
+      } else {
+        this.logger.error('[Create] Error creating user', error.stack);
       }
     } finally {
       return "Email verification sent. Please check your email to verify your account. If you don't receive the email, please check your spam folder.";
@@ -74,6 +77,10 @@ export class UsersService {
         );
       }
     } catch (error) {
+      this.logger.error(
+        '[SignUp] Wrong verification token is given',
+        error.stack,
+      );
       throw new ForbiddenException('Invalid verification token');
     }
   }
@@ -82,10 +89,13 @@ export class UsersService {
     try {
       return await this.usersDatabaseHelper.getAllUsers();
     } catch (error) {
-      this.logger.error({
-        code: error.code,
-        message: error.message,
-      });
+      this.logger.error(
+        {
+          code: error.code,
+          message: error.message,
+        },
+        error.stack,
+      );
     }
   }
 
@@ -96,10 +106,13 @@ export class UsersService {
 
       return user;
     } catch (error) {
-      this.logger.error({
-        code: error.code,
-        message: error.message,
-      });
+      this.logger.error(
+        {
+          code: error.code,
+          message: error.message,
+        },
+        error.stack,
+      );
     }
   }
 
@@ -116,10 +129,13 @@ export class UsersService {
 
       return user;
     } catch (error) {
-      this.logger.error({
-        code: error.code,
-        message: error.message,
-      });
+      this.logger.error(
+        {
+          code: error.code,
+          message: error.message,
+        },
+        error.stack,
+      );
     }
   }
 
@@ -134,6 +150,8 @@ export class UsersService {
     } catch (error) {
       if (isNotFoundError(error)) {
         this.logger.debug('[Update] User not found');
+      } else {
+        this.logger.error('[Update] Error updating user', error.stack);
       }
     }
   }
@@ -149,6 +167,8 @@ export class UsersService {
     } catch (error) {
       if (isNotFoundError(error)) {
         this.logger.debug('[Delete] User not found');
+      } else {
+        this.logger.error('[Delete] Error deleting user', error.stack);
       }
     }
   }
