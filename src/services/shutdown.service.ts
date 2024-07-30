@@ -11,9 +11,10 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { CronExpression, SchedulerRegistry } from '@nestjs/schedule';
 import { lastValueFrom, map, Subject } from 'rxjs';
 import { AppService } from '../app.service';
+import { CronJob } from 'cron';
 
 @Injectable()
 export class ShutdownService implements OnModuleInit, OnModuleDestroy {
@@ -38,36 +39,41 @@ export class ShutdownService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly configService: ConfigService,
     private readonly http: HttpService,
+    private schedulerRegistry: SchedulerRegistry,
   ) {
     this.client = new AutoScalingClient({ region: this.AWS_REGION });
   }
 
   async onModuleInit() {
-    if (this.ENV === ENV.PROD) {
+    this.logger.debug('ENV :: ' + this.ENV);
+
+    if (this.ENV === ENV.PROD_AWS) {
       const token = await this.getMetadataToken();
       this.instanceId = await this.getInstanceId(token);
       this.autoScalingGroupName = await this.getInstanceAutoScalingGroupName();
       this.logger.warn(
-        `Instance ID :: ${this.instanceId} Started, AutoSacaleGroup :: ${this.autoScalingGroupName}`,
+        `Instance ID :: ${this.instanceId} Started, AutoScaleGroup :: ${this.autoScalingGroupName}`,
       );
-    } else {
-      // this.logger.debug('Local Environment');
+      this.addAWSLifecycleStateCheckCronJob(CronExpression.EVERY_10_SECONDS);
     }
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  addAWSLifecycleStateCheckCronJob(cronExpression: string) {
+    const job = new CronJob(cronExpression, async () => {
+      await this.checkLifecycleState();
+    });
+    this.schedulerRegistry.addCronJob('checkAWSLifecycleState', job);
+    job.start();
+
+    this.logger.log(
+      `CronJob checkAWSLifeCycleState added :: ${cronExpression}`,
+    );
+  }
+
   async checkLifecycleState() {
     if (!AppService.active) return;
-
-    if (this.ENV === ENV.PROD) {
-      const state = await this.getInstanceLifecycleState();
-      if (state === LIFECYCLE_STATE.TERMINATING_WAIT) {
-        this.shutdown();
-      }
-    } else {
-      // ENV.DEV, ENV.TEST
-      //this.logger.debug('Called every 10 seconds');
-    }
+    const state = await this.getInstanceLifecycleState();
+    if (state === LIFECYCLE_STATE.TERMINATING_WAIT) await this.shutdown();
   }
 
   onModuleDestroy() {
@@ -128,7 +134,6 @@ export class ShutdownService implements OnModuleInit, OnModuleDestroy {
 
   private async getInstanceLifecycleState() {
     const response = await this.getInstanceDescription();
-
     return response.AutoScalingInstances[0]?.LifecycleState;
   }
 
@@ -180,6 +185,7 @@ export class ShutdownService implements OnModuleInit, OnModuleDestroy {
 
 const enum ENV {
   PROD = 'production',
+  PROD_AWS = 'production-aws',
   DEV = 'development',
   TEST = 'test',
 }
@@ -187,7 +193,7 @@ const enum ENV {
 const enum LIFECYCLE_STATE {
   IN_SERVICE = 'InService',
   TERMINATING_WAIT = 'Terminating:Wait',
-  TERMINATUNG_PROCEED = 'Terminating:Proceed',
+  TERMINATING_PROCEED = 'Terminating:Proceed',
 }
 
 const enum LIFECYCLE_ACTION_RESULT {
